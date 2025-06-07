@@ -74,7 +74,7 @@ def crear_tablas():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            rol TEXT NOT NULL
+            rol TEXT CHECK(rol IN ('aprendiz', 'administrador')) NOT NULL
         )
     """)
 

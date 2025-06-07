@@ -1,27 +1,44 @@
-# vistas/login.py
-import tkinter as tk
+import customtkinter as ctk
 from tkinter import messagebox
+from bd.users import verificar_credenciales
 
-def iniciar_app():
-    print("Ejecutando iniciar_app()")
-    root = tk.Tk()
-    root.title("Login")
+class LoginApp(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("Login de Usuarios")
+        self.geometry("400x300")
 
-    tk.Label(root, text="Usuario:").pack()
-    entrada_usuario = tk.Entry(root)
-    entrada_usuario.pack()
+        ctk.set_appearance_mode("dark")  # Opcional: "light", "dark", "system"
+        ctk.set_default_color_theme("blue")  # También: "green", "dark-blue"
 
-    tk.Label(root, text="Contraseña:").pack()
-    entrada_contraseña = tk.Entry(root, show="*")
-    entrada_contraseña.pack()
+        # Título
+        self.label_title = ctk.CTkLabel(self, text="Inicio de sesión", font=("Arial", 20))
+        self.label_title.pack(pady=20)
 
-    def login():
-        usuario = entrada_usuario.get()
-        contrasena = entrada_contraseña.get()
-        if usuario == "admin" and contrasena == "admin":
-            messagebox.showinfo("Login", "Bienvenido, administrador")
+        # Entrada de usuario
+        self.username_entry = ctk.CTkEntry(self, placeholder_text="Usuario")
+        self.username_entry.pack(pady=10)
+
+        # Entrada de contraseña
+        self.password_entry = ctk.CTkEntry(self, placeholder_text="Contraseña", show="*")
+        self.password_entry.pack(pady=10)
+
+        # Botón de login
+        self.login_button = ctk.CTkButton(self, text="Iniciar sesión", command=self.login)
+        self.login_button.pack(pady=20)
+
+    def login(self):
+        username = self.username_entry.get()
+        password = self.password_entry.get()
+
+        exito, rol = verificar_credenciales(username, password)
+        if exito:
+            messagebox.showinfo("Bienvenido", f"Has iniciado sesión como {rol}.")
+            # Aquí podrías abrir otra ventana o interfaz según el rol
         else:
-            messagebox.showerror("Login", "Credenciales inválidas")
+            messagebox.showerror("Error", "Credenciales incorrectas.")
 
-    tk.Button(root, text="Iniciar sesión", command=login).pack(pady=10)
-    root.mainloop()
+# # Para ejecutar directamente
+# if __name__ == "__main__":
+#     app = LoginApp()
+#     app.mainloop()
