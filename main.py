@@ -1,9 +1,12 @@
 # main.py
 
 # from views.login import LoginApp
-from views.create_user import CrearUsuario
+# from views.create_user import CrearUsuario
 # from views.data_management import GestionUsuarios
 # from bd.setup import crear_tablas
+# from views.crud_employees import CrudEmpleados
+# from views.crud_contracts import CrudContratos
+from views.crud_afiliations import CrudAfiliaciones
 
 # if __name__ == "__main__":
 #     crear_tablas()
@@ -23,5 +26,5 @@ from views.create_user import CrearUsuario
 #     print("Credenciales incorrectas")
 # Para ejecutar directamente
 if __name__ == "__main__":
-    app = CrearUsuario()
+    app = CrudAfiliaciones()
     app.mainloop()

@@ -10,7 +10,7 @@ def crear_tablas():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS employees (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
+            name TEXT NOT NULL, 
             last_name TEXT NOT NULL,
             document_type TEXT NOT NULL,
             document_number INTEGER NOT NULL UNIQUE,
