@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from tkinter import messagebox
 from bd.users import verificar_credenciales
+from views.main_menu import MainMenu
 
 class LoginApp(ctk.CTk):
     def __init__(self):
@@ -34,7 +35,9 @@ class LoginApp(ctk.CTk):
         exito, rol = verificar_credenciales(username, password)
         if exito:
             messagebox.showinfo("Bienvenido", f"Has iniciado sesión como {rol}.")
-            # Aquí podrías abrir otra ventana o interfaz según el rol
+            self.destroy()  # Cierra la ventana de login
+            main_menu = MainMenu(username, rol)
+            main_menu.mainloop()
         else:
             messagebox.showerror("Error", "Credenciales incorrectas.")
 

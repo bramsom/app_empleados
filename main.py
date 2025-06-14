@@ -6,7 +6,8 @@
 # from bd.setup import crear_tablas
 # from views.crud_employees import CrudEmpleados
 # from views.crud_contracts import CrudContratos
-from views.crud_afiliations import CrudAfiliaciones
+# from views.crud_afiliations import CrudAfiliaciones
+from views.login import LoginApp
 
 # if __name__ == "__main__":
 #     crear_tablas()
@@ -26,5 +27,5 @@ from views.crud_afiliations import CrudAfiliaciones
 #     print("Credenciales incorrectas")
 # Para ejecutar directamente
 if __name__ == "__main__":
-    app = CrudAfiliaciones()
+    app = LoginApp()
     app.mainloop()
