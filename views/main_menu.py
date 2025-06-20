@@ -7,6 +7,8 @@ from views.crud_afiliations import CrudAfiliaciones
 class MainMenu(ctk.CTk):
     def __init__(self, username, rol):
         super().__init__()
+        self.username = username
+        self.rol = rol
         self.title("Menú Principal")
         self.geometry("400x400")
 
@@ -19,25 +21,25 @@ class MainMenu(ctk.CTk):
         ctk.CTkButton(self, text="Salir", command=self.destroy).pack(pady=20)
 
     def abrir_crud_usuarios(self):
-        self.withdraw()
-        ventana = CrearUsuario()
-        ventana.mainloop()
-        self.deiconify()
+        self.destroy()
+        from views.create_user import CrearUsuario
+        app= CrearUsuario(self.username, self.rol)
+        app.mainloop()
 
     def abrir_crud_empleados(self):
-        self.withdraw()
-        ventana = CrudEmpleados()
-        ventana.mainloop()
-        self.deiconify()
+        self.destroy()
+        from views.crud_employees import CrudEmpleados
+        app = CrudEmpleados(self.username, self.rol)
+        app.mainloop()
 
     def abrir_crud_contratos(self):
-        self.withdraw()
-        ventana = CrudContratos()
-        ventana.mainloop()
-        self.deiconify()
+        self.destroy()
+        from views.crud_contracts import CrudContratos
+        app = CrudContratos(self.username, self.rol)
+        app.mainloop()
 
     def abrir_crud_afiliaciones(self):
-        self.withdraw()
-        ventana = CrudAfiliaciones()
-        ventana.mainloop()
-        self.deiconify()
+        self.destroy()
+        from views.crud_afiliations import CrudAfiliaciones
+        app = CrudAfiliaciones(self.username, self.rol)
+        app.mainloop()

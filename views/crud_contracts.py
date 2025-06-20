@@ -4,12 +4,12 @@ from bd.contracts import crear_contrato, obtener_contratos, obtener_contrato_por
 from bd.employees import obtener_empleados  # para seleccionar empleados
 
 class CrudContratos(ctk.CTk):
-    def __init__(self):
+    def __init__(self, username, rol):
         super().__init__()
         self.title("CRUD Contratos")
         self.geometry("700x650")
-        self.selected_id = None
-
+        
+        ctk.CTkButton(self, text="Volver al menú principal", command=lambda: self.volver_menu(username, rol)).pack(pady=20)
         # Frame desplazable
         self.scroll = ctk.CTkScrollableFrame(self, width=680, height=630)
         self.scroll.pack(padx=10, pady=10, fill="both", expand=True)
@@ -155,3 +155,9 @@ class CrudContratos(ctk.CTk):
             if v == emp_id:
                 return k
         return ""
+    
+    def volver_menu(self, username, rol):
+        self.destroy()  # Cierra esta ventana
+        from views.main_menu import MainMenu
+        main_menu = MainMenu(username, rol)
+        main_menu.mainloop()

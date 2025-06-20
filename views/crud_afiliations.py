@@ -4,11 +4,13 @@ from bd.affiliations import *
 from bd.employees import obtener_empleados
 
 class CrudAfiliaciones(ctk.CTk):
-    def __init__(self):
+    def __init__(self, username, rol):
         super().__init__()
         self.title("CRUD Afiliaciones")
         self.geometry("700x620")
         self.selected_id = None
+
+        ctk.CTkButton(self, text="Volver al menú principal", command=lambda: self.volver_menu(username, rol)).pack(pady=20)
 
         self.scroll = ctk.CTkScrollableFrame(self, width=680, height=600)
         self.scroll.pack(padx=10, pady=10, fill="both", expand=True)
@@ -125,3 +127,9 @@ class CrudAfiliaciones(ctk.CTk):
             if v == emp_id:
                 return k
         return ""
+    
+    def volver_menu(self, username, rol):
+        self.destroy()  # Cierra esta ventana
+        from views.main_menu import MainMenu
+        main_menu = MainMenu(username, rol)
+        main_menu.mainloop()

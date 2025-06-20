@@ -3,17 +3,18 @@ from tkinter import messagebox
 from bd.employees import crear_empleado, obtener_empleados, obtener_empleado_por_id, actualizar_empleado, eliminar_empleado
 
 class CrudEmpleados(ctk.CTk):
-    def __init__(self):
+    def __init__(self, username, rol):
         super().__init__()
         self.title("CRUD Empleados")
-        self.geometry("600x600")
-        self.selected_id = None
+        self.geometry("600x400")
 
+        ctk.CTkLabel(self, text="Gestión de Empleados", font=("Arial", 18)).pack(pady=20)
+        ctk.CTkButton(self, text="Volver al menú principal", command=lambda: self.volver_menu(username, rol)).pack(pady=20)
         # Contenedor scrollable
         self.scroll_frame = ctk.CTkScrollableFrame(self, width=580, height=550)
         self.scroll_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Entradas de texto
+            # Entradas de texto
         campos = [
             "Nombre", "Apellido", "Tipo Doc.", "N° Doc.", "Expedición", "Nacimiento",
             "Teléfono", "Dirección", "RUT", "Email", "Cargo"
@@ -92,3 +93,9 @@ class CrudEmpleados(ctk.CTk):
         for campo in self.entries.values():
             campo.delete(0, 'end')
         self.selected_id = None
+
+    def volver_menu(self, username, rol):
+        self.destroy()  # Cierra esta ventana
+        from views.main_menu import MainMenu
+        main_menu = MainMenu(username, rol)
+        main_menu.mainloop()
