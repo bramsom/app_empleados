@@ -1,7 +1,11 @@
 import customtkinter as ctk
 from tkinter import messagebox
-from bd.affiliations import *
-from bd.employees import obtener_empleados
+from controllers.affiliation_controller import (registrar_afiliacion,
+    listar_afiliaciones,
+    consultar_afiliacion,
+    modificar_afiliacion,
+    borrar_afiliacion)
+from controllers.employee_controller import listar_empleados  # para seleccionar empleados
 
 class CrudAfiliaciones(ctk.CTk):
     def __init__(self, username, rol):
@@ -16,7 +20,7 @@ class CrudAfiliaciones(ctk.CTk):
         self.scroll.pack(padx=10, pady=10, fill="both", expand=True)
 
         # Empleado
-        self.empleado_map = {f"{e[1]} {e[2]} ({e[4]})": e[0] for e in obtener_empleados()}
+        self.empleado_map = {f"{e[1]} {e[2]} ({e[4]})": e[0] for e in listar_empleados()}
         self.option_empleado = ctk.CTkOptionMenu(self.scroll, values=list(self.empleado_map.keys()))
         self.option_empleado.pack(pady=5)
 
@@ -46,7 +50,7 @@ class CrudAfiliaciones(ctk.CTk):
         self.cargar_lista()
 
     def cargar_lista(self):
-        resultados = obtener_afiliaciones()
+        resultados = listar_afiliaciones()
         self.afiliaciones = {f"{r[1]} - {r[2]} ({r[3]})": r[0] for r in resultados}
         self.lista.configure(values=list(self.afiliaciones.keys()))
         if self.afiliaciones:
@@ -58,7 +62,7 @@ class CrudAfiliaciones(ctk.CTk):
 
     def cargar(self, clave):
         af_id = self.afiliaciones.get(clave)
-        datos = obtener_afiliacion_por_id(af_id)
+        datos = consultar_afiliacion(af_id)
         if not datos:
             return
         self.selected_id = af_id
@@ -83,7 +87,7 @@ class CrudAfiliaciones(ctk.CTk):
                 self.entries["número_de_cuenta"].get(),
                 self.entries["tipo_de_cuenta"].get()
             )
-            crear_afiliacion(datos)
+            registrar_afiliacion(datos)
             messagebox.showinfo("Éxito", "Afiliación registrada.")
             self.cargar_lista()
             self.limpiar()
@@ -101,7 +105,7 @@ class CrudAfiliaciones(ctk.CTk):
             self.entries["número_de_cuenta"].get(),
             self.entries["tipo_de_cuenta"].get()
         )
-        actualizar_afiliacion(self.selected_id, datos)
+        modificar_afiliacion(self.selected_id, datos)
         messagebox.showinfo("Actualizado", "Afiliación actualizada.")
         self.cargar_lista()
 
@@ -109,7 +113,7 @@ class CrudAfiliaciones(ctk.CTk):
         if not self.selected_id:
             return
         if messagebox.askyesno("¿Confirmar?", "¿Eliminar esta afiliación?"):
-            eliminar_afiliacion(self.selected_id)
+            borrar_afiliacion(self.selected_id)
             messagebox.showinfo("Eliminado", "Afiliación eliminada.")
             self.cargar_lista()
             self.limpiar()

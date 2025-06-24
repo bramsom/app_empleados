@@ -35,13 +35,12 @@ class LoginApp(ctk.CTk):
         exito, rol = verificar_credenciales(username, password)
         if exito:
             messagebox.showinfo("Bienvenido", f"Has iniciado sesión como {rol}.")
-            self.destroy()  # Cierra la ventana de login
-            main_menu = MainMenu(username, rol)
-            main_menu.mainloop()
+            # Retardo breve para evitar conflicto con animación
+            self.after(100, lambda: self.abrir_menu_principal(username, rol))
         else:
             messagebox.showerror("Error", "Credenciales incorrectas.")
 
-# # Para ejecutar directamente
-# if __name__ == "__main__":
-#     app = LoginApp()
-#     app.mainloop()
+    def abrir_menu_principal(self, username, rol):
+        self.destroy()
+        main_menu = MainMenu(username, rol)
+        main_menu.mainloop()

@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from views.create_user import CrearUsuario
+from views.crud_users import CrudUsuarios
 from views.crud_employees import CrudEmpleados
 from views.crud_contracts import CrudContratos
 from views.crud_afiliations import CrudAfiliaciones
@@ -22,8 +22,8 @@ class MainMenu(ctk.CTk):
 
     def abrir_crud_usuarios(self):
         self.destroy()
-        from views.create_user import CrearUsuario
-        app= CrearUsuario(self.username, self.rol)
+        from views.crud_users import CrudUsuarios
+        app= CrudUsuarios(self.username, self.rol)
         app.mainloop()
 
     def abrir_crud_empleados(self):

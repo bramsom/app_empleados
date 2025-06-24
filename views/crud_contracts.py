@@ -1,7 +1,12 @@
 import customtkinter as ctk
 from tkinter import messagebox
-from bd.contracts import crear_contrato, obtener_contratos, obtener_contrato_por_id, actualizar_contrato, eliminar_contrato
-from bd.employees import obtener_empleados  # para seleccionar empleados
+from controllers.contract_controller import ( registrar_contrato,
+    listar_contratos,
+    consultar_contrato,
+    modificar_contrato,
+    borrar_contrato
+    )
+from controllers.employee_controller import listar_empleados  # para seleccionar empleados
 
 class CrudContratos(ctk.CTk):
     def __init__(self, username, rol):
@@ -15,7 +20,7 @@ class CrudContratos(ctk.CTk):
         self.scroll.pack(padx=10, pady=10, fill="both", expand=True)
 
         # Empleados
-        self.empleado_map = {f"{e[1]} {e[2]} ({e[4]})": e[0] for e in obtener_empleados()}
+        self.empleado_map = {f"{e[1]} {e[2]} ({e[4]})": e[0] for e in listar_empleados()}
         self.option_empleado = ctk.CTkOptionMenu(self.scroll, values=list(self.empleado_map.keys()))
         self.option_empleado.pack(pady=5)
 
@@ -61,7 +66,7 @@ class CrudContratos(ctk.CTk):
         self.cargar_lista()
 
     def cargar_lista(self):
-        contratos = obtener_contratos()
+        contratos = listar_contratos()
         self.contratos = {f"{c[1]} - {c[2]} ({c[5]})": c[0] for c in contratos}
         self.lista.configure(values=list(self.contratos.keys()))
         if self.contratos:
@@ -72,26 +77,26 @@ class CrudContratos(ctk.CTk):
 
     def cargar(self, clave):
         cid = self.contratos.get(clave)
-        datos = obtener_contrato_por_id(cid)
+        datos = consultar_contrato(cid)
         if not datos: return
         self.selected_id = cid
-        self.option_empleado.set(self._get_empleado_display(datos[1]))
-        self.tipo_contrato.set(datos[2])
+        self.option_empleado.set(self._get_empleado_display(datos.employee_id))
+        self.tipo_contrato.set(datos.type_contract)
         self.entries["fecha_inicio"].delete(0, 'end')
-        self.entries["fecha_inicio"].insert(0, datos[3])
+        self.entries["fecha_inicio"].insert(0, datos.start_date)
         self.entries["fecha_fin"].delete(0, 'end')
-        self.entries["fecha_fin"].insert(0, datos[4])
+        self.entries["fecha_fin"].insert(0, datos.end_date)
         self.entries["valor_hora"].delete(0, 'end')
-        self.entries["valor_hora"].insert(0, datos[5])
+        self.entries["valor_hora"].insert(0, datos.value_hour)
         self.entries["n°_horas"].delete(0, 'end')
-        self.entries["n°_horas"].insert(0, datos[6])
+        self.entries["n°_horas"].insert(0, datos.number_hour)
         self.entries["pago_mensual"].delete(0, 'end')
-        self.entries["pago_mensual"].insert(0, datos[7])
+        self.entries["pago_mensual"].insert(0, datos.monthly_payment)
         self.entries["transporte"].delete(0, 'end')
-        self.entries["transporte"].insert(0, datos[8])
-        self.estado.set(datos[9])
+        self.entries["transporte"].insert(0, datos.transport)
+        self.estado.set(datos.state)
         self.entries["contratista"].delete(0, 'end')
-        self.entries["contratista"].insert(0, datos[10])
+        self.entries["contratista"].insert(0, datos.contractor)
 
     def guardar(self):
         try:
@@ -107,7 +112,7 @@ class CrudContratos(ctk.CTk):
                 self.estado.get(),
                 self.entries["contratista"].get()
             )
-            crear_contrato(datos)
+            registrar_contrato(datos)
             messagebox.showinfo("Éxito", "Contrato creado.")
             self.cargar_lista()
             self.limpiar()
@@ -129,7 +134,7 @@ class CrudContratos(ctk.CTk):
             self.estado.get(),
             self.entries["contratista"].get()
         )
-        actualizar_contrato(self.selected_id, datos)
+        modificar_contrato(self.selected_id, datos)
         messagebox.showinfo("Actualizado", "Contrato actualizado.")
         self.cargar_lista()
 
@@ -137,7 +142,7 @@ class CrudContratos(ctk.CTk):
         if not self.selected_id:
             return
         if messagebox.askyesno("Confirmar", "¿Eliminar este contrato?"):
-            eliminar_contrato(self.selected_id)
+            borrar_contrato(self.selected_id)
             messagebox.showinfo("Eliminado", "Contrato eliminado.")
             self.cargar_lista()
             self.limpiar()
