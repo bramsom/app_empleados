@@ -10,9 +10,8 @@ class Afiliacion:
         self.account_number = account_number
         self.account_type = account_type
 
-    def to_tupe(self):
+    def to_tuple(self):
         return (
-            self.id, self.employee_id, self.affiliation_type, self.name, 
+            self.employee_id, self.affiliation_type, self.name, 
             self.bank, self.account_number, self.account_type
         )
-

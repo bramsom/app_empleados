@@ -34,21 +34,31 @@ def obtener_contrato_por_id(contrato_id):
 
 def actualizar_contrato(contrato_id, contrato):
     conn = conectar()
-    cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE contracts SET 
-        employee_id=?, type_contract=?, start_date=?, end_date=?, 
-        value_hour=?, number_hour=?, monthly_payment=?, transport=?, 
-        state=?, contractor=? 
-        WHERE id=?
-    """,contrato.to_tuple()+ (contrato_id,))
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE contracts SET 
+            employee_id=?, type_contract=?, start_date=?, end_date=?, 
+            value_hour=?, number_hour=?, monthly_payment=?, transport=?, 
+            state=?, contractor=? 
+            WHERE id=?
+        """,contrato.to_tuple()+ (contrato_id,))
+        conn.commit()
+    except Exception as e: 
+        print("error al actualizar el contrato:", e)
+        raise
+    finally:
+        conn.close()
 
 def eliminar_contrato(contrato_id):
     conn = conectar()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM contracts WHERE id=?", (contrato_id,)) 
-    conn.commit()
-    conn.close   
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM contracts WHERE id=?", (contrato_id,)) 
+        conn.commit()
+    except Exception as e:
+        print("Error al eliminar contrato:", e)
+        raise
+    finally:
+        conn.close() 
     

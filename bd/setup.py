@@ -58,7 +58,7 @@ def crear_tablas():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             employee_id INTEGER NOT NULL,
             affiliation_type TEXT NOT NULL CHECK (
-                affiliation_type IN ('EPS', 'ARL', 'AFP', 'BANCO')
+                affiliation_type IN ('EPS','ARL','AFP','BANCO')
             ),
             name TEXT NOT NULL,
             bank TEXT,

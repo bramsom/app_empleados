@@ -7,24 +7,22 @@ from controllers.contract_controller import ( registrar_contrato,
     borrar_contrato
     )
 from controllers.employee_controller import listar_empleados  # para seleccionar empleados
+from models.contract import Contrato
 
 class CrudContratos(ctk.CTk):
     def __init__(self, username, rol):
         super().__init__()
         self.title("CRUD Contratos")
         self.geometry("700x650")
-        
+
         ctk.CTkButton(self, text="Volver al menú principal", command=lambda: self.volver_menu(username, rol)).pack(pady=20)
-        # Frame desplazable
         self.scroll = ctk.CTkScrollableFrame(self, width=680, height=630)
         self.scroll.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Empleados
-        self.empleado_map = {f"{e[1]} {e[2]} ({e[4]})": e[0] for e in listar_empleados()}
+        self.empleado_map = { f"{e.name} {e.last_name} ({e.document_number})": e.id for e in listar_empleados()}
         self.option_empleado = ctk.CTkOptionMenu(self.scroll, values=list(self.empleado_map.keys()))
         self.option_empleado.pack(pady=5)
 
-        # Tipo de contrato
         self.tipo_contrato = ctk.CTkOptionMenu(
             self.scroll, 
             values=[
@@ -37,9 +35,8 @@ class CrudContratos(ctk.CTk):
         )
         self.tipo_contrato.pack(pady=5)
 
-        # Campos de fechas y números
         campos = [
-            "Fecha inicio", "Fecha fin", "Valor hora", "N° horas",
+            "Fecha inicio", "Fecha fin", "Valor hora", "Numero horas",
             "Pago mensual", "Transporte", "Contratista"
         ]
         self.entries = {}
@@ -50,17 +47,14 @@ class CrudContratos(ctk.CTk):
             entry.pack(pady=2)
             self.entries[campo.lower().replace(" ", "_")] = entry
 
-        # Estado del contrato
         self.estado = ctk.CTkOptionMenu(self.scroll, values=["ACTIVO", "FINALIZADO", "RETIRADO"])
         self.estado.pack(pady=5)
 
-        # Botones
         ctk.CTkButton(self.scroll, text="Guardar", command=self.guardar).pack(pady=5)
         ctk.CTkButton(self.scroll, text="Actualizar", command=self.actualizar).pack(pady=5)
         ctk.CTkButton(self.scroll, text="Eliminar", command=self.eliminar).pack(pady=5)
         ctk.CTkButton(self.scroll, text="Limpiar", command=self.limpiar).pack(pady=5)
 
-        # Lista de contratos
         self.lista = ctk.CTkOptionMenu(self.scroll, values=[], command=self.cargar)
         self.lista.pack(pady=10)
         self.cargar_lista()
@@ -88,8 +82,8 @@ class CrudContratos(ctk.CTk):
         self.entries["fecha_fin"].insert(0, datos.end_date)
         self.entries["valor_hora"].delete(0, 'end')
         self.entries["valor_hora"].insert(0, datos.value_hour)
-        self.entries["n°_horas"].delete(0, 'end')
-        self.entries["n°_horas"].insert(0, datos.number_hour)
+        self.entries["numero_horas"].delete(0, 'end')
+        self.entries["numero_horas"].insert(0, datos.number_hour)
         self.entries["pago_mensual"].delete(0, 'end')
         self.entries["pago_mensual"].insert(0, datos.monthly_payment)
         self.entries["transporte"].delete(0, 'end')
@@ -98,48 +92,56 @@ class CrudContratos(ctk.CTk):
         self.entries["contratista"].delete(0, 'end')
         self.entries["contratista"].insert(0, datos.contractor)
 
-    def guardar(self):
+    def _obtener_datos_contrato(self):
         try:
             datos = (
                 self.empleado_map[self.option_empleado.get()],
                 self.tipo_contrato.get(),
-                self.entries["fecha_inicio"].get(),
-                self.entries["fecha_fin"].get(),
+                self.entries["fecha_inicio"].get().strip(),
+                self.entries["fecha_fin"].get().strip(),
                 float(self.entries["valor_hora"].get()),
-                int(self.entries["n°_horas"].get()),
+                int(float(self.entries["numero_horas"].get())),
                 float(self.entries["pago_mensual"].get()),
                 float(self.entries["transporte"].get()),
                 self.estado.get(),
-                self.entries["contratista"].get()
+                self.entries["contratista"].get().strip()
             )
+            return datos
+        except ValueError as ve:
+            messagebox.showerror("Error de validación", f"Verifica los datos numéricos: {ve}")
+            return None
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+            return None
+
+    def guardar(self):
+        datos = self._obtener_datos_contrato()
+        if not datos:
+            return
+        try:
             registrar_contrato(datos)
             messagebox.showinfo("Éxito", "Contrato creado.")
             self.cargar_lista()
             self.limpiar()
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error al guardar", str(e))
 
     def actualizar(self):
-        if not self.selected_id:
+        if not hasattr(self, 'selected_id') or not self.selected_id:
+            messagebox.showwarning("Advertencia", "Selecciona un contrato primero.")
             return
-        datos = (
-            self.empleado_map[self.option_empleado.get()],
-            self.tipo_contrato.get(),
-            self.entries["fecha_inicio"].get(),
-            self.entries["fecha_fin"].get(),
-            float(self.entries["valor_hora"].get()),
-            int(self.entries["n°_horas"].get()),
-            float(self.entries["pago_mensual"].get()),
-            float(self.entries["transporte"].get()),
-            self.estado.get(),
-            self.entries["contratista"].get()
-        )
-        modificar_contrato(self.selected_id, datos)
-        messagebox.showinfo("Actualizado", "Contrato actualizado.")
-        self.cargar_lista()
+        datos = self._obtener_datos_contrato()
+        if not datos:
+            return
+        try:
+            modificar_contrato(self.selected_id, datos)
+            messagebox.showinfo("Actualizado", "Contrato actualizado.")
+            self.cargar_lista()
+        except Exception as e:
+            messagebox.showerror("Error al actualizar", str(e))
 
     def eliminar(self):
-        if not self.selected_id:
+        if not hasattr(self, 'selected_id') or not self.selected_id:
             return
         if messagebox.askyesno("Confirmar", "¿Eliminar este contrato?"):
             borrar_contrato(self.selected_id)
@@ -160,9 +162,9 @@ class CrudContratos(ctk.CTk):
             if v == emp_id:
                 return k
         return ""
-    
+
     def volver_menu(self, username, rol):
-        self.destroy()  # Cierra esta ventana
+        self.destroy()
         from views.main_menu import MainMenu
         main_menu = MainMenu(username, rol)
         main_menu.mainloop()

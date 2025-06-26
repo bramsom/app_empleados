@@ -1,17 +1,19 @@
 import customtkinter as ctk
 from tkinter import messagebox
-from controllers.affiliation_controller import (registrar_afiliacion,
+from controllers.affiliation_controller import (
+    registrar_afiliacion,
     listar_afiliaciones,
     consultar_afiliacion,
     modificar_afiliacion,
-    borrar_afiliacion)
-from controllers.employee_controller import listar_empleados  # para seleccionar empleados
+    borrar_afiliacion
+)
+from controllers.employee_controller import listar_empleados
 
 class CrudAfiliaciones(ctk.CTk):
     def __init__(self, username, rol):
         super().__init__()
         self.title("CRUD Afiliaciones")
-        self.geometry("700x620")
+        self.geometry("700x650")
         self.selected_id = None
 
         ctk.CTkButton(self, text="Volver al menú principal", command=lambda: self.volver_menu(username, rol)).pack(pady=20)
@@ -19,16 +21,13 @@ class CrudAfiliaciones(ctk.CTk):
         self.scroll = ctk.CTkScrollableFrame(self, width=680, height=600)
         self.scroll.pack(padx=10, pady=10, fill="both", expand=True)
 
-        # Empleado
-        self.empleado_map = {f"{e[1]} {e[2]} ({e[4]})": e[0] for e in listar_empleados()}
+        self.empleado_map = {f"{e.name} {e.last_name} ({e.document_number})": e.id for e in listar_empleados()}
         self.option_empleado = ctk.CTkOptionMenu(self.scroll, values=list(self.empleado_map.keys()))
         self.option_empleado.pack(pady=5)
 
-        # Tipo de afiliación
         self.tipo_afiliacion = ctk.CTkOptionMenu(self.scroll, values=["EPS", "ARL", "AFP", "BANCO"])
         self.tipo_afiliacion.pack(pady=5)
 
-        # Campos texto
         campos = ["Nombre", "Banco", "Número de cuenta", "Tipo de cuenta"]
         self.entries = {}
         for campo in campos:
@@ -38,27 +37,29 @@ class CrudAfiliaciones(ctk.CTk):
             entry.pack(pady=2)
             self.entries[campo.lower().replace(" ", "_")] = entry
 
-        # Botones
         ctk.CTkButton(self.scroll, text="Guardar", command=self.guardar).pack(pady=5)
         ctk.CTkButton(self.scroll, text="Actualizar", command=self.actualizar).pack(pady=5)
         ctk.CTkButton(self.scroll, text="Eliminar", command=self.eliminar).pack(pady=5)
         ctk.CTkButton(self.scroll, text="Limpiar", command=self.limpiar).pack(pady=5)
 
-        # Lista de afiliaciones
-        self.lista = ctk.CTkOptionMenu(self.scroll, values=[], command=self.cargar)
-        self.lista.pack(pady=10)
+        # Marco para mostrar afiliaciones
+        self.frame_lista = ctk.CTkScrollableFrame(self.scroll, width=640, height=200)
+        self.frame_lista.pack(pady=10)
+
+        self.afiliaciones = {}
         self.cargar_lista()
 
     def cargar_lista(self):
+        for widget in self.frame_lista.winfo_children():
+            widget.destroy()
+
         resultados = listar_afiliaciones()
-        self.afiliaciones = {f"{r[1]} - {r[2]} ({r[3]})": r[0] for r in resultados}
-        self.lista.configure(values=list(self.afiliaciones.keys()))
-        if self.afiliaciones:
-            primera = list(self.afiliaciones.keys())[0]
-            self.lista.set(primera)
-            self.cargar(primera)
-        else:
-            self.lista.set("")
+        self.afiliaciones = {}
+        for r in resultados:
+            clave = f"{r.employee_id} - {r.affiliation_type} ({r.name})"
+            self.afiliaciones[clave] = r.id
+            boton = ctk.CTkButton(self.frame_lista, text=clave, command=lambda k=clave: self.cargar(k))
+            boton.pack(fill="x", padx=5, pady=2)
 
     def cargar(self, clave):
         af_id = self.afiliaciones.get(clave)
@@ -66,26 +67,31 @@ class CrudAfiliaciones(ctk.CTk):
         if not datos:
             return
         self.selected_id = af_id
-        self.option_empleado.set(self._get_empleado_display(datos[1]))
-        self.tipo_afiliacion.set(datos[2])
-        self.entries["nombre"].delete(0, 'end')
-        self.entries["nombre"].insert(0, datos[3] or "")
-        self.entries["banco"].delete(0, 'end')
-        self.entries["banco"].insert(0, datos[4] or "")
-        self.entries["número_de_cuenta"].delete(0, 'end')
-        self.entries["número_de_cuenta"].insert(0, datos[5] or "")
-        self.entries["tipo_de_cuenta"].delete(0, 'end')
-        self.entries["tipo_de_cuenta"].insert(0, datos[6] or "")
+        self.option_empleado.set(self._get_empleado_display(datos.employee_id))
+        self.tipo_afiliacion.set(datos.affiliation_type)
+
+        for key in self.entries:
+            self.entries[key].delete(0, 'end')
+
+        self.entries["nombre"].insert(0, datos.name or "")
+        self.entries["banco"].insert(0, datos.bank or "")
+        self.entries["número_de_cuenta"].insert(0, datos.account_number or "")
+        self.entries["tipo_de_cuenta"].insert(0, datos.account_type or "")
 
     def guardar(self):
         try:
+            tipo = self.tipo_afiliacion.get().strip().upper()
+            if tipo not in ["EPS", "ARL", "AFP", "BANCO"]:
+                messagebox.showerror("Error", "Tipo de afiliación no válido.")
+                return
+
             datos = (
                 self.empleado_map[self.option_empleado.get()],
-                self.tipo_afiliacion.get(),
-                self.entries["nombre"].get(),
-                self.entries["banco"].get(),
-                self.entries["número_de_cuenta"].get(),
-                self.entries["tipo_de_cuenta"].get()
+                tipo,
+                self.entries["nombre"].get().strip(),
+                self.entries["banco"].get().strip(),
+                self.entries["número_de_cuenta"].get().strip(),
+                self.entries["tipo_de_cuenta"].get().strip()
             )
             registrar_afiliacion(datos)
             messagebox.showinfo("Éxito", "Afiliación registrada.")
@@ -97,13 +103,18 @@ class CrudAfiliaciones(ctk.CTk):
     def actualizar(self):
         if not self.selected_id:
             return
+        tipo = self.tipo_afiliacion.get().strip().upper()
+        if tipo not in ["EPS", "ARL", "AFP", "BANCO"]:
+            messagebox.showerror("Error", "Tipo de afiliación no válido.")
+            return
+
         datos = (
             self.empleado_map[self.option_empleado.get()],
-            self.tipo_afiliacion.get(),
-            self.entries["nombre"].get(),
-            self.entries["banco"].get(),
-            self.entries["número_de_cuenta"].get(),
-            self.entries["tipo_de_cuenta"].get()
+            tipo,
+            self.entries["nombre"].get().strip(),
+            self.entries["banco"].get().strip(),
+            self.entries["número_de_cuenta"].get().strip(),
+            self.entries["tipo_de_cuenta"].get().strip()
         )
         modificar_afiliacion(self.selected_id, datos)
         messagebox.showinfo("Actualizado", "Afiliación actualizada.")
@@ -131,9 +142,9 @@ class CrudAfiliaciones(ctk.CTk):
             if v == emp_id:
                 return k
         return ""
-    
+
     def volver_menu(self, username, rol):
-        self.destroy()  # Cierra esta ventana
+        self.destroy()
         from views.main_menu import MainMenu
         main_menu = MainMenu(username, rol)
         main_menu.mainloop()
