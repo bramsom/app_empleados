@@ -3,19 +3,16 @@ from tkinter import messagebox
 from controllers import employee_controller
 from models.employee import Empleado
 
-class CrudEmpleados(ctk.CTk):
-    def __init__(self, username, rol):
-        super().__init__()
+class CrudEmpleados(ctk.CTkFrame):
+    def __init__(self, parent, username, rol):
+        super().__init__(parent)
         self.controller = employee_controller
-        self.title("CRUD Empleados")
-        self.geometry("600x700")
-        
 
         ctk.CTkLabel(self, text="Gestión de Empleados", font=("Arial", 18)).pack(pady=20)
         ctk.CTkButton(self, text="Volver al menú principal", command=lambda: self.volver_menu(username, rol)).pack(pady=10)
 
         self.scroll_frame = ctk.CTkScrollableFrame(self, width=580, height=500)
-        self.scroll_frame.pack(padx=10, pady=10, fill="both", expand=True)
+        self.scroll_frame.grid(padx=10, pady=10, fill="both", expand=True)
 
         campos = [
             ("nombre", "Nombre"),
@@ -150,7 +147,6 @@ class CrudEmpleados(ctk.CTk):
             campo.delete(0, 'end')
         self.selected_id = None
 
-    def volver_menu(self, username, rol):
-        self.destroy()
-        from views.main_menu import MainMenu
-        MainMenu(username, rol).deiconify()
+   # def volver_menu(self, username, rol):
+    #    from views.main_menu import MainMenu
+     #   MainMenu(username, rol).deiconify()
