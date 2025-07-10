@@ -143,8 +143,8 @@ class CrudAfiliaciones(ctk.CTk):
                 return k
         return ""
 
-    def volver_menu(self, username, rol):
-        self.destroy()
-        from views.main_menu import MainMenu
-        main_menu = MainMenu(username, rol)
-        main_menu.mainloop()
+   # def volver_menu(self, username, rol):
+       # self.destroy()
+       # from views.main_menu import MainMenu
+       # main_menu = MainMenu(username, rol)
+       # main_menu.mainloop()

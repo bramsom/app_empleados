@@ -3,7 +3,7 @@ from tkinter import Canvas
 from PIL import Image
 from tkinter import messagebox
 from bd.users import verificar_credenciales
-from views.main_menu import MainMenu  # <-- Ajusta este import según tu estructura
+from views.apprentice_panel import Dashboard  # <-- Cambié el import al dashboard
 
 class LoginApp(ctk.CTk):
     def __init__(self):
@@ -32,9 +32,14 @@ class LoginApp(ctk.CTk):
         canvas.create_polygon(151, 500, 150, 500, 50, 400, 50, 400, fill="#FCFCFC", outline="")
         canvas.create_polygon(250, 500, 251, 500, 150, 400, 150, 400, fill="#FCFCFC", outline="")
 
-        logo_img = ctk.CTkImage(Image.open("C:/Users/Usuario/Documents/proyectos python/app_empleados/images/logo.png"), size=(140, 150))
-        logo_label = ctk.CTkLabel(frame_izquierdo, image=logo_img, text="", fg_color=frame_izquierdo.cget("fg_color"))
-        logo_label.place(relx=0.55, rely=0.45, anchor="center")
+        try:
+            logo_img = ctk.CTkImage(Image.open("C:/Users/Usuario/Documents/proyectos python/app_empleados/images/logo.png"), size=(140, 150))
+            logo_label = ctk.CTkLabel(frame_izquierdo, image=logo_img, text="", fg_color=frame_izquierdo.cget("fg_color"))
+            logo_label.place(relx=0.55, rely=0.45, anchor="center")
+        except:
+            # Si no se puede cargar la imagen, usar un emoji como respaldo
+            logo_label = ctk.CTkLabel(frame_izquierdo, text="🛡️", font=("Arial", 40), text_color="white")
+            logo_label.place(relx=0.55, rely=0.45, anchor="center")
 
         # === Frame Derecho (formulario) ===
         frame_derecho = ctk.CTkFrame(self, width=300, corner_radius=0, fg_color="white")
@@ -70,20 +75,33 @@ class LoginApp(ctk.CTk):
         )
         self.login_button.pack(pady=(0, 20))
 
+        # Permitir login con Enter
+        self.bind('<Return>', lambda event: self.login())
+
     def login(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
-        exito, rol = verificar_credenciales(username, password)
-        if exito:
-            messagebox.showinfo("Bienvenido", f"Has iniciado sesión como {rol}.")
-            self.after(100, lambda: self.abrir_menu_principal(username, rol))
-        else:
-            messagebox.showerror("Error", "Credenciales incorrectas.")
+        
+        # Validar que los campos no estén vacíos
+        if not username or not password:
+            messagebox.showerror("Error", "Por favor ingresa usuario y contraseña.")
+            return
+        
+        try:
+            exito, rol = verificar_credenciales(username, password)
+            if exito:
+                messagebox.showinfo("Bienvenido", f"Has iniciado sesión como {rol}.")
+                self.after(100, lambda: self.abrir_dashboard(username, rol))
+            else:
+                messagebox.showerror("Error", "Credenciales incorrectas.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al verificar credenciales: {str(e)}")
 
-    def abrir_menu_principal(self, username, rol):
+    def abrir_dashboard(self, username, rol):
+        """Abrir el dashboard pasando los datos del usuario"""
         self.destroy()
-        main_menu = MainMenu(username, rol)
-        main_menu.mainloop()
+        dashboard = Dashboard(username, rol)
+        dashboard.mainloop()
 
 if __name__ == "__main__":
     app = LoginApp()
