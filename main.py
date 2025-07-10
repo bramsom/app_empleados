@@ -8,7 +8,7 @@
 # from views.crud_contracts import CrudContratos
 # from views.crud_afiliations import CrudAfiliaciones
 from views.login import LoginApp
-from views.apprentice_panel import inicializar_dashboard
+from views.apprentice_panel import Dashboard
 
 # if __name__ == "__main__":
 #     crear_tablas()

@@ -5,8 +5,10 @@ from PIL import Image
 import math
 
 class Dashboard(ctk.CTk):
-    def __init__(self):
+    def __init__(self, username, rol):
         super().__init__()
+        self.username = username
+        self.rol = rol
         self.title("Sistema de Gestión de Personal")
         self.geometry("900x600")
         
@@ -46,7 +48,7 @@ class Dashboard(ctk.CTk):
         
         self.welcome_label = ctk.CTkLabel(
             self.user_info_frame, 
-            text="Bienvenido, Laura Pérez", 
+            text=f"Bienvenido, {self.username}",
             font=("Georgia", 12),
             text_color="white"
         )
