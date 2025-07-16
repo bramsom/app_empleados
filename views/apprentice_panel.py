@@ -1,164 +1,280 @@
 import customtkinter as ctk
-from tkinter import Canvas
-from PIL import Image
-import math
-from tkinter import messagebox
+from tkinter import Canvas, messagebox
 
 class Dashboard(ctk.CTk):
     def __init__(self, username, rol):
         super().__init__()
         self.username = username
         self.rol = rol
+        self.menu_expanded = False
+        self.menu_width = {"collapsed": 60, "expanded": 200}
         
-        # Configuración de la ventana
+        self.setup_window()
+        self.create_layout()
+        self.show_default_view()
+        
+    def setup_window(self):
+        """Configuración inicial de la ventana"""
         self.geometry("1200x800")
         self.title("Dashboard - Sistema de Gestión")
         
-        # Crear layout principal
-        self.create_layout()
-        
     def create_layout(self):
-        # Sidebar para navegación
-        self.sidebar = ctk.CTkFrame(self, width=200)
-        self.sidebar.pack(side="left", fill="y", padx=10, pady=10)
+        """Crear layout principal con header, sidebar y contenido"""
+        # Header
+        self.header = ctk.CTkFrame(self, height=60, fg_color="#A9A9A9")
+        self.header.pack(side="top", fill="x")
+        self.header.pack_propagate(False)
+        self.init_header()
         
-        # Área de contenido principal
-        self.content_area = ctk.CTkFrame(self,fg_color="#F5F5F5")
-        self.content_area.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+        # Contenedor principal para el área debajo del header
+        self.main_container = ctk.CTkFrame(self)
+        self.main_container.pack(side="top", fill="both", expand=True)
         
-        # Crear menú de navegación
+        # Área de contenido (ocupa todo el espacio disponible)
+        self.content_area = ctk.CTkFrame(self.main_container, fg_color="#F5F5F5")
+        self.content_area.pack(fill="both", expand=True, padx=2, pady=2)
+        
+        # Sidebar sobrepuesto usando place (se posiciona encima del contenido)
+        self.sidebar = ctk.CTkFrame(
+            self.main_container, 
+            width=self.menu_width["collapsed"],
+            
+            fg_color="#A9A9A9"
+        )
+        # Posicionar el sidebar en la esquina superior izquierda del main_container
+        self.sidebar.place(x=2, y=2,relheight=1.0)  # height ajustado para el contenedor
+        
         self.create_menu()
-        
-        # Mostrar vista por defecto
-        self.show_default_view()
+        self.setup_menu_events()
         
     def create_menu(self):
-        # Título del menú
-        menu_title = ctk.CTkLabel(self.sidebar, text="MENÚ", 
-                                 font=("Arial", 16, "bold"))
-        menu_title.pack(pady=(20, 30))
+        """Crear menú con configuración unificada"""
+        # Configuración del menú
+        self.menu_config = [
+            ("☰", "MENÚ", None, True),  # Icono especial del menú
+            ("🏠", "Home", self.show_default_view, False),
+            ("👥", "Gestion Empleados", self.show_empleados_view, False),
+            ("🏢", "Contratos", self.show_contratos_view, False),
+            ("🗼", "Afiliaciones", self.show_afiliaciones_view, False),
+            ("[]–>", "Exportar excel/pdf", self.show_reportes_view, False),
+            ("🧭", "Administrar Usuarios", self.show_usuarios_view, False),
+            ("(–", "Cerrar Sesión", self.cerrar_sesion, False)
+        ]
         
-        # Botón para empleados
-        empleados_btn = ctk.CTkButton(self.sidebar, text="Empleados",
-                                     command=self.show_empleados_view,
-                                     width=160, height=40)
-        empleados_btn.pack(pady=10, padx=20, fill="x")
+        self.menu_widgets = {}
         
-        # Otros botones del menú
-        inventario_btn = ctk.CTkButton(self.sidebar, text="Inventario",
-                                      command=self.show_inventario_view,
-                                      width=160, height=40)
-        inventario_btn.pack(pady=10, padx=20, fill="x")
+        # Crear widgets del menú
+        for i, (icon, text, command, is_title) in enumerate(self.menu_config):
+            if is_title:
+                # Título del menú
+                self.menu_widgets['title'] = ctk.CTkLabel(self.sidebar, text=text, font=("Georgia", 16))
+                self.menu_widgets['title'].pack_forget()
+                # Icono hamburguesa
+                self.menu_widgets['icon'] = ctk.CTkLabel(self.sidebar, text=icon, font=("Georgia", 24))
+                self.menu_widgets['icon'].pack(pady=(20, 10))
+            else:
+                # Botones del menú
+                btn_config = {
+                    "text": icon, "command": command, "width": 40, "height": 40,
+                    "fg_color": "#A9A9A9","font":("Georgia", 16),"hover_color": "#888888"
+                }
+                if text == "Cerrar Sesión":
+                    btn_config.update({"fg_color": "red", "hover_color": "darkred"})
+                    
+                btn = ctk.CTkButton(self.sidebar, **btn_config)
+                pack_config = {"pady": 10, "padx": 10}
+                if text == "Cerrar Sesión":
+                    pack_config.update({"side": "bottom", "pady": 20})
+                    
+                btn.pack(**pack_config)
+                self.menu_widgets[text.lower().replace(" ", "_")] = btn
+                
+    def setup_menu_events(self):
+        """Configurar eventos del menú de forma unificada"""
+        widgets_to_bind = [self.sidebar, self.menu_widgets['icon']] + [
+            widget for key, widget in self.menu_widgets.items() 
+            if key not in ['title', 'icon']
+        ]
         
-        ventas_btn = ctk.CTkButton(self.sidebar, text="Ventas",
-                                  command=self.show_ventas_view,
-                                  width=160, height=40)
-        ventas_btn.pack(pady=10, padx=20, fill="x")
+        for widget in widgets_to_bind:
+            widget.bind("<Enter>", lambda e: self.toggle_menu(True))
+            widget.bind("<Leave>", lambda e: self.toggle_menu(False))
+            
+    def toggle_menu(self, expand):
+        """Alternar estado del menú"""
+        if expand and not self.menu_expanded:
+            self.menu_expanded = True
+            # Cambiar el ancho del sidebar usando place
+            self.sidebar.place_configure(width=self.menu_width["expanded"])
+            self.menu_widgets['title'].pack(pady=(20, 30))
+            self.menu_widgets['icon'].pack_forget()
+            
+            # Actualizar botones con texto
+            for i, (icon, text, command, is_title) in enumerate(self.menu_config):
+                if not is_title:
+                    key = text.lower().replace(" ", "_")
+                    self.menu_widgets[key].configure(text=text, width=160, height=40)
+                    self.menu_widgets[key].pack_configure(padx=20, fill="both")
+                    
+        elif not expand and self.menu_expanded:
+            self.after(100, self._collapse_menu_delayed)
+            
+    def _collapse_menu_delayed(self):
+        """Contraer menú con verificación de posición del cursor"""
+        if self._cursor_over_sidebar():
+            return
+            
+        self.menu_expanded = False
+        # Cambiar el ancho del sidebar usando place
+        self.sidebar.place_configure(width=self.menu_width["collapsed"])
+        self.menu_widgets['title'].pack_forget()
+        self.menu_widgets['icon'].pack(pady=(20, 10))
         
-        reportes_btn = ctk.CTkButton(self.sidebar, text="Reportes",
-                                    command=self.show_reportes_view,
-                                    width=160, height=40)
-        reportes_btn.pack(pady=10, padx=20, fill="x")
+        # Restaurar botones con iconos
+        for i, (icon, text, command, is_title) in enumerate(self.menu_config):
+            if not is_title:
+                key = text.lower().replace(" ", "_")
+                self.menu_widgets[key].configure(text=icon, width=40, height=40)
+                self.menu_widgets[key].pack_configure(padx=10, fill="both")
+                
+    def _cursor_over_sidebar(self):
+        """Verificar si el cursor está sobre el sidebar"""
+        try:
+            x, y = self.winfo_pointerxy()
+            sx, sy = self.sidebar.winfo_rootx(), self.sidebar.winfo_rooty()
+            sw, sh = self.sidebar.winfo_width(), self.sidebar.winfo_height()
+            return sx <= x <= sx + sw and sy <= y <= sy + sh
+        except:
+            return False
+            
+    def init_header(self):
+        """Crear header con información del usuario"""
+        header_items = [
+            ("left", f"👤 {self.username}", {"font": ("Arial", 14, "bold"), "text_color": "white"}),
+            ("left", f"Rol: {self.rol}", {"font": ("Arial", 14), "text_color": "white"}),
+            ("right", "Cerrar sesión", {"fg_color": "red", "hover_color": "darkred", "command": self.cerrar_sesion})
+        ]
         
-        # Botón de cerrar sesión
-        cerrar_btn = ctk.CTkButton(self.sidebar, text="Cerrar Sesión",
-                                  command=self.cerrar_sesion,
-                                  width=160, height=40,
-                                  fg_color="red", hover_color="darkred")
-        cerrar_btn.pack(side="bottom", pady=20, padx=20, fill="x")
-        
+        for side, text, config in header_items:
+            if side == "right":
+                widget = ctk.CTkButton(self.header, text=text, width=120, **config)
+            else:
+                widget = ctk.CTkLabel(self.header, text=text, **config)
+            widget.pack(side=side, padx=20 if side == "left" else 20)
+            
     def clear_content_area(self):
-        """Limpia el área de contenido"""
+        """Limpiar área de contenido"""
         for widget in self.content_area.winfo_children():
             widget.destroy()
             
+    def create_view_placeholder(self, title):
+        """Crear placeholder para vistas"""
+        placeholder = ctk.CTkLabel(self.content_area, text=title, font=("Arial", 24, "bold"))
+        placeholder.pack(expand=True)
+        
     def show_empleados_view(self):
-        """Muestra la vista de gestión de empleados"""
+        """Vista de empleados"""
         self.clear_content_area()
-        
-        # Importar la clase CrudEmpleados desde su propio archivo
-        from views.crud_employees import CrudEmpleados
-        
-        # Crear y mostrar el CRUD de empleados
-        crud_empleados = CrudEmpleados(self.content_area, self.username, self.rol)
-        crud_empleados.pack(fill="both", expand=True, padx=10, pady=10)
-        
-    def show_inventario_view(self):
-        """Muestra la vista de inventario"""
+        try:
+            from views.crud_employees import CrudEmpleados
+            crud = CrudEmpleados(self.content_area, self.username, self.rol)
+            crud.pack(fill="both", expand=True, padx=10, pady=10)
+        except ImportError:
+            self.create_view_placeholder("Gestión de Empleados")
+            
+    def show_contratos_view(self):
+        """Vista de contratos"""
         self.clear_content_area()
+        try:
+            from views.crud_contracts import CrudContratos
+            crud = CrudContratos(self.content_area, self.username, self.rol)
+            crud.pack(fill="both", expand=True, padx=10, pady=10)
+        except ImportError:
+            self.create_view_placeholder("Gestión de contratos")
         
-        # Cuando tengas la vista de inventario, importarla así:
-        # from views.crud_inventario import CrudInventario
-        # crud_inventario = CrudInventario(self.content_area, self.username, self.rol)
-        # crud_inventario.pack(fill="both", expand=True, padx=10, pady=10)
-        
-        # Por ahora, placeholder
-        placeholder = ctk.CTkLabel(self.content_area, text="Gestión de Inventario",
-                                  font=("Arial", 24, "bold"))
-        placeholder.pack(expand=True)
-        
-    def show_ventas_view(self):
-        """Muestra la vista de ventas"""
+    def show_afiliaciones_view(self):
         self.clear_content_area()
-        
-        # Placeholder para ventas
-        placeholder = ctk.CTkLabel(self.content_area, text="Gestión de Ventas",
-                                  font=("Arial", 24, "bold"))
-        placeholder.pack(expand=True)
+        try:
+            from views.crud_afiliations import CrudAfiliaciones
+            crud = CrudAfiliaciones(self.content_area, self.username, self.rol)
+            crud.pack(fill="both", expand=True, padx=10, pady=10)
+        except ImportError:
+            self.create_view_placeholder("Gestión de afiliaciones")
         
     def show_reportes_view(self):
-        """Muestra la vista de reportes"""
         self.clear_content_area()
+        self.create_view_placeholder("Reportes y Estadísticas")
         
-        # Placeholder para reportes
-        placeholder = ctk.CTkLabel(self.content_area, text="Reportes y Estadísticas",
-                                  font=("Arial", 24, "bold"))
-        placeholder.pack(expand=True)
+    def show_usuarios_view(self):
+        self.clear_content_area()
+        try:
+            from views.crud_users import CrudUsuarios
+            crud = CrudUsuarios(self.content_area, self.username, self.rol)
+            crud.pack(fill="both", expand=True, padx=10, pady=10)
+        except ImportError:
+            self.create_view_placeholder("Gestion de usuarios y roles")
         
     def show_default_view(self):
-        """Muestra la vista por defecto"""
+        """Vista por defecto con diseño geométrico"""
         self.clear_content_area()
         
-        # Crear un frame para centrar el contenido
-        welcome_frame = ctk.CTkFrame(self.content_area, fg_color="transparent")
-        welcome_frame.pack(expand=True, fill="both")
+        canvas = Canvas(self.content_area, bg="#F5F5F5", highlightthickness=0)
+        canvas.pack(fill="both", expand=True)
         
-        # Etiqueta de bienvenida
-        welcome_label = ctk.CTkLabel(welcome_frame, 
-                                    text=f"Bienvenido, {self.username}",
-                                    font=("Arial", 28, "bold"))
-        welcome_label.pack(expand=True)
+        # Frame para contenido
+        welcome_frame = ctk.CTkFrame(canvas, fg_color="transparent")
+        welcome_window = canvas.create_window(0, 0, window=welcome_frame, anchor="nw")
         
-        # Información adicional
-        info_label = ctk.CTkLabel(welcome_frame, 
-                                 text=f"Rol: {self.rol}",
-                                 font=("Arial", 16))
-        info_label.pack(pady=(0, 10))
+        # Definir polígonos para el fondo
+        polygons = [
+            ([860, 0, 990, 0, 1320, 330, 1255, 395], "#D2D2D2"),
+            ([1079, 122, 1140, 60, 1360, 280, 1360, 402], "#888888"),
+            ([1240, 0, 1360, 0, 1360, 120, 1360, 120], "#D2D2D2"),
+            ([1060, 0, 1210, 0, 1340, 130, 1265, 205], "#D12B1B"),
+            ([930, 0, 935, 0, 1195, 259, 1190, 260], "#FCFCFC"),
+            ([1130, 0, 1135, 0, 1260, 125, 1260, 130], "#FCFCFC"),
+            ([355, 640, 505, 640, 105, 241, 30, 315], "#D2D2D2"),
+            ([0, 240, 0, 370, 150, 520, 215, 455], "#888888"),
+            ([300, 640, 160, 640, 10, 490, 81, 420], "#D12B1B"),
+            ([225, 640, 230, 640, 70, 480, 68, 483], "#FCFCFC"),
+            ([425, 640, 430, 640, 180, 390, 178, 395], "#FCFCFC")
+        ]
         
-        # Instrucciones
-        instrucciones = ctk.CTkLabel(welcome_frame, 
-                                   text="Selecciona una opción del menú lateral para comenzar",
-                                   font=("Arial", 14),
-                                   text_color="gray")
-        instrucciones.pack(pady=10)
+        def update_canvas(event=None):
+            canvas.delete("all")
+            width, height = canvas.winfo_width(), canvas.winfo_height()
+            
+            # Dibujar polígonos
+            for points, color in polygons:
+                canvas.create_polygon(points, fill=color, outline="")
+                
+            # Centrar contenido
+            canvas.coords(welcome_window, width // 2 - 150, height // 2 - 80)
+            
+        canvas.bind("<Configure>", update_canvas)
         
+        # Contenido de bienvenida
+        welcome_content = [
+            (f"Bienvenido, {self.username}", ("Arial", 28, "bold")),
+            (f"Rol: {self.rol}", ("Arial", 16)),
+            ("Pasa el cursor sobre el menú lateral para expandir las opciones", ("Arial", 14))
+        ]
+        
+        for i, (text, font) in enumerate(welcome_content):
+            label = ctk.CTkLabel(welcome_frame, text=text, font=font)
+            if i == 2:  # Última etiqueta
+                label.configure(text_color="gray")
+            label.pack(expand=True if i == 0 else False, pady=(0, 10) if i == 1 else 10)
+            
     def cerrar_sesion(self):
-        """Cierra la sesión actual"""
+        """Cerrar sesión con confirmación"""
         if messagebox.askyesno("Confirmar", "¿Estás seguro de que deseas cerrar sesión?"):
             self.destroy()
-            # Aquí puedes agregar lógica para volver a la pantalla de login
-            # from views.login import LoginView
-            # LoginView().mainloop()
 
-
-# Función para inicializar el dashboard
 def inicializar_dashboard(username, rol):
-    """Inicializa el dashboard con el usuario y rol especificados"""
+    """Inicializar dashboard"""
     dashboard = Dashboard(username, rol)
     dashboard.mainloop()
 
-
-# Ejemplo de uso
 if __name__ == "__main__":
-    # Reemplaza con los valores reales del usuario logueado
     inicializar_dashboard("usuario_ejemplo", "administrador")

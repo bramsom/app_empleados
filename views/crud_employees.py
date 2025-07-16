@@ -11,7 +11,7 @@ class CrudEmpleados(ctk.CTkFrame):
         self.controller = employee_controller
 
         # Configuración del contenedor principal
-        self.configure(fg_color="transparent")
+        self.configure(fg_color="#F5F5F5")
         
         # Crear el layout principal
         self.create_layout()
@@ -24,10 +24,10 @@ class CrudEmpleados(ctk.CTkFrame):
 
         # Frame principal que contendrá todo
         main_frame = ctk.CTkFrame(self)
-        main_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        main_frame.pack(fill="both", expand=True, padx=60, pady=10)
 
         # Frame para la lista de empleados (parte superior)
-        list_frame = ctk.CTkFrame(main_frame)
+        list_frame = ctk.CTkFrame(main_frame,fg_color="#F5F5F5")
         list_frame.pack(fill="x", padx=10, pady=10)
         
         ctk.CTkLabel(list_frame, text="Seleccionar Empleado:", 
@@ -39,7 +39,7 @@ class CrudEmpleados(ctk.CTkFrame):
         self.lista.pack(pady=5)
 
         # Frame scrollable para los campos de entrada
-        self.scroll_frame = ctk.CTkScrollableFrame(main_frame, width=580, height=400)
+        self.scroll_frame = ctk.CTkScrollableFrame(main_frame, width=580, height=400, fg_color="#F5F5F5")
         self.scroll_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
         # Crear campos de entrada
@@ -71,7 +71,7 @@ class CrudEmpleados(ctk.CTkFrame):
         self.entries = {}
         for key, label in campos:
             # Frame para cada campo
-            field_frame = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
+            field_frame = ctk.CTkFrame(self.scroll_frame, fg_color="#F5F5F5")
             field_frame.pack(fill="x", pady=5)
             
             # Etiqueta

@@ -9,12 +9,12 @@ from controllers.affiliation_controller import (
 )
 from controllers.employee_controller import listar_empleados
 
-class CrudAfiliaciones(ctk.CTk):
-    def __init__(self, username, rol):
-        super().__init__()
-        self.title("CRUD Afiliaciones")
-        self.geometry("700x650")
-        self.selected_id = None
+class CrudAfiliaciones(ctk.CTkFrame):
+    def __init__(self, parent, username, rol):
+        super().__init__(parent)
+        self.username = username
+        self.rol = rol
+        self.configure(fg_color="transparent")
 
         ctk.CTkButton(self, text="Volver al menú principal", command=lambda: self.volver_menu(username, rol)).pack(pady=20)
 
@@ -143,8 +143,8 @@ class CrudAfiliaciones(ctk.CTk):
                 return k
         return ""
 
-    def volver_menu(self, username, rol):
-        self.destroy()
-        from views.main_menu import MainMenu
-        main_menu = MainMenu(username, rol)
-        main_menu.mainloop()
+    #def volver_menu(self, username, rol):
+        #self.destroy()
+        #from views.main_menu import MainMenu
+        #main_menu = MainMenu(username, rol)
+        #main_menu.mainloop()

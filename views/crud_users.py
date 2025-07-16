@@ -2,12 +2,14 @@ import customtkinter as ctk
 from tkinter import messagebox
 from controllers.user_controller import UserController
 
-class CrudUsuarios(ctk.CTk):
-    def __init__(self, username, rol):
-        super().__init__()
+class CrudUsuarios(ctk.CTkFrame):
+    def __init__(self,parent, username, rol):
+        super().__init__(parent)
         self.user_ctrl = UserController()
-        self.title("Usuarios")
-        self.geometry("500x500")
+        self.username = username
+        self.rol = rol
+        self.configure(fg_color="transparent")
+
 
         ctk.CTkButton(self, text="Volver al menú principal", command=lambda: self.volver_menu(username, rol)).pack(pady=20)
 
@@ -52,8 +54,8 @@ class CrudUsuarios(ctk.CTk):
         self.user_ctrl.cambiar_password(self.seleccionado, nueva)
         messagebox.showinfo("Éxito", "Contraseña actualizada")
 
-    def volver_menu(self, username, rol):
-        self.destroy()  # Cierra esta ventana
-        from views.main_menu import MainMenu
-        main_menu = MainMenu(username, rol)
-        main_menu.mainloop()
+    #def volver_menu(self, username, rol):
+        #self.destroy()  # Cierra esta ventana
+        #from views.main_menu import MainMenu
+        #main_menu = MainMenu(username, rol)
+        #main_menu.mainloop()
