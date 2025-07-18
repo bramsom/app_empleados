@@ -19,11 +19,11 @@ class CrudEmpleados(ctk.CTkFrame):
     def create_layout(self):
         # Título
         title_label = ctk.CTkLabel(self, text="Gestión de Empleados", 
-                                  font=("Arial", 24, "bold"))
+                                  font=("Georgia", 24, "bold"))
         title_label.pack(pady=(0, 20))
 
         # Frame principal que contendrá todo
-        main_frame = ctk.CTkFrame(self)
+        main_frame = ctk.CTkFrame(self, fg_color="#F5F5F5")
         main_frame.pack(fill="both", expand=True, padx=60, pady=10)
 
         # Frame para la lista de empleados (parte superior)
@@ -31,7 +31,7 @@ class CrudEmpleados(ctk.CTkFrame):
         list_frame.pack(fill="x", padx=10, pady=10)
         
         ctk.CTkLabel(list_frame, text="Seleccionar Empleado:", 
-                    font=("Arial", 14, "bold")).pack(pady=5)
+                    font=("Georgia", 14, "bold")).pack(pady=5)
         
         self.lista = ctk.CTkOptionMenu(list_frame, values=[], 
                                       command=self.cargar_empleado,
@@ -76,7 +76,7 @@ class CrudEmpleados(ctk.CTkFrame):
             
             # Etiqueta
             label_widget = ctk.CTkLabel(field_frame, text=label, 
-                                       font=("Arial", 12, "bold"),
+                                       font=("Georgia", 12, "bold"),
                                        width=150)
             label_widget.pack(side="left", padx=(0, 10))
             
