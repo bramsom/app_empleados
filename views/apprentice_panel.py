@@ -15,6 +15,7 @@ class Dashboard(ctk.CTk):
         # Configuración de vistas disponibles
         self.views = {
             "empleados": ("views.crud_employees", "CrudEmpleados", "Gestión de Empleados"),
+            "empleados_buscar": ("views.search_employees", "BuscarEmpleado", "Búsqueda de Empleados"),
             "contratos": ("views.crud_contracts", "CrudContratos", "Gestión de contratos"),
             "afiliaciones": ("views.crud_afiliations", "CrudAfiliaciones", "Gestión de afiliaciones"),
             "usuarios": ("views.crud_users", "CrudUsuarios", "Gestion de usuarios y roles")
@@ -73,7 +74,7 @@ class Dashboard(ctk.CTk):
             ("home.png", "Home", self.show_default_view, False),
             ("emplooye.png", "Empleados", None, False, {
                 "Registrar Empleado": lambda: self.show_view("empleados", "registrar"),
-                "Buscar Empleado": lambda: self.show_view("empleados", "buscar")
+                "Buscar Empleado": lambda: self.show_view("empleados_buscar")
             }),
             ("contract.png", "Contratos", None, False, {
                 "Registrar Contrato": lambda: self.show_view("contratos", "registrar"),
@@ -373,7 +374,7 @@ class Dashboard(ctk.CTk):
                     crud = crud_class(self.content_area, self.username, self.rol)
             else:
                 crud = crud_class(self.content_area, self.username, self.rol)
-            crud.pack(fill="both", expand=True, padx=10, pady=10)
+            crud.pack(fill="both", expand=True, padx=0, pady=0)
         except ImportError:
             self.create_view_placeholder(placeholder_text)
         

@@ -4,6 +4,12 @@ from PIL import Image
 from tkinter import messagebox
 from bd.users import verificar_credenciales
 from views.apprentice_panel import Dashboard # <-- Cambié el import al dashboard
+import os
+
+
+MODO_DESARROLLO = os.environ.get("DEV_MODE") == "1"
+
+
 
 class LoginApp(ctk.CTk):
     def __init__(self):
@@ -11,6 +17,12 @@ class LoginApp(ctk.CTk):
         self.geometry("600x500")
         self.resizable(False, False)
         self.title("Inicio de sesión")
+        # login.py
+        MODO_DESARROLLO = True  # ⚠️ Cambia a False al finalizar desarrollo
+
+        if MODO_DESARROLLO:
+            self.after(100, lambda: self.abrir_dashboard("admin1", "administrador"))
+            return
 
         # === Frame Izquierdo con decoraciones ===
         frame_izquierdo = ctk.CTkFrame(self, width=300, corner_radius=0)
