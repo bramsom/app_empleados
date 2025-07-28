@@ -16,7 +16,7 @@ def crear_empleado(empleado):
 def obtener_empleados():
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, last_name, document_number, email FROM employees")
+    cursor.execute("SELECT * FROM employees")
     datos = cursor.fetchall()
     conn.close()
     return datos

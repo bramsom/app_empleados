@@ -21,6 +21,10 @@ def consultar_afiliacion(afiliacion_id):
         return Afiliacion(*datos)
     return None
 
+def consultar_afiliaciones_por_empleado(employee_id):
+    resultados = obtener_afiliaciones_por_empleado(employee_id)
+    return [Afiliacion(*r) for r in resultados]
+
 def modificar_afiliacion(afiliacion_id, datos_tuple):
     afiliacion = Afiliacion(     
         employee_id=datos_tuple[0],

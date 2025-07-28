@@ -32,6 +32,20 @@ def obtener_contrato_por_id(contrato_id):
     conn.close()
     return contrato
 
+def obtener_contratos_por_empleado(employee_id):
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("""
+        SELECT id, employee_id, type_contract, start_date, end_date, value_hour, number_hour,monthly_payment,transport,state,contractor
+        FROM contracts
+        WHERE employee_id = ?
+    """, (employee_id,))
+    
+    resultados = cursor.fetchall()
+    conexion.close()
+    return resultados
+
 def actualizar_contrato(contrato_id, contrato):
     conn = conectar()
     try:

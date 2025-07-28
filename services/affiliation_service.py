@@ -38,8 +38,6 @@ def obtener_afiliaciones_con_nombre_empleado():
     conn.close()
     return resultados
 
-
-
 def obtener_afiliacion_por_id(afiliacion_id):
     conn = conectar()
     cursor = conn.cursor()
@@ -47,6 +45,20 @@ def obtener_afiliacion_por_id(afiliacion_id):
     afiliacion = cursor.fetchone()
     conn.close()
     return afiliacion
+
+def obtener_afiliaciones_por_empleado(employee_id):
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute("""
+        SELECT id, employee_id, affiliation_type, name, bank, account_number, account_type
+        FROM affiliations
+        WHERE employee_id = ?
+    """, (employee_id,))
+    
+    resultados = cursor.fetchall()
+    conexion.close()
+    return resultados
 
 def actualizar_afiliacion(afiliacion_id, afiliacion):
     conn = conectar()

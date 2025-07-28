@@ -17,6 +17,10 @@ def registrar_contrato(datos_tuple):
 def listar_contratos():
     return obtener_contratos()
 
+def consultar_contratos_por_empleado(employee_id):
+    resultados = obtener_contratos_por_empleado(employee_id)
+    return [Contrato(*r) for r in resultados]
+
 def consultar_contrato(contrato_id):
     datos = obtener_contrato_por_id(contrato_id)
     if datos:
