@@ -2,14 +2,11 @@ import sqlite3
 from bd.connection import conectar
 
 def crear_afiliacion(afiliacion):
-    print("Afiliación a insertar:", afiliacion.to_tuple())
-    if afiliacion.affiliation_type not in ['EPS', 'ARL', 'AFP', 'BANCO']:
-        raise ValueError("Tipo de afiliación inválido")
     conn = conectar()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO affiliations (employee_id, affiliation_type, name, bank, account_number, account_type)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO affiliations (employee_id, eps, arl, afp, bank, account_number, account_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     """, afiliacion.to_tuple())
     conn.commit()
     conn.close()
@@ -18,7 +15,7 @@ def obtener_afiliaciones():
     conn = conectar()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT id, employee_id, affiliation_type, name, bank, account_number, account_type
+        SELECT id, employee_id, eps, arl, afp , bank, account_number, account_type
         FROM affiliations
     """)
     afiliaciones = cursor.fetchall()
@@ -29,14 +26,20 @@ def obtener_afiliaciones_con_nombre_empleado():
     conn = conectar()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT affiliations.id, employees.name || ' ' || employees.last_name AS empleado,
-            affiliation_type, affiliations.name
+        SELECT affiliations.id,
+               employees.name || ' ' || employees.last_name AS empleado,
+               affiliations.eps,
+               affiliations.arl,
+               affiliations.afp,
+               affiliations.bank,
+               affiliations.account_number,
+               affiliations.account_type
         FROM affiliations
         JOIN employees ON employees.id = affiliations.employee_id
     """)
     resultados = cursor.fetchall()
     conn.close()
-    return resultados
+    return resultados 
 
 def obtener_afiliacion_por_id(afiliacion_id):
     conn = conectar()
@@ -51,7 +54,7 @@ def obtener_afiliaciones_por_empleado(employee_id):
     cursor = conexion.cursor()
 
     cursor.execute("""
-        SELECT id, employee_id, affiliation_type, name, bank, account_number, account_type
+        SELECT id, employee_id, eps, arl, afp, bank, account_number, account_type
         FROM affiliations
         WHERE employee_id = ?
     """, (employee_id,))
@@ -65,7 +68,7 @@ def actualizar_afiliacion(afiliacion_id, afiliacion):
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE affiliations SET
-        employee_id=?, affiliation_type=?, name=?, bank=?, account_number=?, account_type=?
+        employee_id=?, eps=?, arl=?, afp=?, bank=?, account_number=?, account_type=?
         WHERE id=?
     """, afiliacion.to_tuple()+(afiliacion_id,))
     conn.commit()

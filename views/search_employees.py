@@ -17,9 +17,18 @@ class BuscarEmpleado(ctk.CTkFrame):
         self.icon_ver = ctk.CTkImage(light_image=Image.open("images/read.png"), size=(20, 20))
         self.icon_editar = ctk.CTkImage(light_image=Image.open("images/edit.png"), size=(20, 20))
         self.icon_eliminar = ctk.CTkImage(light_image=Image.open("images/delete.png"), size=(20, 20))
+        self.icon_back = ctk.CTkImage(Image.open("images/arrow.png"), size=(30, 30))
 
         # Configuración del contenedor principal
         self.configure(fg_color="#F5F5F5")
+
+        self.btn_volver = ctk.CTkButton(
+            self,text="",image=self.icon_back,width=40,
+            height=40,fg_color="transparent",hover_color="#D3D3D3",command=self.volver_a_lista  # o tu función personalizada
+        )
+      
+        self.btn_volver.place(x=1300, y=10)  # Puedes ajustar la posición
+        self.btn_volver.lower()
 
         canvas = Canvas(self, bg="#F5F5F5", highlightthickness=0)
         canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
@@ -140,47 +149,62 @@ class BuscarEmpleado(ctk.CTkFrame):
         self.empleado_actual = empleado
         self.scroll_frame.pack_forget()
         self.barra_busqueda.pack_forget()
+        self.card.place_forget()
+        self.btn_volver.lift()
 
         # Frame general
-        self.frame_detalle = ctk.CTkFrame(self, fg_color="transparent")
-        self.frame_detalle.place(relx=0.52, rely=0.52, anchor="center", relwidth=0.90, relheight=0.90)
-        self.frame_detalle.lift()
+        self.card2 = ctk.CTkFrame(self, fg_color="transparent", corner_radius=10)
+        self.card2.place(relx=0.52, rely=0.5, anchor="center", relwidth=0.90, relheight=0.80)
+        self.frame_detalle = ctk.CTkScrollableFrame(self.card2, fg_color="transparent")
+        self.frame_detalle.pack(fill="both", expand=True, padx=0, pady=0)
 
         # Contenedor superior con dos columnas
         fila_superior = ctk.CTkFrame(self.frame_detalle, fg_color="transparent")
         fila_superior.pack(fill="x", padx=20, pady=10)
         fila_superior.grid_columnconfigure((0, 1), weight=1)
 
-        # Tarjeta: Información personal
-        card_info = ctk.CTkFrame(fila_superior, fg_color="#F5F5F5", corner_radius=10)
-        card_info.grid(row=0, column=0, sticky="nsew", padx=10)
+        # Configurar título y columnas
+        card_info = ctk.CTkFrame(fila_superior, fg_color="#E6E6E6", corner_radius=10)
+        card_info.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
+        card_info.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
 
-        ctk.CTkLabel(card_info, text="DATOS PERSONALES", font=("Georgia", 14, "bold"), text_color="#06A051").grid(row=0, column=0, columnspan=4, sticky="w", padx=10, pady=5)
+        def crear_campo(label, valor, fila, columna, colspan=1):
+            frame = ctk.CTkFrame(card_info, fg_color="#B0B0B0", corner_radius=6)
+            frame.grid(row=fila, column=columna, columnspan=colspan, padx=5, pady=5, sticky="nsew")
+            ctk.CTkLabel(frame, text=label, font=("Georgia", 11, "bold")).pack(anchor="w", padx=10, pady=(5, 0))
+            ctk.CTkLabel(frame, text=valor or "-", font=("arial", 11), anchor="w", justify="left",
+                 corner_radius=5).pack(anchor="w", padx=10, pady=(0, 5), fill="x")
 
-        datos = [
-            ("Nombre:", f"{empleado.name} {empleado.last_name}"),
-            ("Documento:", empleado.document_type),
-            ("No documento:", empleado.document_number),
-            ("Expedida en:", empleado.document_issuance),
-            ("Fecha nacimiento:", empleado.birthdate),
-            ("No telefono:", empleado.phone_number),
-            ("Direccion de residencia:", empleado.residence_address),
-            ("RUT:", empleado.RUT),
-            ("Correo electronico:", empleado.email),
-            ("Cargo:", empleado.position)
+        ctk.CTkLabel(card_info, text="DATOS PERSONALES", font=("Georgia", 16), text_color="#06A051").grid(
+        row=0, column=0, columnspan=5, sticky="w", padx=10, pady=5
+        )
+
+        # Lista de campos: (Etiqueta, Valor, Fila, Columna, Columnspan)
+        campos = [
+            ("Nombre:", f"{empleado.name} {empleado.last_name}", 1, 0, 2),
+            ("Tipo documento:", empleado.document_type, 1, 2),
+            ("Número documento:", empleado.document_number, 1, 3),
+            ("Expedida en:", empleado.document_issuance, 1, 4),
+
+            ("Fecha nacimiento:", empleado.birthdate, 2, 0),
+            ("No telefono:", empleado.phone_number, 2, 1),
+            ("Dirección residencia:", empleado.residence_address, 2, 2, 2),
+            ("RUT:", empleado.RUT, 2, 4),
+
+            ("Correo electrónico:", empleado.email, 3, 0, 2),
+            ("Cargo:", empleado.position, 3, 2),
         ]
 
-        for idx, (label, value) in enumerate(datos):
-            fila = idx // 2 + 1
-            col = (idx % 2) * 2
-            ctk.CTkLabel(card_info, text=label, font=("Georgia", 11, "bold")).grid(row=fila, column=col, sticky="w", padx=10, pady=5)
-            ctk.CTkLabel(card_info, text=value or "-", fg_color="#D3D3D3", corner_radius=5).grid(row=fila, column=col + 1, sticky="w", padx=5, pady=5)
-
+            # Crear los campos con la función
+        for campo in campos:
+                crear_campo(*campo)
+    
+            
         # Tarjeta: Afiliaciones
-        card_afiliaciones = ctk.CTkFrame(fila_superior, fg_color="#F5F5F5", corner_radius=10)
+        card_afiliaciones = ctk.CTkFrame(fila_superior, fg_color="#E6E6E6", corner_radius=10)
         card_afiliaciones.grid(row=0, column=1, sticky="nsew", padx=10)
 
-        ctk.CTkLabel(card_afiliaciones, text="AFILIACIONES", font=("Georgia", 14, "bold"), text_color="#06A051").grid(row=0, column=0, columnspan=4, sticky="w", padx=10, pady=5)
+        ctk.CTkLabel(card_afiliaciones, text="AFILIACIONES", font=("Georgia", 16,), text_color="#06A051").grid(row=0, column=0, columnspan=4, sticky="w", padx=10, pady=5)
 
         afiliaciones = affiliation_controller.consultar_afiliaciones_por_empleado(empleado.id)
         if afiliaciones:
@@ -188,16 +212,19 @@ class BuscarEmpleado(ctk.CTkFrame):
                 texto = f"{afi.affiliation_type}: {afi.name}"
                 fila = idx // 2 + 1
                 col = (idx % 2) * 2
-                ctk.CTkLabel(card_afiliaciones, text=afi.affiliation_type + ":", font=("Georgia", 11, "bold")).grid(row=fila, column=col, sticky="w", padx=10, pady=5)
-                ctk.CTkLabel(card_afiliaciones, text=afi.name or "-", fg_color="#D3D3D3", corner_radius=5).grid(row=fila, column=col+1, sticky="w", padx=5, pady=5)
+                contenedor = ctk.CTkFrame(card_afiliaciones, fg_color="#B0B0B0", corner_radius=6)
+                contenedor.grid(row=fila, column=col, padx=10, pady=5, sticky="nsew", columnspan=2)
+
+                ctk.CTkLabel(contenedor, text=afi.affiliation_type + ":", font=("Georgia", 11, "bold")).pack(anchor="w", padx=10, pady=(5, 0))
+                ctk.CTkLabel(contenedor, text=afi.name or "-", fg_color="#A0A0A0", corner_radius=5).pack(anchor="w", padx=10, pady=(0, 5), fill="x")
         else:
             ctk.CTkLabel(card_afiliaciones, text="Sin afiliaciones registradas", text_color="gray").grid(row=1, column=0, columnspan=4, padx=10, pady=5)
 
         # Tarjeta: Contratos (una sola fila)
-        card_contratos = ctk.CTkFrame(self.frame_detalle, fg_color="#EFEFEF", corner_radius=10)
+        card_contratos = ctk.CTkFrame(self.frame_detalle, fg_color="#E6E6E6", corner_radius=10)
         card_contratos.pack(fill="x", padx=20, pady=10)
 
-        ctk.CTkLabel(card_contratos, text="CONTRATOS", font=("Georgia", 14, "bold"), text_color="#06A051").grid(row=0, column=0, columnspan=10, sticky="w", padx=10, pady=5)
+        ctk.CTkLabel(card_contratos, text="CONTRATOS", font=("Georgia", 16), text_color="#06A051").grid(row=0, column=0, columnspan=10, sticky="w", padx=10, pady=5)
 
         contratos = contract_controller.consultar_contratos_por_empleado(empleado.id)
         if contratos:
@@ -213,17 +240,20 @@ class BuscarEmpleado(ctk.CTkFrame):
                     ("Persona que lo contrató:", contrato.contractor or "-")
                 ]
                 for col_idx, (etq, val) in enumerate(columnas):
-                    ctk.CTkLabel(card_contratos, text=etq, font=("Georgia", 11, "bold")).grid(row=fila, column=col_idx*2, sticky="w", padx=10, pady=5)
-                    ctk.CTkLabel(card_contratos, text=val, fg_color="#D3D3D3", corner_radius=5).grid(row=fila, column=col_idx*2+1, sticky="w", padx=5, pady=5)
+                    contenedor = ctk.CTkFrame(card_contratos, fg_color="#B0B0B0", corner_radius=6)
+                    contenedor.grid(row=fila, column=col_idx, padx=10, pady=5, sticky="nsew")
+
+                ctk.CTkLabel(contenedor, text=etq, font=("Georgia", 11, "bold")).pack(anchor="w", padx=10, pady=(5, 0))
+                ctk.CTkLabel(contenedor, text=val, fg_color="#A0A0A0", corner_radius=5).pack(anchor="w", padx=10, pady=(0, 5), fill="x")
         else:
             ctk.CTkLabel(card_contratos, text="Sin contratos registrados", text_color="gray").grid(row=1, column=0, padx=10, pady=5)
-
-        # Botón volver
-        btn_volver = ctk.CTkButton(self.frame_detalle, text="Ver lista completa",
-                           command=self.volver_a_lista, fg_color="#888888", hover_color="#666666")
-        btn_volver.pack(pady=10)
+        
 
     def volver_a_lista(self):
-        self.frame_detalle.destroy()
+        self.btn_volver.lower()
+        self.card2.destroy()
+        
+        self.card.place(relx=0.52, rely=0.58, anchor="center", relwidth=0.90, relheight=0.80)
+        
         self.scroll_frame.pack(fill="both", expand=True, padx=20, pady=10)
         self.barra_busqueda.pack(pady=10, padx=(100, 0), anchor="w")

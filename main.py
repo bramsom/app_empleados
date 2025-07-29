@@ -3,14 +3,14 @@
 # from views.login import LoginApp
 # from views.create_user import CrearUsuario
 # from views.data_management import GestionUsuarios
-# from bd.setup import crear_tablas
+#from bd.setup import crear_tablas
 # from views.crud_employees import CrudEmpleados
 # from views.crud_contracts import CrudContratos
 # from views.crud_afiliations import CrudAfiliaciones
 from views.login import LoginApp
 
-# if __name__ == "__main__":
-#     crear_tablas()
+#if __name__ == "__main__":
+    # crear_tablas()
 
 # from bd.users import crear_usuario, obtener_usuarios, verificar_credenciales
 

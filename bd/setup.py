@@ -1,5 +1,5 @@
 import sqlite3
-from .connection import conectar
+from bd.connection import conectar
 
 def crear_tablas():
     print("Tablas creadas")
@@ -52,18 +52,23 @@ def crear_tablas():
         )
     """)
 
+    # (Primero eliminar la versión anterior si existe)
+    cursor.execute("DROP TABLE IF EXISTS affiliations")
+
     # Tabla de afiliaciones
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS affiliations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             employee_id INTEGER NOT NULL,
-            affiliation_type TEXT NOT NULL CHECK (
-                affiliation_type IN ('EPS','ARL','AFP','BANCO')
-            ),
-            name TEXT NOT NULL,
-            bank TEXT,
-            account_number TEXT,
-            account_type TEXT,
+            
+            eps TEXT ,
+            arl TEXT ,
+            afp TEXT ,
+    
+            bank TEXT ,
+            account_number ,
+            account_type ,
+            
             FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
         )
     """)

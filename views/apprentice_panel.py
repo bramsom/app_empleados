@@ -21,9 +21,11 @@ class Dashboard(ctk.CTk):
             "usuarios": ("views.crud_users", "CrudUsuarios", "Gestion de usuarios y roles")
         }
         
-        # Estado y widgets de submenús simplificado
+        # Estados de submenús
         self.submenu_states = {}
         self.submenu_widgets = {}
+        self.menu_widgets = {}
+        self.active_section = None
         
         self.setup_window()
         self.create_layout()
@@ -35,18 +37,18 @@ class Dashboard(ctk.CTk):
         self.title("Dashboard - Sistema de Gestión")
         
     def create_layout(self):
-        """Crear layout principal con header, sidebar y contenido"""
+        """Crear layout principal"""
         # Header
         self.header = ctk.CTkFrame(self, height=60, fg_color="#A9A9A9")
         self.header.pack(side="top", fill="x")
         self.header.pack_propagate(False)
-            
+        
         # Contenedor principal
         self.main_container = ctk.CTkFrame(self)
         self.main_container.pack(side="top", fill="both", expand=True)
         
         self.init_header()
-    
+        
         # Área de contenido
         self.content_area = ctk.CTkFrame(self.main_container, fg_color="#F5F5F5")
         self.content_area.pack(fill="both", expand=True, padx=2, pady=2)
@@ -65,87 +67,78 @@ class Dashboard(ctk.CTk):
         self.setup_menu_events()
         
     def create_menu(self):
-        """Crear menú con íconos desde carpeta 'images'"""
+        """Crear menú con configuración simplificada"""
         ruta_img = os.path.join(os.getcwd(), "images")
         
-        # Configuración simplificada del menú
-        menu_config = [
+        # Configuración del menú
+        menu_items = [
             ("logo.png", "MENÚ", None, True),
-            ("home.png", "Home", self.show_default_view, False),
-            ("emplooye.png", "Empleados", None, False, {
+            ("home.png", "Home", self.show_default_view),
+            ("emplooye.png", "Empleados", {
                 "Registrar Empleado": lambda: self.show_view("empleados", "registrar"),
                 "Buscar Empleado": lambda: self.show_view("empleados_buscar")
             }),
-            ("contract.png", "Contratos", None, False, {
+            ("contract.png", "Contratos", {
                 "Registrar Contrato": lambda: self.show_view("contratos", "registrar"),
                 "Buscar Contrato": lambda: self.show_view("contratos", "buscar")
             }),
-            ("affiliation.png", "Afiliaciones", None, False, {
+            ("affiliation.png", "Afiliaciones", {
                 "Registrar Afiliación": lambda: self.show_view("afiliaciones", "registrar"),
                 "Buscar Afiliación": lambda: self.show_view("afiliaciones", "buscar")
             }),
-            ("export.png", "Reportes", lambda: self.create_view_placeholder("Reportes y Estadísticas"), False),
-            ("config.png", "Usuarios", None, False, {
+            ("export.png", "Reportes", lambda: self.create_view_placeholder("Reportes y Estadísticas")),
+            ("config.png", "Usuarios", {
                 "Registrar Usuario": lambda: self.show_view("usuarios", "registrar"),
                 "Buscar Usuario": lambda: self.show_view("usuarios", "buscar")
             })
         ]
         
-        self.menu_widgets = {}
-        
-        for item in menu_config:
-            icon_file, text, command, is_title = item[:4]
-            submenu_items = item[4] if len(item) > 4 else None
+        for item in menu_items:
+            icon_file, text, action = item[:3]
+            is_title = len(item) > 3 and item[3]
             
             image_path = os.path.join(ruta_img, icon_file)
-            img = ctk.CTkImage(dark_image=Image.open(image_path), size=(24, 24))
+            img = ctk.CTkImage(dark_image=Image.open(image_path), size=(27, 27))
 
             if is_title:
-                self._create_menu_title(img, text)
+                continue
+            elif isinstance(action, dict):
+                self._create_menu_with_submenu(img, text, action)
             else:
-                button = self._create_menu_button(img, text, command, submenu_items)
-                if submenu_items:
-                    self._create_submenu(text, submenu_items, button)
-                
-    def _create_menu_title(self, img, text):
-        """Crear título del menú con logo"""
-        self.logo_container = ctk.CTkFrame(self.menu_inner_frame, fg_color="transparent")
-        self.logo_container.pack(pady=(20, 20), fill="x")
-        
-        self.menu_widgets['icon'] = ctk.CTkLabel(self.logo_container, image=img, text="")
-        self.menu_widgets['icon'].image = img
-        self.menu_widgets['icon'].pack(side="left", padx=(15, 10))
-        
-        self.menu_widgets['title'] = ctk.CTkLabel(self.logo_container, text=text, font=("Georgia", 16))
-        self.menu_widgets['title'].pack_forget()
-        
-    def _create_menu_button(self, img, text, command, has_submenu):
-        """Crear botón del menú"""
-        if has_submenu:
-            command = lambda t=text: self.toggle_submenu(t)
+                self._create_simple_menu_button(img, text, action)
             
+        
+    def _create_simple_menu_button(self, img, text, command):
+        """Crear botón simple del menú"""
         btn = ctk.CTkButton(
             self.menu_inner_frame, text="", image=img, compound="left", command=command,
-            width=40, height=40, fg_color="#A9A9A9", hover_color="#888888",
-            font=("Georgia", 14), anchor="w"
+            width=60, height=60, fg_color="#A9A9A9", hover_color="#888888",
+            font=("Georgia", 14), anchor="center"
         )
         btn.image = img
-        btn.pack(pady=3, padx=3)
+        btn.pack(fill="x")
         self.menu_widgets[text.lower()] = btn
-        return btn
         
-    def _create_submenu(self, parent_text, submenu_items, parent_button):
-        """Crear submenú para opciones específicas"""
-        submenu_key = parent_text.lower()
+    def _create_menu_with_submenu(self, img, text, submenu_items):
+        """Crear botón con submenú"""
+        # Botón principal
+        btn = ctk.CTkButton(
+            self.menu_inner_frame, text="", image=img, compound="left",
+            command=lambda: self.toggle_submenu(text.lower()),
+            width=60, height=60, fg_color="#A9A9A9", hover_color="#888888",
+            font=("Georgia", 14), anchor="center"
+        )
+        btn.image = img
+        btn.pack(fill="x")
+        self.menu_widgets[text.lower()] = btn
         
-        # Inicializar estado
+        # Crear submenú
+        submenu_key = text.lower()
         self.submenu_states[submenu_key] = False
         
-        # Crear frame del submenú
         submenu_frame = ctk.CTkFrame(self.menu_inner_frame, fg_color="transparent")
         submenu_frame.pack_forget()
         
-        # Crear botones del submenú
         submenu_buttons = []
         for option_text, option_command in submenu_items.items():
             sub_btn = ctk.CTkButton(
@@ -153,20 +146,17 @@ class Dashboard(ctk.CTk):
                 fg_color="#808080", hover_color="#606060",
                 font=("Georgia", 11), anchor="w", command=option_command
             )
-            sub_btn.pack(pady=2, padx=(20, 3))
+            sub_btn.pack(fill="x")
             submenu_buttons.append((sub_btn, option_text))
         
-        # Guardar widgets del submenú
         self.submenu_widgets[submenu_key] = {
             "frame": submenu_frame,
             "buttons": submenu_buttons,
-            "parent_button": parent_button
+            "parent_button": btn
         }
                 
-    def toggle_submenu(self, section):
+    def toggle_submenu(self, section_key):
         """Alternar visibilidad de submenú"""
-        section_key = section.lower()
-        
         if section_key not in self.submenu_widgets:
             return
 
@@ -181,32 +171,25 @@ class Dashboard(ctk.CTk):
         submenu_data = self.submenu_widgets[section_key]
         
         if self.submenu_states[section_key]:
-            # Mostrar submenú después del botón padre
             submenu_data["frame"].pack(after=submenu_data["parent_button"], fill="x", padx=10)
             self._update_submenu_visibility(section_key)
         else:
             submenu_data["frame"].pack_forget()
                 
     def setup_menu_events(self):
-        """Configurar eventos del menú"""
-        # Widgets principales para bind
-        main_widgets = [self.sidebar, self.logo_container, self.menu_widgets['icon']]
-        main_widgets.extend([widget for key, widget in self.menu_widgets.items() 
-                           if key not in ['title', 'icon']])
+        """Configurar eventos del menú de forma simplificada"""
+        # Obtener todos los widgets relevantes
+        widgets_to_bind = [self.sidebar] + list(self.menu_widgets.values())
         
-        # Bind eventos principales
-        for widget in main_widgets:
+        # Agregar widgets de submenús
+        for submenu_data in self.submenu_widgets.values():
+            widgets_to_bind.append(submenu_data["frame"])
+            widgets_to_bind.extend([btn for btn, _ in submenu_data["buttons"]])
+        
+        # Aplicar eventos a todos los widgets
+        for widget in widgets_to_bind:
             widget.bind("<Enter>", lambda e: self.toggle_menu(True))
             widget.bind("<Leave>", lambda e: self.toggle_menu(False))
-            
-        # Bind eventos de submenús
-        for submenu_data in self.submenu_widgets.values():
-            submenu_data["frame"].bind("<Enter>", lambda e: self.toggle_menu(True))
-            submenu_data["frame"].bind("<Leave>", lambda e: self.toggle_menu(False))
-            
-            for btn, text in submenu_data["buttons"]:
-                btn.bind("<Enter>", lambda e: self.toggle_menu(True))
-                btn.bind("<Leave>", lambda e: self.toggle_menu(False))
             
     def toggle_menu(self, expand):
         """Alternar estado del menú"""
@@ -219,21 +202,16 @@ class Dashboard(ctk.CTk):
         """Expandir menú"""
         self.menu_expanded = True
         self.sidebar.place_configure(width=self.menu_width["expanded"])
-        self.menu_widgets['title'].pack(side="left", padx=(0, 10))
+        if 'title' in self.menu_widgets:
+           self.menu_widgets['title'].pack(side="left", padx=(0, 10))
         
-        # Actualizar botones principales
-        button_texts = {
-            'home': 'Home',
-            'empleados': 'Empleados',
-            'contratos': 'Contratos',
-            'afiliaciones': 'Afiliaciones',
-            'reportes': 'Reportes',
-            'usuarios': 'Usuarios'
-        }
+        # Actualizar textos de botones principales
+        button_texts = {'home': 'Home', 'empleados': 'Empleados', 'contratos': 'Contratos', 
+                       'afiliaciones': 'Afiliaciones', 'reportes': 'Reportes', 'usuarios': 'Usuarios'}
         
         for key, text in button_texts.items():
             if key in self.menu_widgets:
-                self.menu_widgets[key].configure(text=f"  {text}", width=180, anchor="w")
+                self.menu_widgets[key].configure(text=f"  {text}", width=200, anchor="w")
                 
         # Actualizar submenús visibles
         for section_key, is_visible in self.submenu_states.items():
@@ -241,26 +219,32 @@ class Dashboard(ctk.CTk):
                 self._update_submenu_visibility(section_key)
                 
     def _collapse_menu_delayed(self):
-        """Contraer menú con verificación de posición del cursor"""
+        """Contraer menú con verificación"""
         if self._cursor_over_sidebar():
-            return
-        
+             return
+
         self.menu_expanded = False
         self.sidebar.place_configure(width=self.menu_width["collapsed"])
-        self.menu_widgets['title'].pack_forget()
-        
+
+        if 'title' in self.menu_widgets:
+            self.menu_widgets['title'].pack_forget()
+
         # Restaurar botones principales
         for key, widget in self.menu_widgets.items():
-            if key not in ['title', 'icon']:
-                widget.configure(text="", width=40, anchor="center")
-                
-        # Ocultar texto de submenús
-        for submenu_data in self.submenu_widgets.values():
-            for btn, text in submenu_data["buttons"]:
+            widget.configure(text="", width=60, anchor="center")
+
+        # Ocultar texto de submenús y cerrarlos
+        for section_key, submenu_data in self.submenu_widgets.items():
+            # Ocultar frame de submenú si estaba visible
+            submenu_data["frame"].pack_forget()
+            self.submenu_states[section_key] = False  # Marcar como cerrado
+
+            # Ocultar texto de los botones del submenú
+            for btn, _ in submenu_data["buttons"]:
                 btn.configure(text="", width=35)
                 
     def _update_submenu_visibility(self, section_key):
-        """Actualizar visibilidad de opciones del submenú"""
+        """Actualizar visibilidad de submenú"""
         if section_key in self.submenu_widgets:
             submenu_data = self.submenu_widgets[section_key]
             for btn, text in submenu_data["buttons"]:
@@ -270,7 +254,7 @@ class Dashboard(ctk.CTk):
                     btn.configure(text="", width=35)
                 
     def _cursor_over_sidebar(self):
-        """Verificar si el cursor está sobre el sidebar"""
+        """Verificar si cursor está sobre sidebar"""
         try:
             x, y = self.winfo_pointerxy()
             sx, sy = self.sidebar.winfo_rootx(), self.sidebar.winfo_rooty()
@@ -280,31 +264,33 @@ class Dashboard(ctk.CTk):
             return False
             
     def init_header(self):
-        """Crear header con logo institucional e información del usuario"""
+        """Crear header"""
         self._create_institutional_logo()
         
         # Contenedor de usuario
         self.user_container = ctk.CTkFrame(self.header, fg_color="transparent")
         self.user_container.pack(side="right", padx=10)
         
-        # Información del usuario
-        user_info = ctk.CTkLabel(
+        # Info usuario
+        ctk.CTkLabel(
             self.user_container, 
             text=f"Bienvenido {self.username} | Rol: {self.rol}", 
-            font=("Georgia", 14), 
-            text_color="black"
-        )
-        user_info.pack(side="left", padx=(0, 10))
+            font=("Georgia", 14), text_color="black"
+        ).pack(side="left", padx=(0, 50))
         
-        # Botón de usuario expandible
-        self.user_button = ctk.CTkButton(
-            self.user_container, text="▼", width=30, height=30,
-            fg_color="#888888", hover_color="#666666",
-            font=("Georgia", 12, "bold"), command=self.toggle_user_menu
-        )
-        self.user_button.pack(side="right")
+        # Cargar imagen de ícono
+        icon_path = os.path.join(os.getcwd(), "images", "logout.png")  # Cambia el nombre si es logout_icon.png
+        user_img = ctk.CTkImage(dark_image=Image.open(icon_path), size=(24, 24))
 
-        # Botón de cerrar sesión
+        # Botón usuario con imagen
+        self.user_button = ctk.CTkButton(
+        self.user_container, text="", image=user_img, width=36, height=36,
+        fg_color="#A9A9A9", hover_color="#888888", command=self.toggle_user_menu
+        )
+        self.user_button.image = user_img  # para evitar que se recoja el recolector de basura
+        self.user_button.pack(side="right", padx=(50, 30))
+
+        # Botón logout
         self.logout_button = ctk.CTkButton(
             self.main_container, text="Cerrar sesión", width=120, height=40,
             text_color="black", fg_color="#D12B1B", hover_color="#C00013",
@@ -313,7 +299,7 @@ class Dashboard(ctk.CTk):
         self.logout_button.place_forget()
         
     def _create_institutional_logo(self):
-        """Crear logo institucional en el header"""
+        """Crear logo institucional"""
         try:
             logo_path = os.path.join(os.getcwd(), "images", "logo2.png")
             logo_img = ctk.CTkImage(dark_image=Image.open(logo_path), size=(60, 60))
@@ -321,22 +307,19 @@ class Dashboard(ctk.CTk):
             logo_label.image = logo_img
             logo_label.pack(side="left", padx=10)
         except Exception:
-            logo_label = ctk.CTkLabel(
+            ctk.CTkLabel(
                 self.header, text="🏛️ FCCP", 
                 font=("Arial", 16, "bold"), text_color="white"
-            )
-            logo_label.pack(side="left", padx=10)
+            ).pack(side="left", padx=10)
         
     def toggle_user_menu(self):
-        """Alternar botón de cerrar sesión desplegable"""
+        """Alternar menú de usuario"""
         if not self.user_button_expanded:
             self.user_button_expanded = True
-            self.user_button.configure(text="▲")
             self.logout_button.place(x=self.winfo_width() - 120, y=2)
             self.logout_button.lift()
         else:
             self.user_button_expanded = False
-            self.user_button.configure(text="▼")
             self.logout_button.place_forget()
             
     def clear_content_area(self):
@@ -351,14 +334,21 @@ class Dashboard(ctk.CTk):
         placeholder.pack(expand=True)
         
     def show_view(self, view_name, action=None):
-        """Mostrar vista específica usando configuración centralizada"""
+        """Mostrar vista específica"""
         if view_name not in self.views:
             return
             
         self.clear_content_area()
+
+        for key in self.submenu_widgets:
+            if view_name.startswith(key):
+                self.set_active_section(key)
+                break
+            else:
+                self.set_active_section(view_name)
+
         module_name, class_name, placeholder_text = self.views[view_name]
         
-        # Modificar el título según la acción
         if action:
             action_text = "Registro" if action == "registrar" else "Búsqueda"
             placeholder_text = f"{action_text} de {view_name.title()}"
@@ -366,7 +356,6 @@ class Dashboard(ctk.CTk):
         try:
             module = __import__(module_name, fromlist=[class_name])
             crud_class = getattr(module, class_name)
-            # Pasar la acción como parámetro si la clase lo soporta
             if action:
                 try:
                     crud = crud_class(self.content_area, self.username, self.rol, action)
@@ -377,6 +366,17 @@ class Dashboard(ctk.CTk):
             crud.pack(fill="both", expand=True, padx=0, pady=0)
         except ImportError:
             self.create_view_placeholder(placeholder_text)
+
+    def set_active_section(self, section_key):
+        """Marcar botón principal como activo"""
+        self.active_section = section_key
+
+        for key, btn in self.menu_widgets.items():
+            if key not in ['icon', 'title']:
+                if key == section_key:
+                    btn.configure(fg_color="#888888")  # Color más oscuro
+                else:
+                    btn.configure(fg_color="#A9A9A9")  # Color normal
         
     def show_default_view(self):
         """Vista por defecto con diseño geométrico"""
@@ -389,8 +389,7 @@ class Dashboard(ctk.CTk):
         self.title_label = ctk.CTkLabel(
             self.content_area,
             text="Bienvenidos al programa de gestion de\n\npersonal . Fundacion colegio ciudad de\n\nPiendamo(FCCP)",
-            font=("Georgia", 24, "bold"),
-            text_color="#333333"
+            font=("Georgia", 24, "bold"), text_color="#333333"
         )
         self.title_label.place(relx=0.55, rely=0.45, anchor="center")
         
@@ -398,7 +397,7 @@ class Dashboard(ctk.CTk):
         welcome_frame = ctk.CTkFrame(canvas, fg_color="transparent")
         welcome_window = canvas.create_window(0, 0, window=welcome_frame, anchor="nw")
         
-        # Polígonos para el fondo (mantenidos exactamente igual)
+        # Polígonos (mantenidos igual)
         polygons = [
             ([860, 0, 990, 0, 1320, 330, 1255, 395], "#D2D2D2"),
             ([1079, 122, 1140, 60, 1360, 280, 1360, 402], "#888888"),
@@ -416,10 +415,8 @@ class Dashboard(ctk.CTk):
         def update_canvas(event=None):
             canvas.delete("all")
             width, height = canvas.winfo_width(), canvas.winfo_height()
-            
             for points, color in polygons:
                 canvas.create_polygon(points, fill=color, outline="")
-                
             canvas.coords(welcome_window, width // 2 - 150, height // 2 - 80)
             
         canvas.bind("<Configure>", update_canvas)
@@ -439,7 +436,7 @@ class Dashboard(ctk.CTk):
                       pady=(0, 10) if "Rol:" in text else 10)
             
     def cerrar_sesion(self):
-        """Cerrar sesión con confirmación"""
+        """Cerrar sesión"""
         if messagebox.askyesno("Confirmar", "¿Estás seguro de que deseas cerrar sesión?"):
             self.destroy()
 
