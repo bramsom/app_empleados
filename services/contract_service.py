@@ -1,5 +1,7 @@
 import sqlite3
 from bd.connection import conectar
+from datetime import datetime
+
 
 def  crear_contrato(contrato):
     conn = conectar()
@@ -13,15 +15,54 @@ def  crear_contrato(contrato):
     conn.close()
 
 def obtener_contratos():
-    conn = conectar()
+    conn = conectar()  
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT contracts.id, employees.name || ' ' || employees.last_name AS empleado, type_contract, start_date, end_date, state
+        SELECT
+            contracts.id,
+            employees.name || ' ' || employees.last_name AS empleado,
+            contracts.type_contract,
+            contracts.start_date,
+            contracts.end_date,
+            contracts.monthly_payment,
+            contracts.value_hour,
+            contracts.number_hour,
+            contracts.state,
+            contracts.contractor
         FROM contracts
         JOIN employees ON employees.id = contracts.employee_id
     """)
-    contratos = cursor.fetchall()
+    contratos_raw = cursor.fetchall()
     conn.close()
+
+    contratos = []
+    for row in contratos_raw:
+        (
+            id_, empleado, tipo, inicio, corte, mensualidad,
+            valor_hora, num_horas, estado, contratante
+        ) = row
+
+        # Convertir fechas de string a objeto datetime.date
+        inicio_str = inicio
+        corte_str = corte
+
+        # Calcular un valor total estimado, según el tipo de contrato
+        if tipo == "CONTRATO SERVICIO HORA_CATEDRA" and valor_hora and num_horas:
+            valor_estimado = valor_hora * num_horas
+        else:
+            valor_estimado = mensualidad or 0
+
+        contratos.append({
+            "id": id_,
+            "empleado": empleado,
+            "tipo": tipo,
+            "inicio": inicio_str,
+            "corte": corte_str,
+            "valor_estimado": valor_estimado,
+            "estado": estado,
+            "contratante": contratante
+        })
+
     return contratos
 
 def obtener_contrato_por_id(contrato_id):

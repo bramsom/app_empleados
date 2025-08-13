@@ -15,11 +15,13 @@ class Dashboard(ctk.CTk):
         # Configuración de vistas disponibles
         self.views = {
             "empleados": ("views.crud_employees", "CrudEmpleados", "Gestión de Empleados"),
-            "empleados_buscar": ("views.search_employees", "BuscarEmpleado", "Búsqueda de Empleados"),
-            "contratos": ("views.crud_contracts", "CrudContratos", "Gestión de contratos"),
-            "afiliaciones": ("views.crud_afiliations", "CrudAfiliaciones", "Gestión de afiliaciones"),
-            "usuarios": ("views.crud_users", "CrudUsuarios", "Gestion de usuarios y roles")
-        }
+            "empleados_buscar": ("views.employees.search_employees", "BuscarEmpleados", "Búsqueda de Empleados"),
+            "contratos": ("views.contracts.register_contracts", "RegistrarContrato", "Gestión de contratos"),
+            "contratos_buscar": ("views.contracts.search_contracts", "BuscarContratos", "Gestión de Contratos"),
+            "afiliaciones": ("views.afilliations.register_affiliations", "RegistrarAfiliacion", "Gestión de afiliaciones"),
+            "afiliaciones_buscar": ("views.afilliations.search_affiliations", "BuscarAfiliaciones", "Búsqueda de afiliaciones"),
+            "usuarios": ("views.crud_users", "CrudUsuarios", "Gestión de usuarios y roles")
+     }
         
         # Estados de submenús
         self.submenu_states = {}
@@ -80,11 +82,11 @@ class Dashboard(ctk.CTk):
             }),
             ("contract.png", "Contratos", {
                 "Registrar Contrato": lambda: self.show_view("contratos", "registrar"),
-                "Buscar Contrato": lambda: self.show_view("contratos", "buscar")
+                "Buscar Contrato": lambda: self.show_view("contratos_buscar")
             }),
             ("affiliation.png", "Afiliaciones", {
                 "Registrar Afiliación": lambda: self.show_view("afiliaciones", "registrar"),
-                "Buscar Afiliación": lambda: self.show_view("afiliaciones", "buscar")
+                "Buscar Afiliación": lambda: self.show_view("afiliaciones_buscar")
             }),
             ("export.png", "Reportes", lambda: self.create_view_placeholder("Reportes y Estadísticas")),
             ("config.png", "Usuarios", {
@@ -356,13 +358,12 @@ class Dashboard(ctk.CTk):
         try:
             module = __import__(module_name, fromlist=[class_name])
             crud_class = getattr(module, class_name)
-            if action:
-                try:
-                    crud = crud_class(self.content_area, self.username, self.rol, action)
-                except TypeError:
-                    crud = crud_class(self.content_area, self.username, self.rol)
-            else:
+            try:
+                crud = crud_class(self.content_area, self.username, self.rol, self.volver_al_menu)
+            except TypeError:
                 crud = crud_class(self.content_area, self.username, self.rol)
+            else:
+                crud = crud_class(self.content_area, self.username, self.rol, self.volver_al_menu)
             crud.pack(fill="both", expand=True, padx=0, pady=0)
         except ImportError:
             self.create_view_placeholder(placeholder_text)
@@ -434,11 +435,16 @@ class Dashboard(ctk.CTk):
                 label.configure(text_color=color)
             label.pack(expand=True if "Bienvenido" in text else False, 
                       pady=(0, 10) if "Rol:" in text else 10)
+    
+    def volver_al_menu(self):
+        """Función de retorno desde vistas"""
+        self.show_default_view()
             
     def cerrar_sesion(self):
         """Cerrar sesión"""
         if messagebox.askyesno("Confirmar", "¿Estás seguro de que deseas cerrar sesión?"):
             self.destroy()
+    
 
 def inicializar_dashboard(username, rol):
     """Inicializar dashboard"""

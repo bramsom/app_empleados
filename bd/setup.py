@@ -26,16 +26,16 @@ def crear_tablas():
 
     # Tabla de contratos
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS contracts (
+        CREATE TABLE  IF NOT EXISTS contracts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             employee_id INTEGER NOT NULL,
             type_contract TEXT NOT NULL CHECK (
-                type_contract IN (
-                    'contrato individual de trabajo termino fijo',
-                    'contrato individual de trabajo termino indefinido',
-                    'contrato servicio hora_catedra',
-                    'contrato aprendizaje sena',
-                    'orden prestacion de servicios'
+            type_contract IN (
+                'CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO',
+                'CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO',
+                'CONTRATO SERVICIO HORA CATEDRA',
+                'CONTRATO APRENDIZAJE SENA',
+                'ORDEN PRESTACION DE SERVICIOS'
                 )
             ),
             start_date DATE NOT NULL,
@@ -45,34 +45,31 @@ def crear_tablas():
             monthly_payment REAL,
             transport REAL,
             state TEXT NOT NULL CHECK (
-                state IN ('ACTIVO','FINALIZADO','RETIRADO')
+            state IN ('ACTIVO','FINALIZADO','RETIRADO')
             ),
             contractor TEXT,
             FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
         )
     """)
 
-    # (Primero eliminar la versión anterior si existe)
-    cursor.execute("DROP TABLE IF EXISTS affiliations")
-
-    # Tabla de afiliaciones
+    # Crear tabla de afiliaciones con campos adicionales
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS affiliations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             employee_id INTEGER NOT NULL,
-            
-            eps TEXT ,
-            arl TEXT ,
-            afp TEXT ,
-    
-            bank TEXT ,
-            account_number ,
-            account_type ,
-            
+
+            eps TEXT,
+            arl TEXT,
+            risk_level TEXT,              -- Nuevo campo: Nivel de riesgo
+            afp TEXT,
+            compensation_box TEXT,        -- Nuevo campo: Caja de compensación
+            bank TEXT,
+            account_number TEXT,
+            account_type TEXT,
+
             FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
         )
     """)
-
     # Tabla de usuarios del sistema
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (

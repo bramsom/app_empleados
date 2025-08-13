@@ -10,7 +10,7 @@
 from views.login import LoginApp
 
 #if __name__ == "__main__":
-    # crear_tablas()
+  #   crear_tablas()
 
 # from bd.users import crear_usuario, obtener_usuarios, verificar_credenciales
 

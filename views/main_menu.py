@@ -1,8 +1,8 @@
 import customtkinter as ctk
-from views.crud_users import CrudUsuarios
-from views.crud_employees import CrudEmpleados
-from views.crud_contracts import CrudContratos
-from views.crud_afiliations import CrudAfiliaciones
+from views.users.crud_users import CrudUsuarios
+from views.employees.crud_employees import CrudEmpleados
+from views.contracts.crud_contracts import CrudContratos
+from views.afilliations.crud_afiliations import CrudAfiliaciones
 
 class MainMenu(ctk.CTk):
     def __init__(self, username, rol):
@@ -22,24 +22,24 @@ class MainMenu(ctk.CTk):
 
     def abrir_crud_usuarios(self):
         self.destroy()
-        from views.crud_users import CrudUsuarios
+        from views.users.crud_users import CrudUsuarios
         app= CrudUsuarios(self.username, self.rol)
         app.mainloop()
 
     def abrir_crud_empleados(self):
         self.destroy()
-        from views.crud_employees import CrudEmpleados
+        from views.employees.crud_employees import CrudEmpleados
         app = CrudEmpleados(self.username, self.rol)
         app.mainloop()
 
     def abrir_crud_contratos(self):
         self.destroy()
-        from views.crud_contracts import CrudContratos
+        from views.contracts.crud_contracts import CrudContratos
         app = CrudContratos(self.username, self.rol)
         app.mainloop()
 
     def abrir_crud_afiliaciones(self):
         self.destroy()
-        from views.crud_afiliations import CrudAfiliaciones
+        from views.afilliations.crud_afiliations import CrudAfiliaciones
         app = CrudAfiliaciones(self.username, self.rol)
         app.mainloop()
