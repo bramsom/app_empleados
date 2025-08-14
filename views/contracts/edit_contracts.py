@@ -19,7 +19,6 @@ class EditarContrato(ctk.CTkFrame):
         self.volver_callback = volver_callback
         self.contrato_id = contract_id
 
-
         # Configuración visual general
         agregar_fondo_decorativo(self)
         self.configure(fg_color="#F5F5F5")

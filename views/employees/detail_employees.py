@@ -33,10 +33,17 @@ class MostrarEmpleado(ctk.CTkFrame):
 
         agregar_fondo_decorativo(self)
 
+        self.icon_back = ctk.CTkImage(Image.open("images/arrow.png"), size=(30, 30))
+
+        # Botón de regresar (puedes colocarlo donde prefieras, aquí un ejemplo arriba a la derecha)
+        ctk.CTkButton(
+            self,image=self.icon_back,text="",corner_radius=0,width=40,height=40,fg_color="#D2D2D2",hover_color="#E0E0E0",command=self.cancelar  # O el método que uses para volver a la tabla
+        ).place(relx=0.98, rely=0.02, anchor="ne") 
+
         # Frame general
-        self.card2 = ctk.CTkFrame(self, fg_color="#F3EFEF", corner_radius=10)
-        self.card2.place(relx=0.52, rely=0.5, anchor="center", relwidth=0.92, relheight=0.80)
-        self.frame_detalle = ctk.CTkScrollableFrame(self.card2, fg_color="transparent")
+        self.card = ctk.CTkFrame(self, fg_color="#F3EFEF", corner_radius=10)
+        self.card.place(relx=0.52, rely=0.5, anchor="center", relwidth=0.92, relheight=0.80)
+        self.frame_detalle = ctk.CTkScrollableFrame(self.card, fg_color="transparent")
         self.frame_detalle.pack(fill="both", expand=True, padx=0, pady=0)
 
         # Contenedor superior con dos columnas
@@ -177,6 +184,10 @@ class MostrarEmpleado(ctk.CTkFrame):
                     contenedor.grid(row=fila, column=col_idx, padx=6, pady=5, sticky="nsew")
 
                     ctk.CTkLabel(contenedor, text=etq, font=("Georgia", 11, "bold")).pack(anchor="w", padx=10, pady=(5, 0))
-                    ctk.CTkLabel(contenedor, text=val,font=("Arial", 11), fg_color="#A0A0A0", corner_radius=5).pack(anchor="w", padx=10, pady=(0, 5), fill="x")
+                    ctk.CTkLabel(contenedor, text=val,font=("Arial", 11), fg_color="transparent", corner_radius=5).pack(anchor="w", padx=10, pady=(0, 5), fill="x")
         else:
             ctk.CTkLabel(card_contratos, text="Sin contratos registrados", text_color="gray").grid(row=1, column=0, padx=10, pady=5)
+    def cancelar(self):
+        self.destroy()
+        if self.volver_callback:
+            self.volver_callback()

@@ -26,3 +26,4 @@ def actualizar_empleado(id, empleado: Empleado):
 
 def eliminar_empleado(id):
     eliminar_empleado_service(id)
+    

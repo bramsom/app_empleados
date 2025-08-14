@@ -14,7 +14,7 @@ class Dashboard(ctk.CTk):
         
         # Configuración de vistas disponibles
         self.views = {
-            "empleados": ("views.crud_employees", "CrudEmpleados", "Gestión de Empleados"),
+            "empleados": ("views.employees.register_employees", "RegistrarEmpleados", "Gestión de Empleados"),
             "empleados_buscar": ("views.employees.search_employees", "BuscarEmpleados", "Búsqueda de Empleados"),
             "contratos": ("views.contracts.register_contracts", "RegistrarContrato", "Gestión de contratos"),
             "contratos_buscar": ("views.contracts.search_contracts", "BuscarContratos", "Gestión de Contratos"),
