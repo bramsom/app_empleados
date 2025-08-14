@@ -54,7 +54,7 @@ class BuscarEmpleados(ctk.CTkFrame):
 
         # Lista scrollable de empleados
         self.scroll_frame = ctk.CTkScrollableFrame(self.card, height=300, fg_color="transparent")
-        self.scroll_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        self.scroll_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.cargar_empleados()
 
@@ -77,29 +77,28 @@ class BuscarEmpleados(ctk.CTkFrame):
 
         # Definir tamaños fijos por columna
         anchos_columnas = {
-            0: 100,  # Nombre
-            1: 100,  # Apellido
-            2: 50,   # Tipo Doc
+            0: 140,  # Nombre
+            1: 140,  # Apellido
+            2: 80,   # Tipo Doc
             3: 80,  # N° Doc
             4: 100,  # Fecha nacimiento
-            5: 90,  # Teléfono
-            6: 130,  # Dirección
-            7: 160,  # Correo
-            8: 90, # Cargo
-            9: 80,  # Mostrar
-            10: 80,  # Editar
-            11: 80   # Eliminar
+            5: 100,  # Teléfono
+            6: 190,  # Correo
+            7: 120, # Cargo
+            8: 60,  # Mostrar
+            9: 60,  # Editar
+            10: 70   # Eliminar
         }
 
         for col, ancho in anchos_columnas.items():
             self.scroll_frame.grid_columnconfigure(col, minsize=ancho)
 
         # Encabezados
-        headers = ["Nombre", "Apellido", "Tipo\nDoc", "N°\nDoc", "Fecha\nNacimiento",
-                "Teléfono", "Dirección", "Correo", "Cargo", "Mostrar", "Editar", "Eliminar"]
+        headers = ["Nombre", "Apellido", "Tipo Doc", "N° Doc", "Fecha\nNacimiento",
+                "Teléfono", "Correo", "Cargo", "Ver", "Editar", "Eliminar"]
 
         for i, header in enumerate(headers):
-            cell = ctk.CTkFrame(self.scroll_frame, fg_color="#A9A9A9", corner_radius=8)
+            cell = ctk.CTkFrame(self.scroll_frame, fg_color="#A9A9A9", corner_radius=5)
             cell.grid(row=0, column=i, padx=2, pady=5, sticky="nsew")
             label = ctk.CTkLabel(cell, text=header, font=("Georgia", 11, "bold"), text_color="black")
             label.pack(expand=True)
@@ -107,11 +106,10 @@ class BuscarEmpleados(ctk.CTkFrame):
         # Filas de empleados
         row = 1
         for emp in self.empleados:
-            nombre_completo = f"{emp.name} {emp.last_name} {emp.document_type} {emp.document_number} {emp.birthdate} {emp.phone_number} {emp.residence_address}{emp.email}{emp.position}"
+            nombre_completo = f"{emp.name} {emp.last_name} {emp.document_type} {emp.document_number} {emp.birthdate} {emp.phone_number} {emp.email}{emp.position}"
             if filtro in nombre_completo.lower():
                 valores = [emp.name, emp.last_name, emp.document_type, emp.document_number,
-                   emp.birthdate, emp.phone_number, emp.residence_address,
-                   emp.email, emp.position]
+                   emp.birthdate, emp.phone_number,emp.email, emp.position]
 
                 for col, texto in enumerate(valores):
                     cell = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
@@ -128,7 +126,7 @@ class BuscarEmpleados(ctk.CTkFrame):
                 btn = ctk.CTkButton(self.scroll_frame, text=txt, image=icon, width=40, height=30,
                                 fg_color="transparent", hover_color="#D3D3D3",
                                 command=cmd, compound="left")
-                btn.grid(row=row, column=9 + i, padx=2, pady=3)
+                btn.grid(row=row, column=8 + i, padx=2, pady=3)
 
             row += 1
 

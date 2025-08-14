@@ -26,7 +26,7 @@ class BuscarAfiliaciones(ctk.CTkFrame):
     
         self.btn_volver = ctk.CTkButton(
         self,image=self.icon_back,text="",corner_radius=0,hover_color="#F3EFEF", width=30,height=30,command=self.volver_al_panel,fg_color="#D2D2D2"
-    )
+        )
         self.btn_volver.place(relx=0.97, y=3, anchor="ne")
 
         # Buscador

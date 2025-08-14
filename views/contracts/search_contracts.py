@@ -24,7 +24,6 @@ class BuscarContratos(ctk.CTkFrame):
         agregar_fondo_decorativo(self)
 
         self.configurar_iconos()
-        self.configurar_encabezado()
         self.configurar_filtros()
         self.configurar_tabla()
         self.cargar_contratos()
@@ -41,36 +40,35 @@ class BuscarContratos(ctk.CTkFrame):
         # Configuración del contenedor principal
         self.configure(fg_color="#F5F5F5")
 
-        # Botón volver
-        self.btn_volver = ctk.CTkButton(
-            self, text="", image=self.icon_back, width=40,
-            height=40, fg_color="transparent", hover_color="#D3D3D3", 
-            command=self.volver_a_lista
-        )
-        self.btn_volver.place(x=1300, y=10)
-        self.btn_volver.lower()
-
-    def configurar_encabezado(self):
-        # Título
-        titulo = ctk.CTkLabel(self, text="Buscar contrato", font=("Georgia", 24, "bold"))
-        titulo.pack(pady=10, padx=(100, 0), anchor="w")
-
         # Tarjeta principal
         self.card = ctk.CTkFrame(self, fg_color="#F3EFEF", corner_radius=10)
-        self.card.place(relx=0.52, rely=0.58, anchor="center", relwidth=0.90, relheight=0.80)
+        self.card.place(relx=0.52, rely=0.53, anchor="center", relwidth=0.92, relheight=0.80)
         self.card.lift()
     
 
     def configurar_filtros(self):
         # === CONTENEDOR DE BARRA Y FILTROS EN UNA MISMA FILA ===
-        barra_filtros_frame = ctk.CTkFrame(self, fg_color="#F3EFEF", width=700, corner_radius=10)
-        barra_filtros_frame.place(relx=0.07, rely=0.07, relwidth=0.90, relheight=0.1)
+        barra_filtros_frame = ctk.CTkFrame(self, fg_color="#F5F5F5", width=700, corner_radius=10)
+        barra_filtros_frame.place(relx=0.06, rely=0.01, relwidth=0.92, relheight=0.1)
+        # Crea un canvas dentro del frame
+        canvas = Canvas(barra_filtros_frame, bg="#F5F5F5", highlightthickness=0)
+        canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
+        canvas.create_polygon(783, 0, 914, 0, 1243, 330, 1180, 395, fill="#D2D2D2", outline="")
+        canvas.create_polygon(983, 0, 1134, 0, 1263, 130, 1188, 205, fill="#D12B1B", outline="")
+        canvas.create_polygon(1164, 0, 1284, 0, 1284, 120, 1284, 120, fill="#D2D2D2", outline="")
+        canvas.create_polygon(854, 0, 860, 0, 1118, 259, 1114, 260, fill="#FCFCFC", outline="")
+        canvas.create_polygon(1054, 0, 1059, 0, 1184, 125, 1184, 130, fill="#FCFCFC", outline="")
         # === BARRA DE BÚSQUEDA ===
         # Frame con borde visible
         barra_busqueda_frame = ctk.CTkFrame(
             barra_filtros_frame,border_width=2,border_color="#B0B0B0",fg_color="white", corner_radius=20,width=300
         )
-        barra_busqueda_frame.pack(side="left", padx=(0, 10), pady=10)
+        barra_busqueda_frame.pack(side="left", padx=(10, 10), pady=10)
+
+        self.btn_volver = ctk.CTkButton(
+        barra_filtros_frame,image=self.icon_back,text="",corner_radius=0,hover_color="#F3EFEF", width=30,height=30,command=self.volver_al_panel,fg_color="#d2d2d2"
+        )
+        self.btn_volver.place(relx=1.001, rely=0.2, anchor="ne")
 
         # Entry y botón más pequeños y con fondo blanco
         self.barra_busqueda = ctk.CTkEntry(
@@ -119,7 +117,7 @@ class BuscarContratos(ctk.CTkFrame):
 
         # Lista scrollable
         self.scroll_frame = ctk.CTkScrollableFrame(self.card, height=300, fg_color="transparent")
-        self.scroll_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.scroll_frame.pack(fill="both", expand=True, padx=5, pady=10)
 
 
     def cargar_contratos(self):
@@ -162,8 +160,8 @@ class BuscarContratos(ctk.CTkFrame):
 
         # Definir columnas
         columnas = [
-            ("Empleado", 200), ("Tipo", 250), ("Inicio", 90), ("Corte", 90),
-            ("Estado", 90), ("Contratante", 120), ("Valor Estimado", 130),
+            ("Empleado", 220), ("Tipo", 220), ("Inicio", 90), ("Corte", 90),
+            ("Estado", 90), ("Contratante", 170), ("Valor Estimado", 130),
             ("Ver", 60), ("Editar", 60), ("Eliminar", 70)
         ]
 
@@ -173,7 +171,7 @@ class BuscarContratos(ctk.CTkFrame):
         # Crear encabezado
         for col, (nombre, _) in enumerate(columnas):
             celda = ctk.CTkFrame(self.scroll_frame, fg_color="#A9A9A9", corner_radius=5)
-            celda.grid(row=0, column=col, padx=1, pady=3, sticky="nsew")
+            celda.grid(row=0, column=col, padx=2, pady=5, sticky="nsew")
             label = ctk.CTkLabel(celda, text=nombre, font=("Georgia", 11, "bold"), text_color="black")
             label.pack(expand=True)
 
@@ -276,11 +274,7 @@ class BuscarContratos(ctk.CTkFrame):
             contract_service.eliminar_contrato(contrato['id'])
             messagebox.showinfo("Éxito", "Afiliación eliminada correctamente.")
 
-    def volver_a_lista(self):
+    def volver_al_panel(self):
         if self.volver_callback:
             self.volver_callback()
-        self.btn_volver.lower()
-        self.card.place(relx=0.52, rely=0.58, anchor="center", relwidth=0.90, relheight=0.80)
-        self.scroll_frame.pack(fill="both", expand=True, padx=20, pady=10)
-        self.barra_busqueda.pack(pady=10, padx=(100, 0), anchor="w")
 
