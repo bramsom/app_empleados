@@ -1,6 +1,6 @@
 import customtkinter as ctk
 from PIL import Image
-from tkinter import messagebox
+from tkinter import Canvas,messagebox
 from utils.canvas import agregar_fondo_decorativo
 from services import affiliation_service, employee_service
 from controllers import affiliation_controller, employee_controller
@@ -17,22 +17,16 @@ class BuscarAfiliaciones(ctk.CTkFrame):
         self.icon_editar = ctk.CTkImage(light_image=Image.open("images/edit.png"), size=(20, 20))
         self.icon_eliminar = ctk.CTkImage(light_image=Image.open("images/delete.png"), size=(20, 20))
         self.icon_back = ctk.CTkImage(Image.open("images/arrow.png"), size=(30, 30))
+        self.icon_seeker = ctk.CTkImage(Image.open("images/seeker.png"), size=(25, 25))
 
         agregar_fondo_decorativo(self)
         self.configure(fg_color="#F5F5F5")
 
-        titulo = ctk.CTkLabel(self, text="Buscar Afiliacion", font=("Georgia", 24, "bold"))
-        titulo.pack(pady=10, padx=(100, 0), anchor="w")
-    
-        self.btn_volver = ctk.CTkButton(
-        self,image=self.icon_back,text="",corner_radius=0,hover_color="#F3EFEF", width=30,height=30,command=self.volver_al_panel,fg_color="#D2D2D2"
-        )
-        self.btn_volver.place(relx=0.97, y=3, anchor="ne")
 
         # Buscador
         # ==== Tarjeta principal ====
         self.card = ctk.CTkFrame(self, fg_color="#F3EFEF", corner_radius=10)
-        self.card.place(relx=0.52, rely=0.58, anchor="center", relwidth=0.90, relheight=0.80)
+        self.card.place(relx=0.52, rely=0.55, anchor="center", relwidth=0.92, relheight=0.80)
         self.card.rowconfigure(0, weight=1)
         self.card.columnconfigure(0, weight=1)
 
@@ -40,32 +34,60 @@ class BuscarAfiliaciones(ctk.CTkFrame):
         titulo2 = ctk.CTkLabel(self.card, text="AFILIACIONES", font=("Georgia", 16), text_color="#06A051")
         titulo2.pack(pady=(10, 5), padx=(20, 0), anchor="w")
 
-        buscador_frame = ctk.CTkFrame(self, fg_color="#F3EFEF", width=700, corner_radius=10)
-        buscador_frame.place(relx=0.07, rely=0.07, relwidth=0.90, relheight=0.1)
+        barra_filtros_frame = ctk.CTkFrame(self, fg_color="#F3EFEF", width=700, corner_radius=10)
+        barra_filtros_frame.place(relx=0.06, rely=0.01, relwidth=0.92, relheight=0.1)
 
-        self.entry_busqueda = ctk.CTkEntry(buscador_frame, placeholder_text="Buscar por nombre...",width=300, corner_radius=20, height=40)
-        self.entry_busqueda.pack(side="left", padx=(10, 5))
-        self.entry_busqueda.bind("<Return>", lambda event: self.buscar_afiliaciones())
+        canvas = Canvas(barra_filtros_frame, bg="#F5F5F5", highlightthickness=0)
+        canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
+        canvas.create_polygon(783, 0, 914, 0, 1243, 330, 1180, 395, fill="#D2D2D2", outline="")
+        canvas.create_polygon(983, 0, 1134, 0, 1263, 130, 1188, 205, fill="#D12B1B", outline="")
+        canvas.create_polygon(1164, 0, 1284, 0, 1284, 120, 1284, 120, fill="#D2D2D2", outline="")
+        canvas.create_polygon(854, 0, 860, 0, 1118, 259, 1114, 260, fill="#FCFCFC", outline="")
+        canvas.create_polygon(1054, 0, 1059, 0, 1184, 125, 1184, 130, fill="#FCFCFC", outline="")
+
+        self.btn_volver = ctk.CTkButton(
+        barra_filtros_frame,image=self.icon_back,text="",corner_radius=0,hover_color="#F3EFEF", width=30,height=30,command=self.volver_al_panel,fg_color="#D2D2D2"
+        )
+        self.btn_volver.place(relx=1.001, rely=0.2, anchor="ne")
+
+        barra_busqueda_frame = ctk.CTkFrame(
+            barra_filtros_frame,border_width=2,border_color="#B0B0B0",fg_color="white", corner_radius=20,width=300
+        )
+        barra_busqueda_frame.pack(side="left", padx=(10, 10), pady=10)
+
+        self.btn_volver = ctk.CTkButton(
+        barra_filtros_frame,image=self.icon_back,text="",corner_radius=0,hover_color="#F3EFEF", width=30,height=30,command=self.volver_al_panel,fg_color="#d2d2d2"
+        )
+        self.btn_volver.place(relx=1.001, rely=0.2, anchor="ne")
+
+        # Entry y botón más pequeños y con fondo blanco
+        self.entry_busqueda = ctk.CTkEntry(
+            barra_busqueda_frame,placeholder_text="Buscar por nombre...",border_width=0,width=200,height=36,corner_radius=20,fg_color="white"
+        )
+        self.entry_busqueda.pack(side="left", padx=(8, 0), pady=6)
+        self.entry_busqueda.bind("<Return>", self.buscar_afiliaciones)
+
+        btn_buscar = ctk.CTkButton(
+            barra_busqueda_frame,text="",image=self.icon_seeker,width=36,height=36,corner_radius=20,fg_color="white",hover_color="#F0F0F0",command=self.buscar_afiliaciones
+        )
+        btn_buscar.pack(side="left", padx=(0, 8), pady=6)
         
-        self.filtro_eps = ctk.CTkEntry(buscador_frame, placeholder_text="EPS", width=150)
+        self.filtro_eps = ctk.CTkEntry(barra_filtros_frame, placeholder_text="EPS", width=150)
         self.filtro_eps.pack(side="left", padx=5)
         self.filtro_eps.bind("<Return>", lambda event: self.buscar_afiliaciones())
         
 
-        self.filtro_arl = ctk.CTkEntry(buscador_frame, placeholder_text="ARL", width=150)
+        self.filtro_arl = ctk.CTkEntry(barra_filtros_frame, placeholder_text="ARL", width=150)
         self.filtro_arl.pack(side="left", padx=5)
         self.filtro_arl.bind("<Return>", lambda event: self.buscar_afiliaciones())
 
-        self.filtro_afp = ctk.CTkEntry(buscador_frame, placeholder_text="AFP", width=150)
+        self.filtro_afp = ctk.CTkEntry(barra_filtros_frame, placeholder_text="AFP", width=150)
         self.filtro_afp.pack(side="left", padx=5)
         self.filtro_afp.bind("<Return>", lambda event: self.buscar_afiliaciones())
 
-        self.filtro_banco = ctk.CTkEntry(buscador_frame, placeholder_text="Banco", width=150)
+        self.filtro_banco = ctk.CTkEntry(barra_filtros_frame, placeholder_text="Banco", width=150)
         self.filtro_banco.pack(side="left", padx=5)
         self.filtro_banco.bind("<Return>", lambda event: self.buscar_afiliaciones())
-
-        btn_buscar = ctk.CTkButton(buscador_frame, text="Buscar", command=self.buscar_afiliaciones)
-        btn_buscar.pack(side="left")
 
         # Frame contenedor con scroll
         self.scroll_frame = ctk.CTkScrollableFrame(self.card, fg_color="#F3EFEF")
