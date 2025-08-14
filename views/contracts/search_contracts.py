@@ -42,7 +42,7 @@ class BuscarContratos(ctk.CTkFrame):
 
         # Tarjeta principal
         self.card = ctk.CTkFrame(self, fg_color="#F3EFEF", corner_radius=10)
-        self.card.place(relx=0.52, rely=0.53, anchor="center", relwidth=0.92, relheight=0.80)
+        self.card.place(relx=0.52, rely=0.55, anchor="center", relwidth=0.92, relheight=0.80)
         self.card.lift()
     
 
@@ -113,11 +113,11 @@ class BuscarContratos(ctk.CTkFrame):
     def configurar_tabla(self):
         # Título de la tabla
         titulo_tabla = ctk.CTkLabel(self.card, text="CONTRATOS", font=("Georgia", 16), text_color="#06A051")
-        titulo_tabla.pack(pady=(10, 5), padx=(20, 0), anchor="w")
+        titulo_tabla.pack(pady=(5, 5), padx=(20, 0), anchor="w")
 
         # Lista scrollable
         self.scroll_frame = ctk.CTkScrollableFrame(self.card, height=300, fg_color="transparent")
-        self.scroll_frame.pack(fill="both", expand=True, padx=5, pady=10)
+        self.scroll_frame.pack(fill="both", expand=True, padx=5, pady=0)
 
 
     def cargar_contratos(self):
