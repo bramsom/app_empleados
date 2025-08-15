@@ -1,26 +1,30 @@
 from models.contract import Contrato
 from services.contract_service import *
 
-def registrar_contrato(datos_tuple):
-    """Registra un nuevo contrato"""
+def registrar_contrato(datos_contrato_dict, datos_pago_dict):
+    """
+    Registra un nuevo contrato y sus detalles de pago.
+    Recibe los datos en dos diccionarios separados.
+    """
     try:
+        # Creamos el objeto Contrato solo con los datos principales
         contrato = Contrato(
-            employee_id=datos_tuple[0],
-            type_contract=datos_tuple[1],
-            start_date=datos_tuple[2],
-            end_date=datos_tuple[3],
-            value_hour=datos_tuple[4],
-            number_hour=datos_tuple[5],
-            monthly_payment=datos_tuple[6],
-            transport=datos_tuple[7],
-            state=datos_tuple[8],
-            contractor=datos_tuple[9]
+            employee_id=datos_contrato_dict.get('employee_id'),
+            type_contract=datos_contrato_dict.get('type_contract'),
+            start_date=datos_contrato_dict.get('start_date'),
+            end_date=datos_contrato_dict.get('end_date'),
+            state=datos_contrato_dict.get('state'),
+            contractor=datos_contrato_dict.get('contractor'),
+            total_payment=datos_contrato_dict.get('total_payment')
         )
-        crear_contrato(contrato)
+        # Llamamos al servicio con ambos diccionarios para manejar la lógica
+        crear_contrato(contrato, datos_pago_dict)
         return True
     except Exception as e:
         print(f"Error al registrar contrato: {e}")
         return False
+
+
 
 def listar_contratos():
     """Lista todos los contratos - el servicio ya maneja el formato de fechas"""
@@ -30,46 +34,43 @@ def listar_contratos():
         print(f"Error al listar contratos: {e}")
         return []
 
-def consultar_contratos_por_empleado(employee_id):
-    """Consulta contratos por empleado"""
-    try:
-        resultados = obtener_contratos_por_empleado(employee_id)
-        return [Contrato(*r) for r in resultados]
-    except Exception as e:
-        print(f"Error al consultar contratos por empleado: {e}")
-        return []
-
 def consultar_contrato(contrato_id):
     """Consulta un contrato específico"""
     try:
         datos = obtener_contrato_por_id(contrato_id)
-        if datos:
-            return Contrato(*datos)
-        return None
+        # El servicio ya retorna un objeto completo, no es necesario construirlo aquí
+        return datos
     except Exception as e:
         print(f"Error al consultar contrato: {e}")
         return None
 
-def modificar_contrato(contrato_id, datos_tuple):
-    """Modifica un contrato existente"""
+
+def modificar_contrato(contrato_id, datos_contrato_dict):
+    """Modifica los datos principales de un contrato existente"""
     try:
+        # Aquí solo se actualizan los datos del contrato principal
         contrato = Contrato(
-            id=contrato_id,
-            employee_id=datos_tuple[0],
-            type_contract=datos_tuple[1],
-            start_date=datos_tuple[2],
-            end_date=datos_tuple[3],
-            value_hour=datos_tuple[4],
-            number_hour=datos_tuple[5],
-            monthly_payment=datos_tuple[6],
-            transport=datos_tuple[7],
-            state=datos_tuple[8],
-            contractor=datos_tuple[9]
+            employee_id=datos_contrato_dict.get('employee_id'),
+            type_contract=datos_contrato_dict.get('type_contract'),
+            start_date=datos_contrato_dict.get('start_date'),
+            end_date=datos_contrato_dict.get('end_date'),
+            state=datos_contrato_dict.get('state'),
+            contractor=datos_contrato_dict.get('contractor'),
+            total_payment=datos_contrato_dict.get('total_payment')
         )
         actualizar_contrato(contrato_id, contrato)
         return True
     except Exception as e:
         print(f"Error al modificar contrato: {e}")
+        return False
+
+def modificar_pago_contrato(contrato_id, datos_pago_dict, fecha_efectiva):
+    """Registra un cambio de pago en el historial del contrato"""
+    try:
+        actualizar_pago_contrato(contrato_id, datos_pago_dict, fecha_efectiva)
+        return True
+    except Exception as e:
+        print(f"Error al modificar pago del contrato: {e}")
         return False
 
 def borrar_contrato(contrato_id):

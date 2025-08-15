@@ -8,11 +8,11 @@
 # from views.crud_contracts import CrudContratos
 # from views.crud_afiliations import CrudAfiliaciones
 from views.login import LoginApp
+#from bd.setup import crear_tablas, migrar_datos
+#from views.login import LoginApp  # Agrega esta importación para poder iniciar la app
 
 #if __name__ == "__main__":
-  #   crear_tablas()
-
-# from bd.users import crear_usuario, obtener_usuarios, verificar_credenciales
+    #crear_tablas()
 
 # crear_usuario("admin1", "admin123", "administrador")
 # crear_usuario("aprendiz1", "aprendiz123", "aprendiz")

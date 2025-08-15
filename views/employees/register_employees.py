@@ -37,7 +37,7 @@ class RegistrarEmpleados(ctk.CTkFrame):
         # ==== Título ====
         ctk.CTkLabel(
             self, text="REGISTRAR EMPLEADO", fg_color="transparent",
-            font=("Georgia", 16), text_color="#06A051"
+            font=("Georgia", 16), text_color="#048B45"
         ).pack(pady=(40, 0), padx=(250, 0), anchor="w")
 
         # ==== Tarjeta principal ====
