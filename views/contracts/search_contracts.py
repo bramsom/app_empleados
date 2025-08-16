@@ -6,8 +6,7 @@ from services import contract_service, employee_service
 from controllers import contract_controller
 from datetime import datetime, date
 from utils.canvas import agregar_fondo_decorativo
-from utils.filters import crear_combobox
-from utils.filters import crear_filtro_fecha, abrir_calendario_avanzado
+from utils.contract_filters import crear_filtro_fecha, abrir_calendario_avanzado,crear_combobox,filtrar_contratos
 from views.contracts.edit_contracts import EditarContrato
 from views.contracts.detail_contracts import MostrarContrato
 
@@ -20,13 +19,15 @@ class BuscarContratos(ctk.CTkFrame):
         self.volver_callback = volver_callback
         self.ver_detalle_callback = ver_detalle_callback
         self.editar_callback = editar_callback
-
+        
+        # Cargar todos los contratos una sola vez al inicio
+        self.todos_los_contratos = contract_service.obtener_contratos()
+        
         agregar_fondo_decorativo(self)
-
         self.configurar_iconos()
         self.configurar_filtros()
         self.configurar_tabla()
-        self.cargar_contratos()
+        self.actualizar_lista()
         
         # Iconos
     def configurar_iconos(self):
@@ -89,10 +90,12 @@ class BuscarContratos(ctk.CTkFrame):
         self.filtro_tipo = crear_combobox(
         filtro_frame, ["Todos", "FIJO", "INDEFINIDO", "HORA CATEDRA", "APRENDIZAJE", "SERVICIOS"], 160,
         )
+        self.filtro_tipo.bind("<<ComboboxSelected>>", self.actualizar_lista)
         self.filtro_tipo.bind("<Return>", self.actualizar_lista)
         self.filtro_estado = crear_combobox(
             filtro_frame, ["Todos", "ACTIVO", "FINALIZADO", "RETIRADO"], 130,
         )
+        self.filtro_estado.bind("<<ComboboxSelected>>", self.actualizar_lista)
         self.filtro_estado.bind("<Return>", self.actualizar_lista)
 
         # Filtros de fecha usando utilidades y lambdas para limpiar
@@ -100,12 +103,12 @@ class BuscarContratos(ctk.CTkFrame):
             filtro_frame, "Desde:", lambda: self.fecha_inicio_cal.delete(0, "end"), lambda: None
         )
         self.fecha_inicio_cal.bind("<Button-1>", lambda e: abrir_calendario_avanzado(self, self.fecha_inicio_cal, self.fecha_corte_cal, lambda: None))
-        self.fecha_inicio_cal.bind("<Return>", self.actualizar_lista)
+        self.fecha_inicio_cal.bind("<KeyRelease>", self.actualizar_lista)
         self.fecha_corte_cal, _ = crear_filtro_fecha(
             filtro_frame, "Hasta:", lambda: self.fecha_corte_cal.delete(0, "end"), lambda: None
         )
         self.fecha_corte_cal.bind("<Button-1>", lambda e: abrir_calendario_avanzado(self, self.fecha_inicio_cal, self.fecha_corte_cal, lambda: None))
-        self.fecha_corte_cal.bind("<Return>", self.actualizar_lista)
+        self.fecha_corte_cal.bind("<KeyRelease>", self.actualizar_lista)
         # Variables de control (si las necesitas para lógica adicional)
         self.fecha_inicio_activa = False
         self.fecha_corte_activa = False
@@ -119,44 +122,27 @@ class BuscarContratos(ctk.CTkFrame):
         self.scroll_frame = ctk.CTkScrollableFrame(self.card, height=300, fg_color="transparent")
         self.scroll_frame.pack(fill="both", expand=True, padx=5, pady=0)
 
-
-    def cargar_contratos(self):
-        try:
-            self.contratos = contract_controller.listar_contratos()
-            if not self.contratos:
-                messagebox.showinfo("Información", "No hay contratos registrados")
-            else:
-                self.actualizar_lista()
-        except Exception as e:
-            messagebox.showerror("Error", f"Error al cargar contratos: {str(e)}")
-
     def actualizar_lista(self, event=None):
         # Limpiar frame anterior
         for widget in self.scroll_frame.winfo_children():
             widget.destroy()
 
-        filtro = self.barra_busqueda.get().lower()
+        # Obtener valores de los filtros
+        filtro = self.barra_busqueda.get()
         tipo_filtro = self.filtro_tipo.get()
         estado_filtro = self.filtro_estado.get()
-
-        # Actualizar estado de los filtros de fecha
-        self.fecha_inicio_activa = bool(self.fecha_inicio_cal.get())
-        self.fecha_corte_activa = bool(self.fecha_corte_cal.get())
-
-        # Obtener fechas seleccionadas si están activas
-        fecha_inicio_filtro = None
-        fecha_corte_filtro = None
-
-        if self.fecha_inicio_activa:
-            try:
-                fecha_inicio_filtro = datetime.strptime(self.fecha_inicio_cal.get(), "%d/%m/%Y").date()
-            except Exception:
-                fecha_inicio_filtro = None
-        if self.fecha_corte_activa:
-            try:
-                fecha_corte_filtro = datetime.strptime(self.fecha_corte_cal.get(), "%d/%m/%Y").date()
-            except Exception:
-                fecha_corte_filtro = None
+        fecha_inicio_cal = self.fecha_inicio_cal.get()
+        fecha_corte_cal = self.fecha_corte_cal.get()
+        
+        # === LLAMAR A LA FUNCIÓN DE FILTRADO ===
+        contratos_filtrados = filtrar_contratos(
+            self.todos_los_contratos, 
+            filtro, 
+            tipo_filtro, 
+            estado_filtro,
+            fecha_inicio_cal, 
+            fecha_corte_cal
+        )
 
         # Definir columnas
         columnas = [
@@ -164,7 +150,7 @@ class BuscarContratos(ctk.CTkFrame):
             ("Estado", 90), ("Contratante", 170), ("Valor Estimado", 130),
             ("Ver", 60), ("Editar", 60), ("Eliminar", 70)
         ]
-
+        
         for i, (_, ancho) in enumerate(columnas):
             self.scroll_frame.grid_columnconfigure(i, minsize=ancho)
 
@@ -177,34 +163,7 @@ class BuscarContratos(ctk.CTkFrame):
 
         # Mostrar contratos filtrados
         row = 1
-        for contrato in self.contratos:
-
-            # Filtro por nombre
-            if filtro and filtro not in contrato["empleado"].lower():
-                continue
-
-            # Filtro por tipo
-            if tipo_filtro != "Todos" and tipo_filtro.lower() not in contrato["tipo"].lower():
-                continue
-
-            # Filtro por estado
-            if estado_filtro != "Todos" and contrato["estado"] != estado_filtro:
-                continue
-
-            # Filtro por fecha
-            if fecha_inicio_filtro or fecha_corte_filtro:
-                try:
-                    fecha_inicio_contrato = datetime.strptime(contrato["inicio"], '%Y-%m-%d').date()
-                    fecha_corte_contrato = datetime.strptime(contrato["corte"], '%Y-%m-%d').date()
-
-                    if fecha_inicio_filtro and fecha_inicio_contrato < fecha_inicio_filtro:
-                        continue
-                    if fecha_corte_filtro and fecha_corte_contrato > fecha_corte_filtro:
-                        continue
-
-                except ValueError:
-                    continue
-
+        for contrato in contratos_filtrados:
             # Convertir fechas para mostrar en formato día/mes/año
             try:
                 inicio_mostrar = datetime.strptime(contrato["inicio"], '%Y-%m-%d').strftime('%d/%m/%Y')
@@ -214,21 +173,32 @@ class BuscarContratos(ctk.CTkFrame):
                 corte_mostrar = datetime.strptime(contrato["corte"], '%Y-%m-%d').strftime('%d/%m/%Y')
             except Exception:
                 corte_mostrar = contrato["corte"]
-            
-            tipo_normalizado = contrato["tipo"].lower().replace("_", " ")
-
+                
             valor_estimado = contrato.get("valor_estimado", 0)
-                # Crear fila
+
+            # Código para truncar el tipo de contrato
+            tipo_contrato_original = contrato["tipo"]
+            largo_maximo = 25  
+            
+            if len(tipo_contrato_original) > largo_maximo:
+                tipo_contrato_mostrar = tipo_contrato_original[:largo_maximo] + "..."
+            else:
+                tipo_contrato_mostrar = tipo_contrato_original
+            
+            # Crear fila
             valores = [
-                contrato["empleado"], contrato["tipo"], inicio_mostrar,
-                corte_mostrar, contrato["estado"], contrato["contratante"],
+                contrato["empleado"],
+                tipo_contrato_mostrar,
+                inicio_mostrar,
+                corte_mostrar,
+                contrato["estado"],
+                contrato["contratante"],
                 f"${valor_estimado:,.2f}"
             ]
-
             for col, valor in enumerate(valores):
                 celda = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
                 celda.grid(row=row, column=col, padx=1, pady=2, sticky="nsew")
-                ctk.CTkLabel(celda, text=valor, font=("Arial", 10.5)).pack(expand=True)
+                ctk.CTkLabel(celda, text=valor, font=("Arial", 9)).pack(expand=True)
 
             # Botones de acción
             acciones = [
@@ -243,7 +213,7 @@ class BuscarContratos(ctk.CTkFrame):
                     fg_color="transparent", hover_color="#D3D3D3", command=comando
                 )
                 btn.grid(row=row, column=7 + i, padx=1, pady=2)
-
+            
             row += 1
 
     def ver_detalle(self, contrato):

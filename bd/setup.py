@@ -1,5 +1,6 @@
 import sqlite3
 from bd.connection import conectar
+from datetime import date
 
 # --- Lógica de migración ---
 # Esta función solo se ejecuta una vez para pasar los datos antiguos a la nueva estructura.
@@ -10,11 +11,10 @@ def migrar_datos():
     try:
         cursor.execute("BEGIN TRANSACTION;")
 
-        # 1. Renombrar la tabla antigua de contratos
+        # 1. Rename the old table
         cursor.execute("ALTER TABLE contracts RENAME TO contracts_old;")
 
-        # 2. Crear las nuevas tablas (la de contratos y las de historial)
-        # La tabla de contratos con el nuevo campo total_payment
+        # 2. Create the new tables (including the new history table)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS contracts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,11 +32,11 @@ def migrar_datos():
                 end_date DATE,
                 state TEXT NOT NULL CHECK (state IN ('ACTIVO','FINALIZADO','RETIRADO')),
                 contractor TEXT,
-                total_payment REAL, -- ¡El nuevo campo agregado!
+                total_payment REAL, 
+                payment_frequency INTEGER,
                 FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
             )
         """)
-        # Tabla de historial de salarios mensuales
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS salary_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,7 +47,6 @@ def migrar_datos():
                 FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE
             )
         """)
-        # Tabla de historial de salarios por hora
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS hourly_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,23 +57,44 @@ def migrar_datos():
                 FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE
             )
         """)
+        # --- NUEVA TABLA DE HISTORIAL DE ORDEN DE SERVICIOS ---
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS service_order_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                contract_id INTEGER NOT NULL,
+                old_total_payment REAL,
+                new_total_payment REAL NOT NULL,
+                old_payment_frequency INTEGER,
+                new_payment_frequency INTEGER NOT NULL,
+                effective_date DATE NOT NULL,
+                FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE
+            )
+        """)
 
-        # 3. Copiar los datos de la tabla antigua
-        cursor.execute("SELECT * FROM contracts_old;")
+        # 3. Copy data from the old table
+        # Assuming contracts_old has total_payment and payment_frequency
+        cursor.execute("SELECT id, employee_id, type_contract, start_date, end_date, state, contractor, total_payment, payment_frequency FROM contracts_old;")
         contratos_antiguos = cursor.fetchall()
         
         for contrato in contratos_antiguos:
             (
-                id, employee_id, type_contract, start_date, end_date, state, contractor
-            ) = contrato # <-- Asegúrate que estas 11 variables se corresponden con tu tabla contracts_old
+                id, employee_id, type_contract, start_date, end_date, state, contractor, total_payment, payment_frequency
+            ) = contrato
 
+            # Insert into the new contracts table
             cursor.execute("""
-                INSERT INTO contracts (id, employee_id, type_contract, start_date, end_date, state, contractor, total_payment)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-            """, (id, employee_id, type_contract, start_date, end_date, state, contractor, 0)) # El 0 es el valor predeterminado
+                INSERT INTO contracts (id, employee_id, type_contract, start_date, end_date, state, contractor, total_payment, payment_frequency)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """, (id, employee_id, type_contract, start_date, end_date, state, contractor, total_payment, payment_frequency))
 
-                
-        # 4. Eliminar la tabla antigua
+            # Insert into the appropriate history table based on contract type
+            if type_contract == 'ORDEN PRESTACION DE SERVICIOS' and total_payment is not None and payment_frequency is not None:
+                cursor.execute("""
+                    INSERT INTO service_order_history (contract_id, old_total_payment, new_total_payment, old_payment_frequency, new_payment_frequency, effective_date)
+                    VALUES (?, ?, ?, ?, ?, ?);
+                """, (id, None, total_payment, None, payment_frequency, date.today()))
+
+        # 4. Drop the old table
         cursor.execute("DROP TABLE contracts_old;")
 
         conn.commit()
@@ -134,6 +154,7 @@ def crear_tablas():
             ),
             contractor TEXT,
             total_payment REAL,
+            payment_frequency INTEGER,
         FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
         )"""
     )
@@ -155,6 +176,19 @@ def crear_tablas():
             contract_id INTEGER NOT NULL,
             value_hour REAL NOT NULL,
             number_hour INTEGER NOT NULL,
+            effective_date DATE NOT NULL,
+            FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE
+        )
+    """)
+            # --- NUEVA TABLA DE HISTORIAL DE ORDEN DE SERVICIOS ---
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS service_order_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            contract_id INTEGER NOT NULL,
+            old_total_payment REAL,
+            new_total_payment REAL NOT NULL,
+            old_payment_frequency INTEGER,
+            new_payment_frequency INTEGER NOT NULL,
             effective_date DATE NOT NULL,
             FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE
         )

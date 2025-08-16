@@ -3,7 +3,7 @@ from datetime import datetime
 class Contrato:
     def __init__(self, id=None, employee_id=None, type_contract="",
                  start_date="", end_date="", state="", contractor="",
-                 total_payment=0.0, monthly_payment=0.0, transport=0.0,
+                 total_payment=0.0,payment_frequency=0.0, monthly_payment=0.0, transport=0.0,
                  value_hour=0.0, number_hour=0.0):
 
         self.id = id
@@ -13,7 +13,8 @@ class Contrato:
         self.end_date = str(end_date).strip()
         self.state = state.strip()
         self.contractor = contractor.strip()
-        self.total_payment = float(total_payment)
+        self.total_payment = float(total_payment or 0.0)
+        self.payment_frequency = float(payment_frequency)
         self.monthly_payment = float(monthly_payment)
         self.transport = float(transport)
         self.value_hour = float(value_hour)
@@ -45,5 +46,6 @@ class Contrato:
             self.transport,
             self.state,
             self.contractor,
-            self.total_payment
+            self.total_payment,
+            self.payment_frequency
         )

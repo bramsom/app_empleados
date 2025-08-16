@@ -15,7 +15,8 @@ def registrar_contrato(datos_contrato_dict, datos_pago_dict):
             end_date=datos_contrato_dict.get('end_date'),
             state=datos_contrato_dict.get('state'),
             contractor=datos_contrato_dict.get('contractor'),
-            total_payment=datos_contrato_dict.get('total_payment')
+            total_payment=datos_contrato_dict.get('total_payment'),
+            payment_frequency=datos_contrato_dict.get('payment_frequency')
         )
         # Llamamos al servicio con ambos diccionarios para manejar la lógica
         crear_contrato(contrato, datos_pago_dict)
@@ -56,7 +57,8 @@ def modificar_contrato(contrato_id, datos_contrato_dict):
             end_date=datos_contrato_dict.get('end_date'),
             state=datos_contrato_dict.get('state'),
             contractor=datos_contrato_dict.get('contractor'),
-            total_payment=datos_contrato_dict.get('total_payment')
+            total_payment=datos_contrato_dict.get('total_payment'),
+            payment_frequency=datos_contrato_dict.get('payment_frequency')
         )
         actualizar_contrato(contrato_id, contrato)
         return True

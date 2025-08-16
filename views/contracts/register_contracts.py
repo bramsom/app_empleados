@@ -78,7 +78,8 @@ class RegistrarContrato(ctk.CTkFrame):
 
         self.label_pago_total = ctk.CTkLabel(self.form_frame, text="Pago total", font=("Georgia", 12, "bold"))
         self.total_payment = ctk.CTkEntry(self.form_frame, placeholder_text="Pago total", **self.entry_style)
-        
+        self.label_frecuencia_pago  = ctk.CTkLabel(self.form_frame, text="Número de Cuotas", font=("Georgia", 12, "bold"))
+        self.payment_frequency = ctk.CTkEntry(self.form_frame, placeholder_text="Número de cuotas", **self.entry_style)
         # Otros campos que siempre son visibles
         self.crear_label_entry("Empleador", 4, 0, 2, "contractor")
         self.crear_option_menu("Estado", 4, 2, ["ACTIVO", "FINALIZADO", "RETIRADO"], "estado_var")
@@ -133,7 +134,7 @@ class RegistrarContrato(ctk.CTkFrame):
         # Lista de todos los widgets de pago
         pago_widgets = [self.label_mensualidad, self.monthly_payment, self.label_transporte, self.transport,
                         self.label_valor_hora, self.value_hour, self.label_numero_horas, self.number_hour,
-                        self.label_pago_total, self.total_payment]
+                        self.label_pago_total, self.total_payment,self.label_frecuencia_pago, self.payment_frequency]
 
         # Ocultar todos los widgets de pago
         for widget in pago_widgets:
@@ -174,12 +175,12 @@ class RegistrarContrato(ctk.CTkFrame):
             self.end_date.configure(state="normal", fg_color="#D9D9D9")
             self.end_date.bind("<Button-1>", lambda e: self.abrir_calendario(self.end_date))
             
-        elif tipo_contrato == "ORDEN PRESTACION DE SERVICIOS":
-            self.label_pago_total.grid(row=2, column=2, columnspan=2, sticky="w", pady=(5, 0), padx=5)
-            self.total_payment.grid(row=3, column=2, columnspan=2, padx=5, pady=(0, 10), sticky="ew")
-            
-            self.end_date.configure(state="normal", fg_color="#D9D9D9")
-            self.end_date.bind("<Button-1>", lambda e: self.abrir_calendario(self.end_date))
+        elif tipo_contrato == 'ORDEN PRESTACION DE SERVICIOS':
+            self.label_pago_total.grid(row=2, column=2, sticky="w", pady=(5, 0), padx=5)
+            self.total_payment.grid(row=3, column=2, padx=5, pady=(0, 10), sticky="ew")
+
+            self.label_frecuencia_pago.grid(row=2, column=3, sticky="w", pady=(5, 0), padx=5)
+            self.payment_frequency.grid(row=3, column=3, padx=5, pady=(0, 10), sticky="ew")
 
     def guardar_contrato(self):
         empleado_nombre = self.entry_empleado.get()
@@ -199,6 +200,7 @@ class RegistrarContrato(ctk.CTkFrame):
             'state': self.estado_var.get(),
             'contractor': self.contractor.get(),
             'total_payment': float(self.total_payment.get()) if tipo_contrato == "ORDEN PRESTACION DE SERVICIOS" and self.total_payment.get() else 0.0,
+            'payment_frequency': float(self.payment_frequency.get()) if tipo_contrato == "ORDEN PRESTACION DE SERVICIOS" and self.payment_frequency.get() else 0.0,
             'monthly_payment': float(self.monthly_payment.get()) if tipo_contrato in ["CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO", "CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO", "CONTRATO APRENDIZAJE SENA"] and self.monthly_payment.get() else 0.0,
             'transport': float(self.transport.get()) if tipo_contrato in ["CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO", "CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO", "CONTRATO APRENDIZAJE SENA"] and self.transport.get() else 0.0,
             'value_hour': float(self.value_hour.get()) if tipo_contrato == "CONTRATO SERVICIO HORA CATEDRA" and self.value_hour.get() else 0.0,
