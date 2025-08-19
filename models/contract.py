@@ -3,8 +3,8 @@ from datetime import datetime
 class Contrato:
     def __init__(self, id=None, employee_id=None, type_contract="",
                  start_date="", end_date="", state="", contractor="",
-                 total_payment=0.0,payment_frequency=0.0, monthly_payment=0.0, transport=0.0,
-                 value_hour=0.0, number_hour=0.0):
+                 total_payment=None, payment_frequency=None, monthly_payment=None, 
+                 transport=None, value_hour=None, number_hour=None):
 
         self.id = id
         self.employee_id = employee_id
@@ -13,12 +13,19 @@ class Contrato:
         self.end_date = str(end_date).strip()
         self.state = state.strip()
         self.contractor = contractor.strip()
-        self.total_payment = float(total_payment or 0.0)
-        self.payment_frequency = float(payment_frequency)
-        self.monthly_payment = float(monthly_payment)
-        self.transport = float(transport)
-        self.value_hour = float(value_hour)
-        self.number_hour = float(number_hour) # <-- Nuevo campo
+        
+        # --- CORRECCIÓN: Manejar los valores None antes de la conversión ---
+        self.total_payment = float(total_payment) if total_payment is not None else None
+        
+        # payment_frequency es un texto, no un número
+        self.payment_frequency = payment_frequency
+        
+        # Los siguientes campos pueden ser None
+        self.monthly_payment = float(monthly_payment) if monthly_payment is not None else None
+        self.transport = float(transport) if transport is not None else None
+        self.value_hour = float(value_hour) if value_hour is not None else None
+        self.number_hour = float(number_hour) if number_hour is not None else None
+        # --- FIN DE LA CORRECCIÓN --- # <-- Nuevo campo
 
     def to_tuple(self):
         # Convertir fechas al formato YYYY-MM-DD para guardar en la base de datos

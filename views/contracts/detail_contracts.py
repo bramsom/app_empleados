@@ -139,7 +139,7 @@ class MostrarContrato(ctk.CTkFrame):
             return
         
         (
-            id_, empleado_nombre, type_contract, start_date, end_date, state,
+            id_,employee_id, empleado_nombre, type_contract, start_date, end_date, state,
             contractor, total_payment, payment_frequency, monthly_payment,
             transport, value_hour, number_hour
         ) = contrato_data
