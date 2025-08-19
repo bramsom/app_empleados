@@ -124,10 +124,21 @@ def obtener_contrato_por_id(contrato_id):
     cursor = conn.cursor()
     cursor.execute("""
         SELECT
-            c.id, c.employee_id, c.type_contract, c.start_date, c.end_date,
-            sh.monthly_payment, sh.transport, hh.value_hour, hh.number_hour, c.total_payment, c.payment_frequency,
-            c.state, c.contractor
+            c.id,
+            e.name || ' ' || e.last_name AS empleado,  -- <-- Agrega el nombre completo del empleado aquí c.type_contract, c.start_date, c.end_date,
+            c.type_contract,
+            c.start_date,
+            c.end_date,
+            c.state,
+            c.contractor,
+            c.total_payment,
+            c.payment_frequency,
+            sh.monthly_payment,
+            sh.transport,
+            hh.value_hour,
+            hh.number_hour
         FROM contracts c
+        LEFT JOIN employees e ON e.id = c.employee_id
         LEFT JOIN salary_history sh ON sh.contract_id = c.id
         LEFT JOIN hourly_history hh ON hh.contract_id = c.id
         WHERE c.id = ?

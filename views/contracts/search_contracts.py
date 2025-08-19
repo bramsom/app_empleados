@@ -224,7 +224,7 @@ class BuscarContratos(ctk.CTkFrame):
         MostrarContrato(
             parent=self.master, username=self.username,rol=self.rol,
             volver_callback=lambda: BuscarContratos(self.master, self.username, self.rol).pack(fill="both", expand=True),
-            contract_id=contrato["id"]  # <-- Aquí pasas el id correcto
+            contract_id=contrato["id"] 
         ).pack(fill="both", expand=True)
 
     def editar_contrato(self, contrato):

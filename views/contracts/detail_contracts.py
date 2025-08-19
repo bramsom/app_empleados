@@ -1,212 +1,203 @@
 import customtkinter as ctk
-from tkcalendar import Calendar
-import tkinter as tk
-from tkinter import messagebox
 from PIL import Image
+from tkinter import messagebox
 from datetime import datetime
-from models.contract import Contrato
-from controllers import contract_controller, employee_controller
-from utils.canvas import agregar_fondo_decorativo
 from services import contract_service, employee_service
 from views.contracts.edit_contracts import EditarContrato
-from utils.autocomplete import crear_autocompletado
+from utils.canvas import agregar_fondo_decorativo
 
 
 class MostrarContrato(ctk.CTkFrame):
-    def __init__(self, parent,contract_id, username=None, rol=None, volver_callback=None):
+    def __init__(self, parent, contract_id, username=None, rol=None, volver_callback=None):
         super().__init__(parent)
         self.username = username
         self.rol = rol
         self.volver_callback = volver_callback
         self.contrato_id = contract_id
 
-        # Configuración visual general
-        agregar_fondo_decorativo(self)
+        self._setup_estilos()
+        self._setup_ui()
+        self.cargar_datos()
+
+    def _setup_estilos(self):
+        """Define estilos y recursos comunes."""
         self.configure(fg_color="#F5F5F5")
-        
+        agregar_fondo_decorativo(self)
         self.icon_back = ctk.CTkImage(Image.open("images/arrow.png"), size=(30, 30))
+        self.entry_style = {
+            "border_width": 0, "fg_color": "#D9D9D9", "text_color": "#000000",
+            "height": 40, "state": "readonly"
+        }
+        self.label_style = {"font": ("Georgia", 12, "bold")}
+        self.title_style = {"font": ("Georgia", 16), "text_color": "#06A051"}
 
-        # Botón de regresar (puedes colocarlo donde prefieras, aquí un ejemplo arriba a la derecha)
+    def _setup_ui(self):
+        """Crea y posiciona todos los widgets de la interfaz."""
+        # Botón de regresar
         ctk.CTkButton(
-            self,image=self.icon_back,text="",corner_radius=0,width=40,height=40,fg_color="#D2D2D2",hover_color="#E0E0E0",command=self.cancelar  # O el método que uses para volver a la tabla
-        ).place(relx=0.98, rely=0.02, anchor="ne") 
-        
+            self, image=self.icon_back, text="", corner_radius=0, width=40, height=40,
+            fg_color="#D2D2D2", hover_color="#E0E0E0", command=self.cancelar
+        ).place(relx=0.98, rely=0.02, anchor="ne")
 
-        # Obtener empleados
-        empleados = employee_service.obtener_empleados_para_combobox()
-        self.empleados_dict = {f"{nombre}": id for id, nombre in empleados}
+        # Título de la vista
+        ctk.CTkLabel(self, text="DETALLE CONTRATO", fg_color="transparent", **self.title_style).pack(
+            pady=(40, 0), padx=(250, 0), anchor="w")
 
-        # ==== Estilos comunes ====
-        entry_style = {
-            "border_width": 0,
-            "fg_color": "#D9D9D9",
-            "text_color": "#000000",
-            "height": 40
-        }
-        boton_style = {
-            "font": ("Georgia", 14),
-            "text_color": "black",
-            "height": 50
-        }
-
-        # ==== Título ====
-        ctk.CTkLabel(
-            self, text="DETALLE CONTRATO", fg_color="transparent",
-            font=("Georgia", 16), text_color="#06A051"
-        ).pack(pady=(40, 0), padx=(250, 0), anchor="w")
-
-        # ==== Tarjeta principal ====
+        # Tarjeta principal
         self.card = ctk.CTkFrame(self, fg_color="#F3EFEF", corner_radius=10)
         self.card.place(relx=0.52, rely=0.52, anchor="center", relwidth=0.70, relheight=0.80)
         self.card.rowconfigure(0, weight=1)
         self.card.columnconfigure(0, weight=1)
 
-        # ==== Formulario ====
-        form_frame = ctk.CTkFrame(self.card, fg_color="transparent")
-        form_frame.grid(row=0, column=0, padx=30, pady=30, sticky="nsew")
-        form_frame.columnconfigure((0, 1, 2, 3), weight=1)
+        # Formulario
+        self.form_frame = ctk.CTkFrame(self.card, fg_color="transparent")
+        self.form_frame.grid(row=0, column=0, padx=30, pady=30, sticky="nsew")
+        self.form_frame.columnconfigure((0, 1, 2, 3), weight=1)
 
-        def crear_label_entry(texto, fila, col, colspan=1, atributo=""):
-            ctk.CTkLabel(form_frame, text=texto, font=("Georgia", 12, "bold")).grid(
-                row=fila, column=col, columnspan=colspan, sticky="w", pady=(5, 0), padx=5
-            )
-            entry = ctk.CTkEntry(form_frame, placeholder_text=texto, **entry_style)
-            entry.grid(row=fila + 1, column=col, columnspan=colspan, padx=5, pady=(0, 10), sticky="ew")
-            setattr(self, atributo, entry)
+        self._crear_widgets()
+        self._ocultar_todos_los_campos_pago()
 
-        # Campo nombre empleado
-        crear_label_entry("Nombre empleado", 0, 0, 2, "entry_empleado")
-
-        # Campo tipo contrato con OptionMenu
-        ctk.CTkLabel(form_frame, text="Tipo contrato", font=("Georgia", 12, "bold")).grid(
-            row=0, column=2, columnspan=2, sticky="w", pady=(5, 0), padx=5
-        )
-        opciones_tipo_contrato = [
-            " ", "CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIGO",
-            "CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO",
-            "CONTRATO SERVICIO HORA CATEDRA",
-            "CONTRATO APRENDIZAJE SENA",
-            "ORDEN PRESTACION DE SERVICIOS"
-        ]
-        self.tipo_contrato_var = ctk.StringVar(value=opciones_tipo_contrato[0])
-        tipo_contrato_menu = ctk.CTkOptionMenu(
-            form_frame, values=opciones_tipo_contrato, variable=self.tipo_contrato_var,
-            fg_color="#D9D9D9", height=40, text_color="black",
-            button_color="#06A051", button_hover_color="#048B45",
-            dropdown_fg_color="white", dropdown_text_color="black"
-        )
-        tipo_contrato_menu.grid(row=1, column=2, columnspan=2, padx=5, pady=(0, 10), sticky="ew")
-
-        # ==== Fechas con calendario ====
-        crear_label_entry("Fecha inicio", 2, 0, 1, "start_date")
-        self.start_date.bind("<Button-1>", lambda e: self.abrir_calendario(self.start_date))
-
-        crear_label_entry("Fecha fin", 2, 1, 1, "end_date")
-        self.end_date.bind("<Button-1>", lambda e: self.abrir_calendario(self.end_date))
-
-        # Otros campos
-        crear_label_entry("valor hora", 2, 2, 1, "value_hour")
-        crear_label_entry("Numero de horas", 2, 3, 1, "number_hour")
-        crear_label_entry("Mensualidad", 4, 0, 1, "monthly_payment")
-        crear_label_entry("Transporte", 4, 1, 1, "transport")
-        crear_label_entry("Empleador", 4, 2, 2, "contractor")
-
-        # Campo estado con OptionMenu
-        ctk.CTkLabel(form_frame, text="Estado", font=("Georgia", 12, "bold")).grid(
-            row=6, column=1,columnspan=2, sticky="w", pady=(5, 0), padx=5
-        )
-        opciones_estado = ["ACTIVO", "FINALIZADO", "RETIRADO"]
-        self.estado_var = ctk.StringVar(value=opciones_estado[0])
-        estado_menu = ctk.CTkOptionMenu(
-            form_frame, values=opciones_estado, variable=self.estado_var,
-            fg_color="#D9D9D9", height=40, text_color="black",
-            button_color="#06A051", button_hover_color="#048B45",
-            dropdown_fg_color="white", dropdown_text_color="black"
-        )
-        estado_menu.grid(row=7, column=1,columnspan=2, padx=5, pady=(0, 10), sticky="ew")
-
-        # Autocompletado
-        self.entry_empleado.empleados_dict = self.empleados_dict
-        self.lista_empleados = ctk.CTkFrame(form_frame, fg_color="white", corner_radius=15, width=200)
-        self.lista_empleados.place(x=0, y=0)
-        self.lista_empleados.lower()
-        self.entry_empleado.bind(
-            "<KeyRelease>",
-            crear_autocompletado(self.entry_empleado, self.lista_empleados, self.seleccionar_empleado)
-        )
-
-        # ==== Botones ====
-        botones_frame = ctk.CTkFrame(self.card, fg_color="transparent")
-        botones_frame.grid(row=3, column=0, columnspan=4, pady=10, padx=10, sticky="ew")
-        botones_frame.columnconfigure((0, 1), weight=1)
-
+        # Botón de edición
         ctk.CTkButton(
-            botones_frame, text="Editar", fg_color="#06A051", hover_color="#048B45",
-            command=self.abrir_editar_contrato, **boton_style, corner_radius=10
-        ).grid(row=0, column=0, padx=30, pady=30, sticky="ew")
+            self.card, text="Editar Contrato", fg_color="#06A051", hover_color="#048B45",
+            command=self.abrir_editar_contrato, font=("Georgia", 14), text_color="black", height=50, corner_radius=10
+        ).grid(row=1, column=0, padx=30, pady=30, sticky="ew")
 
+    def _crear_widgets(self):
+        """Crea todos los widgets del formulario."""
+        # Helper para crear labels y entries de forma dinámica
+        def create_field(text, row, col, colspan, attr_name, placeholder=""):
+            label = ctk.CTkLabel(self.form_frame, text=text, **self.label_style)
+            label.grid(row=row, column=col, columnspan=colspan, sticky="w", pady=(5, 0), padx=5)
+            entry = ctk.CTkEntry(self.form_frame, placeholder_text=placeholder or text, **self.entry_style)
+            entry.grid(row=row + 1, column=col, columnspan=colspan, padx=5, pady=(0, 10), sticky="ew")
+            setattr(self, attr_name, entry)
+            return label, entry
 
-        self.cargar_datos()
+        # Campos comunes
+        self.entry_empleado = create_field("Nombre Empleado", 0, 0, 2, "entry_empleado")[1]
+        
+        # Campo tipo contrato (usando un Label para modo detalle)
+        ctk.CTkLabel(self.form_frame, text="Tipo Contrato", **self.label_style).grid(row=0, column=2, columnspan=2, sticky="w", pady=(5, 0), padx=5)
+        self.tipo_contrato_var = ctk.StringVar(value="")
+        self.label_tipo_contrato = ctk.CTkLabel(self.form_frame, textvariable=self.tipo_contrato_var, font=("Georgia", 12), text_color="black", fg_color="#D9D9D9", height=40)
+        self.label_tipo_contrato.grid(row=1, column=2, columnspan=2, padx=5, pady=(0, 10), sticky="ew")
+
+        self.start_date = create_field("Fecha Inicio", 2, 0, 1, "start_date")[1]
+        self.end_date = create_field("Fecha Fin", 2, 1, 1, "end_date")[1]
+        self.contractor = create_field("Contratante", 4, 0, 2, "contractor")[1]
+
+        # Campo estado (usando un Label)
+        ctk.CTkLabel(self.form_frame, text="Estado", **self.label_style).grid(row=4, column=2, columnspan=2, sticky="w", pady=(5, 0), padx=5)
+        self.estado_var = ctk.StringVar(value="")
+        self.label_estado = ctk.CTkLabel(self.form_frame, textvariable=self.estado_var, font=("Georgia", 12), text_color="black", fg_color="#D9D9D9", height=40)
+        self.label_estado.grid(row=5, column=2, columnspan=2, padx=5, pady=(0, 10), sticky="ew")
+
+        # Crear los labels y entries de pago una sola vez
+        self.label_pago1 = ctk.CTkLabel(self.form_frame, text="", **self.label_style)
+        self.label_pago2 = ctk.CTkLabel(self.form_frame, text="", **self.label_style)
+        self.entry_pago1 = ctk.CTkEntry(self.form_frame, **self.entry_style)
+        self.entry_pago2 = ctk.CTkEntry(self.form_frame, **self.entry_style)
+
+    def _ocultar_todos_los_campos_pago(self):
+        """Oculta todos los widgets de pago."""
+        self.label_pago1.grid_remove()
+        self.label_pago2.grid_remove()
+        self.entry_pago1.grid_remove()
+        self.entry_pago2.grid_remove()
+
+    def _fill_entry_field(self, entry_widget, value):
+        """Helper para rellenar un campo de entrada."""
+        entry_widget.configure(state="normal")
+        entry_widget.delete(0, "end")
+        entry_widget.insert(0, value or "")
+        entry_widget.configure(state="readonly")
+
+    def _format_date(self, date_str):
+        """Formatea una cadena de fecha de YYYY-MM-DD a DD/MM/YYYY."""
+        try:
+            return datetime.strptime(date_str, '%Y-%m-%d').strftime('%d/%m/%Y')
+        except (ValueError, TypeError):
+            return date_str or ""
+
+    def _format_money(self, value):
+        """Formatea un número con signo de peso y separador de miles."""
+        if value is None:
+            return ""
+        try:
+            return f"$ {float(value):,.0f}".replace(",", ".")
+        except (ValueError, TypeError):
+            return str(value)
+
+    def cargar_datos(self):
+        """Obtiene datos del servicio y rellena la interfaz."""
+        contrato_data = contract_service.obtener_contrato_por_id(self.contrato_id)
+        if not contrato_data:
+            messagebox.showerror("Error", "No se encontró el contrato.")
+            if self.volver_callback:
+                self.volver_callback()
+            return
+        
+        (
+            id_, empleado_nombre, type_contract, start_date, end_date, state,
+            contractor, total_payment, payment_frequency, monthly_payment,
+            transport, value_hour, number_hour
+        ) = contrato_data
+
+        # Rellenar campos comunes
+        self._fill_entry_field(self.entry_empleado, empleado_nombre)
+        self._fill_entry_field(self.start_date, self._format_date(start_date))
+        self._fill_entry_field(self.end_date, self._format_date(end_date))
+        self._fill_entry_field(self.contractor, contractor)
+        self.tipo_contrato_var.set(type_contract)
+        self.estado_var.set(state)
+
+        self._mostrar_campos_pago(
+            type_contract, monthly_payment, transport, value_hour,
+            number_hour, total_payment, payment_frequency
+        )
+
+    def _mostrar_campos_pago(self, type_contract, monthly_payment, transport, value_hour, number_hour, total_payment, payment_frequency):
+        """Muestra y rellena los campos de pago según el tipo de contrato."""
+        self._ocultar_todos_los_campos_pago()
+        
+        campos_a_mostrar = []
+        if type_contract in ['CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO', 'CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO', 'CONTRATO APRENDIZAJE SENA']:
+            campos_a_mostrar = [
+                ("Mensualidad", self._format_money(monthly_payment)),
+                ("Transporte", self._format_money(transport))
+            ]
+        elif type_contract == 'CONTRATO SERVICIO HORA CATEDRA':
+            campos_a_mostrar = [
+                ("Valor Hora", self._format_money(value_hour)),
+                ("Número de Horas", number_hour)
+            ]
+        elif type_contract == 'ORDEN PRESTACION DE SERVICIOS':
+            campos_a_mostrar = [
+                ("Pago Total", self._format_money(total_payment)),
+                ("Frecuencia de Pago", payment_frequency)
+            ]
+        
+        if len(campos_a_mostrar) == 2:
+            # Mostrar primer campo
+            self.label_pago1.configure(text=campos_a_mostrar[0][0])
+            self._fill_entry_field(self.entry_pago1, campos_a_mostrar[0][1])
+            self.label_pago1.grid(row=2, column=2, sticky="w", pady=(5, 0), padx=5)
+            self.entry_pago1.grid(row=3, column=2, padx=5, pady=(0, 10), sticky="ew")
+
+            # Mostrar segundo campo
+            self.label_pago2.configure(text=campos_a_mostrar[1][0])
+            self._fill_entry_field(self.entry_pago2, campos_a_mostrar[1][1])
+            self.label_pago2.grid(row=2, column=3, sticky="w", pady=(5, 0), padx=5)
+            self.entry_pago2.grid(row=3, column=3, padx=5, pady=(0, 10), sticky="ew")
 
     def cancelar(self):
         self.destroy()
         if self.volver_callback:
             self.volver_callback()
 
-    def abrir_calendario(self, entry_widget):
-        top = tk.Toplevel(self)
-        top.title("Seleccionar fecha")
-        top.geometry("+500+300")
-
-        cal = Calendar(top, selectmode="day", date_pattern="dd/mm/yyyy")
-        cal.pack(padx=10, pady=10)
-
-        def seleccionar_fecha():
-            fecha = cal.get_date()
-            entry_widget.delete(0, "end")
-            entry_widget.insert(0, fecha)
-            top.destroy()
-
-        tk.Button(top, text="Seleccionar", command=seleccionar_fecha).pack(pady=10)
-
-    def cargar_datos(self):
-        contrato = contract_service.obtener_contrato_por_id(self.contrato_id)
-        if not contrato:
-            messagebox.showerror("Error", "No se encontró la afiliación.")
-            if self.volver_callback:
-                self.volver_callback()
-            return
-
-        (
-            id_, employee_id, tipo, inicio, corte, valor_hora,
-            num_horas, mensualidad, transporte, estado, contratante
-        ) = contrato
-
-        # Convertir fechas a formato dd/mm/yyyy para mostrar
-        try:
-            inicio_mostrar = datetime.strptime(inicio, '%Y-%m-%d').strftime('%d/%m/%Y')
-        except Exception:
-            inicio_mostrar = inicio
-        try:
-            corte_mostrar = datetime.strptime(corte, '%Y-%m-%d').strftime('%d/%m/%Y')
-        except Exception:
-            corte_mostrar = corte
-
-        empleado_nombre = next((nombre for nombre, id in self.empleados_dict.items() if id == employee_id), "")
-        self.entry_empleado.insert(0, empleado_nombre)
-        self.tipo_contrato_var.set(tipo)
-        self.start_date.insert(0, inicio_mostrar)
-        self.end_date.insert(0, corte_mostrar)
-        self.value_hour.insert(0, valor_hora)
-        self.number_hour.insert(0, num_horas)
-        self.monthly_payment.insert(0, mensualidad)
-        self.transport.insert(0, transporte)
-        self.contractor.insert(0, contratante)
-        self.estado_var.set(estado)
-
     def abrir_editar_contrato(self):
         from views.contracts.search_contracts import BuscarContratos
-        # Limpiar el área actual de contenido
         for widget in self.master.winfo_children():
             widget.destroy()
         EditarContrato(
@@ -216,8 +207,3 @@ class MostrarContrato(ctk.CTkFrame):
             rol=self.rol,
             volver_callback=lambda: BuscarContratos(self.master, self.username, self.rol).pack(fill="both", expand=True)
         ).pack(fill="both", expand=True)
-
-    def seleccionar_empleado(self, nombre):
-        self.entry_empleado.delete(0, "end")
-        self.entry_empleado.insert(0, nombre)
-        self.lista_empleados.lower()
