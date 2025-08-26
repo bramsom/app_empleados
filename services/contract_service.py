@@ -58,7 +58,7 @@ def obtener_contratos():
     conn = conectar() 
     cursor = conn.cursor()
     
-    # Se agrega el JOIN para service_order_history
+    # 1. Usar subconsultas para obtener los registros de historial más recientes
     cursor.execute("""
         SELECT
             c.id,
@@ -76,27 +76,46 @@ def obtener_contratos():
             c.contractor
         FROM contracts c
         JOIN employees e ON e.id = c.employee_id
+        
+        -- Subconsulta para el historial de salario más reciente
         LEFT JOIN salary_history sh ON sh.contract_id = c.id
+        AND sh.effective_date = (
+            SELECT MAX(effective_date)
+            FROM salary_history
+            WHERE contract_id = sh.contract_id
+        )
+        
+        -- Subconsulta para el historial de horas más reciente
         LEFT JOIN hourly_history hh ON hh.contract_id = c.id
+        AND hh.effective_date = (
+            SELECT MAX(effective_date)
+            FROM hourly_history
+            WHERE contract_id = hh.contract_id
+        )
+        
+        -- Subconsulta para el historial de orden de servicio más reciente
         LEFT JOIN service_order_history soh ON soh.contract_id = c.id
-        GROUP BY c.id;
+        AND soh.effective_date = (
+            SELECT MAX(effective_date)
+            FROM service_order_history
+            WHERE contract_id = soh.contract_id
+        );
     """)
+    
     contratos_raw = cursor.fetchall()
     conn.close()
     
     contratos = []
     for row in contratos_raw:
-        # Se actualizan las variables para reflejar el nuevo JOIN
+        # Aquí la lógica de procesamiento de los datos es la misma, no necesitas cambiarla.
         (
             id_, empleado, tipo, inicio, corte, mensualidad, transporte,
             valor_hora, num_horas, pago_total, frecuencia_pago, estado, contratante
         ) = row
 
-        # La lógica para el valor estimado se actualiza
         if tipo == 'CONTRATO SERVICIO HORA CATEDRA':
             valor_estimado = valor_hora * num_horas if valor_hora and num_horas else 0
         elif tipo == 'ORDEN PRESTACION DE SERVICIOS':
-            # El valor estimado es el pago total, no la mensualidad
             valor_estimado = pago_total or 0
         else: # Contratos fijos, indefinidos y de aprendizaje
             valor_estimado = mensualidad or 0
@@ -119,14 +138,18 @@ def obtener_contratos():
         })
     return contratos
 
+# En services/contract_service.py
+
 def obtener_contrato_por_id(contrato_id):
     conn = conectar()
     cursor = conn.cursor()
+    
+    # 1. Start a single SELECT statement
     cursor.execute("""
         SELECT
             c.id,
             e.id,
-            e.name || ' ' || e.last_name AS empleado,  -- <-- Agrega el nombre completo del empleado aquí c.type_contract, c.start_date, c.end_date,
+            e.name || ' ' || e.last_name AS empleado,
             c.type_contract,
             c.start_date,
             c.end_date,
@@ -137,15 +160,60 @@ def obtener_contrato_por_id(contrato_id):
             sh.monthly_payment,
             sh.transport,
             hh.value_hour,
-            hh.number_hour
+            hh.number_hour,
+            soh.new_total_payment,
+            soh.new_payment_frequency
         FROM contracts c
         LEFT JOIN employees e ON e.id = c.employee_id
-        LEFT JOIN salary_history sh ON sh.contract_id = c.id
-        LEFT JOIN hourly_history hh ON hh.contract_id = c.id
+        
+        -- Subconsulta para el historial de salario más reciente
+        LEFT JOIN (
+            SELECT 
+                contract_id, 
+                monthly_payment, 
+                transport
+            FROM salary_history
+            WHERE effective_date = (
+                SELECT MAX(effective_date) 
+                FROM salary_history 
+                WHERE contract_id = salary_history.contract_id
+            )
+        ) sh ON sh.contract_id = c.id
+        
+        -- Subconsulta para el historial de horas más reciente
+        LEFT JOIN (
+            SELECT 
+                contract_id, 
+                value_hour, 
+                number_hour
+            FROM hourly_history
+            WHERE effective_date = (
+                SELECT MAX(effective_date) 
+                FROM hourly_history 
+                WHERE contract_id = hourly_history.contract_id
+            )
+        ) hh ON hh.contract_id = c.id
+        
+        -- Subconsulta para el historial de orden de servicio más reciente
+        LEFT JOIN (
+            SELECT 
+                contract_id, 
+                new_total_payment, 
+                new_payment_frequency
+            FROM service_order_history
+            WHERE effective_date = (
+                SELECT MAX(effective_date) 
+                FROM service_order_history 
+                WHERE contract_id = service_order_history.contract_id
+            )
+        ) soh ON soh.contract_id = c.id
+
         WHERE c.id = ?
     """, (contrato_id,))
+    
     contrato = cursor.fetchone()
     conn.close()
+    
     return contrato
 
 # Esta función solo actualiza los campos principales del contrato.

@@ -20,9 +20,6 @@ class BuscarContratos(ctk.CTkFrame):
         self.ver_detalle_callback = ver_detalle_callback
         self.editar_callback = editar_callback
         
-        # Cargar todos los contratos una sola vez al inicio
-        self.todos_los_contratos = contract_service.obtener_contratos()
-        
         agregar_fondo_decorativo(self)
         self.configurar_iconos()
         self.configurar_filtros()
@@ -123,6 +120,7 @@ class BuscarContratos(ctk.CTkFrame):
         self.scroll_frame.pack(fill="both", expand=True, padx=5, pady=0)
 
     def actualizar_lista(self, event=None):
+        self.todos_los_contratos = contract_service.obtener_contratos()
         # Limpiar frame anterior
         for widget in self.scroll_frame.winfo_children():
             widget.destroy()
@@ -215,27 +213,28 @@ class BuscarContratos(ctk.CTkFrame):
                 btn.grid(row=row, column=7 + i, padx=1, pady=2)
             
             row += 1
-
     def ver_detalle(self, contrato):
-        # Limpiar el área actual de contenido
-        for widget in self.master.winfo_children():
-            widget.destroy()
-
+        self.pack_forget()
+    
         MostrarContrato(
-            parent=self.master, username=self.username,rol=self.rol,
-            volver_callback=lambda: BuscarContratos(self.master, self.username, self.rol).pack(fill="both", expand=True),
-            contract_id=contrato["id"] 
+            parent=self.master,
+            username=self.username,
+            rol=self.rol,
+            contract_id=contrato["id"],
+            volver_callback=lambda: self.pack(fill="both", expand=True)
         ).pack(fill="both", expand=True)
 
     def editar_contrato(self, contrato):
-        # Limpiar el área actual de contenido
-        for widget in self.master.winfo_children():
-            widget.destroy()
+        # Oculta la vista actual, no la destruye
+        self.pack_forget()
 
+        # Pasa la instancia de BuscarContratos (self) como callback
         EditarContrato(
-            parent=self.master,username=self.username, rol=self.rol,
-            volver_callback=lambda: BuscarContratos(self.master, self.username, self.rol).pack(fill="both", expand=True),
-            contract_id=contrato["id"]  # <-- Aquí pasas el id correcto
+            parent=self.master,
+            username=self.username,
+            rol=self.rol,
+            volver_callback=self,  # <-- ¡Aquí está la clave!
+            contract_id=contrato["id"]
         ).pack(fill="both", expand=True)
 
     def eliminar_contrato(self, contrato):
@@ -246,5 +245,6 @@ class BuscarContratos(ctk.CTkFrame):
 
     def volver_al_panel(self):
         if self.volver_callback:
-            self.volver_callback()
+            self.destroy()
+            self.volver_callback.pack(fill="both", expand=True)
 

@@ -137,11 +137,11 @@ class MostrarContrato(ctk.CTkFrame):
             if self.volver_callback:
                 self.volver_callback()
             return
-        
+    
         (
-            id_,employee_id, empleado_nombre, type_contract, start_date, end_date, state,
-            contractor, total_payment, payment_frequency, monthly_payment,
-            transport, value_hour, number_hour
+            id_, employee_id, empleado_nombre, type_contract, start_date, end_date, state,
+            contractor, total_payment, payment_frequency, monthly_payment, transport,
+            value_hour, number_hour, new_total_payment, new_payment_frequency
         ) = contrato_data
 
         # Rellenar campos comunes
@@ -151,12 +151,10 @@ class MostrarContrato(ctk.CTkFrame):
         self._fill_entry_field(self.contractor, contractor)
         self.tipo_contrato_var.set(type_contract)
         self.estado_var.set(state)
-
         self._mostrar_campos_pago(
             type_contract, monthly_payment, transport, value_hour,
-            number_hour, total_payment, payment_frequency
+            number_hour, new_total_payment, new_payment_frequency
         )
-
     def _mostrar_campos_pago(self, type_contract, monthly_payment, transport, value_hour, number_hour, total_payment, payment_frequency):
         """Muestra y rellena los campos de pago según el tipo de contrato."""
         self._ocultar_todos_los_campos_pago()
