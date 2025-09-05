@@ -100,11 +100,11 @@ class BuscarAfiliaciones(ctk.CTkFrame):
             widget.destroy()
 
         afiliaciones = affiliation_controller.listar_afiliaciones()
-        empleados = dict(employee_service.obtener_empleados_para_combobox())
         
         if filtros:
             def cumple_filtros(afi):
-                nombre_empleado = empleados.get(afi.employee_id, "").lower()
+                # Usamos directamente afi.empleado que ya contiene el nombre.
+                nombre_empleado = (afi.empleado or "").lower()
                 return (
                     filtros["nombre"] in nombre_empleado and
                     filtros["eps"] in (afi.eps or "").lower() and
@@ -113,6 +113,7 @@ class BuscarAfiliaciones(ctk.CTkFrame):
                     filtros["banco"] in (afi.bank or "").lower()
                 )
             afiliaciones = list(filter(cumple_filtros, afiliaciones))
+
         columnas = [
             ("Empleado", 200),
             ("EPS", 70),
@@ -123,9 +124,8 @@ class BuscarAfiliaciones(ctk.CTkFrame):
             ("Banco", 80),
             ("Cuenta", 90),
             ("Tipo", 90),
-            ("Editar", 50),   # Nueva columna para editar
-            ("Eliminar", 50)  # Nueva columna para eliminar
-
+            ("Editar", 50),
+            ("Eliminar", 50)
         ]
 
         # === ENCABEZADOS ===
@@ -136,9 +136,9 @@ class BuscarAfiliaciones(ctk.CTkFrame):
 
         # === FILAS DE DATOS ===
         for row_index, afiliacion in enumerate(afiliaciones, start=1):
-            nombre = empleados.get(afiliacion.empleado, "No encontrado")
+            # Usamos directamente afiliacion.empleado, que ya trae el nombre del servicio.
             valores = [
-                nombre,
+                afiliacion.empleado or "-",
                 afiliacion.eps,
                 afiliacion.arl,
                 afiliacion.risk_level,
