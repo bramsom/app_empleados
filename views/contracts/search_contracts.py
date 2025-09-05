@@ -7,8 +7,6 @@ from controllers import contract_controller
 from datetime import datetime, date
 from utils.canvas import agregar_fondo_decorativo
 from utils.contract_filters import crear_filtro_fecha, abrir_calendario_avanzado,crear_combobox,filtrar_contratos
-from views.contracts.edit_contracts import EditarContrato
-from views.contracts.detail_contracts import MostrarContrato
 
 
 class BuscarContratos(ctk.CTkFrame):
@@ -215,7 +213,7 @@ class BuscarContratos(ctk.CTkFrame):
             row += 1
     def ver_detalle(self, contrato):
         self.pack_forget()
-    
+        from views.contracts.detail_contracts import MostrarContrato
         MostrarContrato(
             parent=self.master,
             username=self.username,
@@ -225,16 +223,18 @@ class BuscarContratos(ctk.CTkFrame):
         ).pack(fill="both", expand=True)
 
     def editar_contrato(self, contrato):
-        # Oculta la vista actual, no la destruye
         self.pack_forget()
 
-        # Pasa la instancia de BuscarContratos (self) como callback
+        from views.contracts.edit_contracts import EditarContrato
+
+        volver_callback = lambda: [self.pack(fill="both", expand=True), self.actualizar_lista()]
+
         EditarContrato(
             parent=self.master,
+            contract_id=contrato["id"],
+            volver_callback=volver_callback, 
             username=self.username,
-            rol=self.rol,
-            volver_callback=self,  # <-- ¡Aquí está la clave!
-            contract_id=contrato["id"]
+            rol=self.rol
         ).pack(fill="both", expand=True)
 
     def eliminar_contrato(self, contrato):

@@ -209,6 +209,7 @@ def obtener_contrato_por_id(contrato_id):
         ) soh ON soh.contract_id = c.id
 
         WHERE c.id = ?
+        GROUP BY c.id
     """, (contrato_id,))
     
     contrato = cursor.fetchone()
@@ -216,64 +217,79 @@ def obtener_contrato_por_id(contrato_id):
     
     return contrato
 
-# Esta función solo actualiza los campos principales del contrato.
-def actualizar_contrato(contrato_id, contrato):
+
+def actualizar_contrato(contrato_id, contrato_data):
     conn = conectar()
     cursor = conn.cursor()
+    
+    # 1. Obtener los datos originales del contrato para compararlos
+    # Se usa la misma funcion que la vista detalle
+    contrato_original = obtener_contrato_por_id(contrato_id)
+    if not contrato_original:
+        conn.close()
+        raise ValueError("Contrato no encontrado.")
+    
+    # Se desempaquetan los datos originales
+    (
+        id_, emp_id_original, empleado_nombre, type_contract_original, start_date_original, end_date_original, state_original,
+        contractor_original, total_payment_original, payment_frequency_original, monthly_payment_original, transport_original,
+        value_hour_original, number_hour_original, new_total_payment_original, new_payment_frequency_original
+    ) = contrato_original
+    
     try:
-        # Iniciar la transacción para asegurar la coherencia de los datos
-        conn.execute("BEGIN TRANSACTION")
-
-        # 1. Obtener los datos del contrato original para comparar y registrar cambios
-        cursor.execute("SELECT type_contract, total_payment, payment_frequency FROM contracts WHERE id=?", (contrato_id,))
-        tipo_contrato_antiguo, pago_antiguo, frecuencia_antigua = cursor.fetchone()
-
-        # 2. Actualizar la tabla principal 'contracts' con los nuevos datos
+        # 2. Actualizar los campos principales de la tabla 'contracts'
         cursor.execute("""
-            UPDATE contracts SET 
-            employee_id=?, type_contract=?, start_date=?, end_date=?, 
-            state=?, contractor=?, total_payment=?, payment_frequency=?
-            WHERE id=?
+            UPDATE contracts SET
+                employee_id = ?,
+                type_contract = ?,
+                start_date = ?,
+                end_date = ?,
+                state = ?,
+                contractor = ?,
+                total_payment = ?,
+                payment_frequency = ?
+            WHERE id = ?
         """, (
-            contrato.employee_id, contrato.type_contract, contrato.start_date, 
-            contrato.end_date, contrato.state, contrato.contractor, contrato.total_payment, 
-            contrato.payment_frequency, contrato_id
+            contrato_data.employee_id,
+            contrato_data.type_contract,
+            contrato_data.start_date,
+            contrato_data.end_date,
+            contrato_data.state,
+            contrato_data.contractor,
+            contrato_data.total_payment,
+            contrato_data.payment_frequency,
+            contrato_id
         ))
-
-        # 3. Registrar los cambios en las tablas de historial si los valores de pago cambiaron
-        # Comparamos el nuevo total_payment con el antiguo para saber si hubo un cambio
-        if contrato.total_payment != pago_antiguo or contrato.payment_frequency != frecuencia_antigua:
-            
-            nueva_fecha_efectiva = datetime.now().strftime('%Y-%m-%d')
-
-            if contrato.type_contract in ['CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO', 'CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO', 'CONTRATO APRENDIZAJE SENA']:
+        
+        # 3. Insertar nuevos registros en las tablas de historial si los valores cambian
+        if contrato_data.type_contract in ['CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO', 'CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO', 'CONTRATO APRENDIZAJE SENA']:
+            if contrato_data.monthly_payment != monthly_payment_original or contrato_data.transport != transport_original:
                 cursor.execute("""
                     INSERT INTO salary_history (contract_id, monthly_payment, transport, effective_date)
                     VALUES (?, ?, ?, ?)
-                """, (contrato_id, contrato.monthly_payment, contrato.transport, nueva_fecha_efectiva))
-
-            elif contrato.type_contract == 'CONTRATO SERVICIO HORA CATEDRA':
+                """, (contrato_id, contrato_data.monthly_payment, contrato_data.transport, datetime.now().strftime('%Y-%m-%d')))
+        
+        elif contrato_data.type_contract == 'CONTRATO SERVICIO HORA CATEDRA':
+            if contrato_data.value_hour != value_hour_original or contrato_data.number_hour != number_hour_original:
                 cursor.execute("""
                     INSERT INTO hourly_history (contract_id, value_hour, number_hour, effective_date)
                     VALUES (?, ?, ?, ?)
-                """, (contrato_id, contrato.value_hour, contrato.number_hour, nueva_fecha_efectiva))
-                
-            elif contrato.type_contract == 'ORDEN PRESTACION DE SERVICIOS':
-                 cursor.execute("""
-                    INSERT INTO service_order_history (contract_id, old_total_payment, new_total_payment, old_payment_frequency, new_payment_frequency, effective_date)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, (contrato_id, pago_antiguo, contrato.total_payment, frecuencia_antigua, contrato.payment_frequency, nueva_fecha_efectiva))
+                """, (contrato_id, contrato_data.value_hour, contrato_data.number_hour, datetime.now().strftime('%Y-%m-%d')))
+        
+        elif contrato_data.type_contract == 'ORDEN PRESTACION DE SERVICIOS':
+            if contrato_data.total_payment != new_total_payment_original or contrato_data.payment_frequency != new_payment_frequency_original:
+                cursor.execute("""
+                    INSERT INTO service_order_history (contract_id, new_total_payment, new_payment_frequency, effective_date)
+                    VALUES (?, ?, ?, ?)
+                """, (contrato_id, contrato_data.total_payment, contrato_data.payment_frequency, datetime.now().strftime('%Y-%m-%d')))
 
-        # 4. Confirmar la transacción para guardar todos los cambios
+        # 4. Confirmar la transacción
         conn.commit()
-
-    except Exception as e:
-        # Si algo sale mal, se revierte todo
+        
+    except sqlite3.Error as e:
         conn.rollback()
-        print("Error al actualizar el contrato:", e)
-        raise
+        raise e
     finally:
-        # Cerrar la conexión
         conn.close()
 def eliminar_contrato(contrato_id):
     conn = conectar()

@@ -281,22 +281,26 @@ class EditarContrato(ctk.CTkFrame):
                 number_hour=number_hour
             )
 
+            
             contract_service.actualizar_contrato(self.contrato_id, contrato_actualizado)
         
             messagebox.showinfo("Éxito", "Contrato actualizado exitosamente.")
-            
+        
+            # Si la actualización fue exitosa, entonces se llama al callback
             if self.volver_callback:
-                self.volver_callback.actualizar_lista()
                 self.destroy()
-                self.volver_callback.pack(fill="both", expand=True)
-
+                self.volver_callback()
+                
+            
         except Exception as e:
             messagebox.showerror("Error al guardar", f"No se pudo actualizar el contrato: {e}")
 
+
     def cancelar(self):
+        self.destroy()
         if self.volver_callback:
-            self.destroy()
-            self.volver_callback.pack(fill="both", expand=True)
+            self.volver_callback()
+        
 
     def seleccionar_empleado(self, nombre):
         fill_entry_field(self.entry_empleado, nombre)
