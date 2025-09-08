@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import messagebox
+from PIL import Image
 from models.affiliation import Afiliacion
 from services import affiliation_service, employee_service
 from utils.canvas import agregar_fondo_decorativo
@@ -12,6 +13,8 @@ class EditarAfiliacion(ctk.CTkFrame):
         self.rol = rol
         self.volver_callback = volver_callback
         self.afiliacion_id = affiliation_id
+
+        self.icon_back = ctk.CTkImage(Image.open("images/arrow.png"), size=(30, 30))
 
         agregar_fondo_decorativo(self)
         self.configure(fg_color="#F5F5F5")
@@ -38,6 +41,11 @@ class EditarAfiliacion(ctk.CTkFrame):
             self, text="EDITAR AFILIACION",
             fg_color="transparent", font=("Georgia", 16), text_color="#06A051"
         ).pack(pady=(60, 0), padx=(250, 0), anchor="w")
+
+        self.btn_volver = ctk.CTkButton(
+        self,image=self.icon_back,text="",corner_radius=0,hover_color="#F3EFEF", width=30,height=30,command=self.volver_al_panel,fg_color="#D2D2D2"
+        )
+        self.btn_volver.place(relx=1.001, rely=0.2, anchor="ne")
 
         # ==== Tarjeta principal ====
         self.card = ctk.CTkFrame(self, fg_color="#F3EFEF", corner_radius=10)
@@ -146,8 +154,12 @@ class EditarAfiliacion(ctk.CTkFrame):
             self.volver_callback()
             # Redirigir a la vista buscar afiliaciones
     
-
     def seleccionar_empleado(self, nombre):
         self.entry_empleado.delete(0, "end")
         self.entry_empleado.insert(0, nombre)
         self.lista_empleados.lower()
+    
+    def volver_al_panel(self):
+        if self.volver_callback:
+            self.destroy()
+            self.volver_callback()

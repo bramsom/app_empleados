@@ -16,7 +16,10 @@ def crear_afiliacion(afiliacion: Afiliacion):
 
 def obtener_afiliaciones():
     conn = conectar()
+    # Usa row_factory para obtener resultados como diccionarios
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
+    
     cursor.execute("""
         SELECT 
             affiliations.id,
@@ -32,28 +35,30 @@ def obtener_afiliaciones():
         FROM affiliations
         JOIN employees ON employees.id = affiliations.employee_id
     """)
-    resultados_tuplas = cursor.fetchall()
+    
+    # Convierte cada fila (ahora un objeto Row) en un diccionario
+    resultados_dict = [dict(row) for row in cursor.fetchall()]
     conn.close()
     
-    return [EmpleadoAfiliacion(*tupla) for tupla in resultados_tuplas]
+    return resultados_dict
 
 def obtener_afiliacion_con_nombre_por_id(afiliacion_id):
-    """
-    Obtiene una afiliación por su ID, incluyendo el nombre completo del empleado.
-    """
     conn = conectar()
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
+    
     cursor.execute("""
-        SELECT affiliations.id,
-               employees.name || ' ' || employees.last_name AS empleado,
-               affiliations.eps,
-               affiliations.arl,
-               affiliations.risk_level,
-               affiliations.afp,
-               affiliations.compensation_box,
-               affiliations.bank,
-               affiliations.account_number,
-               affiliations.account_type
+        SELECT 
+            affiliations.id,
+            employees.name || ' ' || employees.last_name AS empleado,
+            affiliations.eps,
+            affiliations.arl,
+            affiliations.risk_level,
+            affiliations.afp,
+            affiliations.compensation_box,
+            affiliations.bank,
+            affiliations.account_number,
+            affiliations.account_type
         FROM affiliations
         JOIN employees ON employees.id = affiliations.employee_id
         WHERE affiliations.id = ?
@@ -63,8 +68,7 @@ def obtener_afiliacion_con_nombre_por_id(afiliacion_id):
     conn.close()
     
     if row:
-        # Retorna un único objeto EmpleadoAfiliacion
-        return EmpleadoAfiliacion(*row)
+        return dict(row)
     return None
 
 def obtener_afiliacion_por_id(afiliacion_id):

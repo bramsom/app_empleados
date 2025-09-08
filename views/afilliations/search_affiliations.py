@@ -74,20 +74,24 @@ class BuscarAfiliaciones(ctk.CTkFrame):
         
         self.filtro_eps = ctk.CTkEntry(barra_filtros_frame, placeholder_text="EPS", width=150)
         self.filtro_eps.pack(side="left", padx=5)
-        self.filtro_eps.bind("<Return>", lambda event: self.buscar_afiliaciones())
+        self.filtro_eps.bind("<Return>", self.buscar_afiliaciones)
         
 
         self.filtro_arl = ctk.CTkEntry(barra_filtros_frame, placeholder_text="ARL", width=150)
         self.filtro_arl.pack(side="left", padx=5)
-        self.filtro_arl.bind("<Return>", lambda event: self.buscar_afiliaciones())
+        self.filtro_arl.bind("<Return>", self.buscar_afiliaciones)
 
         self.filtro_afp = ctk.CTkEntry(barra_filtros_frame, placeholder_text="AFP", width=150)
         self.filtro_afp.pack(side="left", padx=5)
-        self.filtro_afp.bind("<Return>", lambda event: self.buscar_afiliaciones())
+        self.filtro_afp.bind("<Return>", self.buscar_afiliaciones)
+
+        self.filtro_caja_compensacion = ctk.CTkEntry(barra_filtros_frame, placeholder_text="Caja de Compensación", width=150)
+        self.filtro_caja_compensacion.pack(side="left", padx=5)
+        self.filtro_caja_compensacion.bind("<Return>", self.buscar_afiliaciones)
 
         self.filtro_banco = ctk.CTkEntry(barra_filtros_frame, placeholder_text="Banco", width=150)
         self.filtro_banco.pack(side="left", padx=5)
-        self.filtro_banco.bind("<Return>", lambda event: self.buscar_afiliaciones())
+        self.filtro_banco.bind("<Return>", self.buscar_afiliaciones)
 
         # Frame contenedor con scroll
         self.scroll_frame = ctk.CTkScrollableFrame(self.card, fg_color="#F3EFEF")
@@ -99,18 +103,20 @@ class BuscarAfiliaciones(ctk.CTkFrame):
         for widget in self.scroll_frame.winfo_children():
             widget.destroy()
 
+        # Ahora el servicio devuelve una lista de diccionarios
         afiliaciones = affiliation_controller.listar_afiliaciones()
-        
+    
         if filtros:
             def cumple_filtros(afi):
-                # Usamos directamente afi.empleado que ya contiene el nombre.
-                nombre_empleado = (afi.empleado or "").lower()
+            # Usar la clave 'empleado' del diccionario para el filtro
+                nombre_empleado = (afi.get('empleado') or "").lower()
                 return (
                     filtros["nombre"] in nombre_empleado and
-                    filtros["eps"] in (afi.eps or "").lower() and
-                    filtros["arl"] in (afi.arl or "").lower() and
-                    filtros["afp"] in (afi.afp or "").lower() and
-                    filtros["banco"] in (afi.bank or "").lower()
+                    filtros["eps"] in (afi.get('eps') or "").lower() and
+                    filtros["arl"] in (afi.get('arl') or "").lower() and
+                    filtros["afp"] in (afi.get('afp') or "").lower() and
+                    filtros["caja_compensacion"] in (afi.get('compensation_box') or "").lower() and
+                    filtros["banco"] in (afi.get('bank') or "").lower()
                 )
             afiliaciones = list(filter(cumple_filtros, afiliaciones))
 
@@ -131,47 +137,48 @@ class BuscarAfiliaciones(ctk.CTkFrame):
         # === ENCABEZADOS ===
         for col_index, (texto, ancho) in enumerate(columnas):
             label = ctk.CTkLabel(self.scroll_frame, text=texto, font=("Georgia", 11, "bold"),
-                                 width=ancho, anchor="w", fg_color="#A9A9A9", corner_radius=8, text_color="black")
+                                width=ancho, anchor="w", fg_color="#A9A9A9", corner_radius=8, text_color="black")
             label.grid(row=0, column=col_index, padx=2, pady=5, sticky="nsew")
 
         # === FILAS DE DATOS ===
         for row_index, afiliacion in enumerate(afiliaciones, start=1):
-            # Usamos directamente afiliacion.empleado, que ya trae el nombre del servicio.
+            # Acceder a los valores usando claves de diccionario (get() es seguro para claves faltantes)
             valores = [
-                afiliacion.empleado or "-",
-                afiliacion.eps,
-                afiliacion.arl,
-                afiliacion.risk_level,
-                afiliacion.afp,
-                afiliacion.compensation_box,
-                afiliacion.bank,
-                afiliacion.account_number,
-                afiliacion.account_type
+                afiliacion.get('empleado') or "-",
+                afiliacion.get('eps') or "-",
+                afiliacion.get('arl') or "-",
+                afiliacion.get('risk_level') or "-",
+                afiliacion.get('afp') or "-",
+                afiliacion.get('compensation_box') or "-",
+                afiliacion.get('bank') or "-",
+                afiliacion.get('account_number') or "-",
+                afiliacion.get('account_type') or "-"
             ]
 
             for col_index, valor in enumerate(valores):
-                campo = ctk.CTkLabel(self.scroll_frame, text=valor or "-", anchor="w", font=("Arial", 11),
-                                     width=columnas[col_index][1], fg_color="#F2F2F2", text_color="black")
+                campo = ctk.CTkLabel(self.scroll_frame, text=valor, anchor="w", font=("Arial", 11),
+                                    width=columnas[col_index][1], fg_color="#F2F2F2", text_color="black")
                 campo.grid(row=row_index, column=col_index, padx=10, pady=5, sticky="nsew")
 
             # Botón Editar
             ctk.CTkButton(
                 self.scroll_frame, image=self.icon_editar, text="", width=30, height=30,
-                fg_color="transparent", command=lambda id=afiliacion.id: self.editar_afiliacion(id),hover_color="#D3D3D3"
+                fg_color="transparent", command=lambda id=afiliacion['id']: self.editar_afiliacion(id), hover_color="#D3D3D3"
             ).grid(row=row_index, column=len(columnas)-2, padx=5, pady=5)
 
             # Botón Eliminar
             ctk.CTkButton(
                 self.scroll_frame, image=self.icon_eliminar, text="", width=30, height=30,
-                fg_color="transparent", command=lambda a=afiliacion: self.eliminar_afiliacion(a),hover_color="#D3D3D3"
+                fg_color="transparent", command=lambda a=afiliacion: self.eliminar_afiliacion(a['id']), hover_color="#D3D3D3"
             ).grid(row=row_index, column=len(columnas)-1, padx=5, pady=5)
 
-    def buscar_afiliaciones(self):
+    def buscar_afiliaciones(self, event=None):
         filtros = {
             "nombre": self.entry_busqueda.get().lower(),
             "eps": self.filtro_eps.get().lower(),
             "arl": self.filtro_arl.get().lower(),
             "afp": self.filtro_afp.get().lower(),
+            "caja_compensacion": self.filtro_caja_compensacion.get().lower(),
             "banco": self.filtro_banco.get().lower(),
         }
         self.mostrar_afiliaciones(filtros)
@@ -189,13 +196,15 @@ class BuscarAfiliaciones(ctk.CTkFrame):
                 affiliation_id=affiliation_id
             ).pack(fill="both", expand=True)
         
-    def eliminar_afiliacion(self, afiliacion):
+    def eliminar_afiliacion(self, afiliacion_id):
         respuesta = messagebox.askyesno("Confirmar", "¿Estás seguro de eliminar esta afiliación?")
         if respuesta:
-            affiliation_service.eliminar_afiliacion(afiliacion.id)
+            # Accede al 'id' usando la clave del diccionario
+            affiliation_service.eliminar_afiliacion(afiliacion_id)
             messagebox.showinfo("Éxito", "Afiliación eliminada correctamente.")
             self.mostrar_afiliaciones()
     
     def volver_al_panel(self):
         if self.volver_callback:
+            self.destroy()
             self.volver_callback()

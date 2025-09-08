@@ -91,7 +91,8 @@ class RegistrarAfiliacion(ctk.CTkFrame):
             messagebox.showerror("Error", "Debes seleccionar un empleado válido.")
             return
 
-        afiliacion = EmpleadoAfiliacion(
+        afiliacion = Afiliacion(
+            id=None,
             employee_id=employee_id,
             eps=self.entry_eps.get(),
             arl=self.entry_arl.get(),
