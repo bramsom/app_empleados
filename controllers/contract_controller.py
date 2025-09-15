@@ -1,14 +1,14 @@
 from models.contract import Contrato
 from services.contract_service import *
 
-def registrar_contrato(datos_contrato_dict, datos_pago_dict):
+def registrar_contrato(datos_contrato_dict):
     """
     Registra un nuevo contrato y sus detalles de pago.
-    Recibe los datos en dos diccionarios separados.
+    Recibe los datos en un solo diccionario.
     """
     try:
-        # Creamos el objeto Contrato solo con los datos principales
-        contrato = Contrato(
+        contrato_obj = Contrato(
+            id=None,
             employee_id=datos_contrato_dict.get('employee_id'),
             type_contract=datos_contrato_dict.get('type_contract'),
             start_date=datos_contrato_dict.get('start_date'),
@@ -16,15 +16,16 @@ def registrar_contrato(datos_contrato_dict, datos_pago_dict):
             state=datos_contrato_dict.get('state'),
             contractor=datos_contrato_dict.get('contractor'),
             total_payment=datos_contrato_dict.get('total_payment'),
-            payment_frequency=datos_contrato_dict.get('payment_frequency')
+            payment_frequency=datos_contrato_dict.get('payment_frequency'),
+            monthly_payment=datos_contrato_dict.get('monthly_payment'),
+            transport=datos_contrato_dict.get('transport'),
+            value_hour=datos_contrato_dict.get('value_hour'),
+            number_hour=datos_contrato_dict.get('number_hour'),
         )
-        # Llamamos al servicio con ambos diccionarios para manejar la lógica
-        crear_contrato(contrato, datos_pago_dict)
-        return True
+        return crear_contrato(contrato_obj)
     except Exception as e:
-        print(f"Error al registrar contrato: {e}")
+        print(f"Error en el controlador al registrar contrato: {e}")
         return False
-
 
 
 def listar_contratos():
@@ -65,7 +66,17 @@ def modificar_contrato(contrato_id, datos_contrato_dict):
     except Exception as e:
         print(f"Error al modificar contrato: {e}")
         return False
-
+def consultar_contratos_por_empleado(employee_id):
+    """
+    Consulta y devuelve una lista de contratos para un empleado específico.
+    Esta es la función que la vista de detalle del empleado necesita.
+    """
+    try:
+        return obtener_contratos_por_empleado(employee_id)
+    except Exception as e:
+        print(f"Error en el controlador al obtener contratos por empleado: {e}")
+        return []
+    
 def modificar_pago_contrato(contrato_id, datos_pago_dict, fecha_efectiva):
     """Registra un cambio de pago en el historial del contrato"""
     try:

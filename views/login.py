@@ -3,7 +3,7 @@ from tkinter import Canvas
 from PIL import Image
 from tkinter import messagebox
 from bd.users import verificar_credenciales
-from views.apprentice_panel import Dashboard # <-- Cambié el import al dashboard
+from views.dashboard import Dashboard # <-- Cambié el import al dashboard
 import os
 
 

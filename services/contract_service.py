@@ -1,6 +1,7 @@
 import sqlite3
 from bd.connection import conectar
 from datetime import datetime
+from models.contract import Contrato
 
 def crear_contrato(contrato):
     conn = conectar()
@@ -217,6 +218,72 @@ def obtener_contrato_por_id(contrato_id):
     
     return contrato
 
+def obtener_contratos_por_empleado(employee_id):
+    conn = conectar()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT
+            c.id,
+            c.employee_id,
+            c.type_contract,
+            c.start_date,
+            c.end_date,
+            c.state,
+            c.contractor,
+            sh.monthly_payment,
+            sh.transport,
+            hh.value_hour,
+            hh.number_hour,
+            soh.new_total_payment,
+            soh.new_payment_frequency
+        FROM contracts c
+        LEFT JOIN salary_history sh ON sh.contract_id = c.id
+        AND sh.effective_date = (
+            SELECT MAX(effective_date)
+            FROM salary_history
+            WHERE contract_id = sh.contract_id
+        )
+        LEFT JOIN hourly_history hh ON hh.contract_id = c.id
+        AND hh.effective_date = (
+            SELECT MAX(effective_date)
+            FROM hourly_history
+            WHERE contract_id = hh.contract_id
+        )
+        LEFT JOIN service_order_history soh ON soh.contract_id = c.id
+        AND soh.effective_date = (
+            SELECT MAX(effective_date)
+            FROM service_order_history
+            WHERE contract_id = soh.contract_id
+        )
+        WHERE c.employee_id = ?
+        ORDER BY c.start_date DESC
+    """, (employee_id,))
+    
+    contratos_raw = cursor.fetchall()
+    conn.close()
+    
+    contratos = []
+    for row in contratos_raw:
+        # Crea una instancia de Contrato para cada fila
+        contratos.append(
+            Contrato(
+                id=row[0],
+                employee_id=row[1],
+                type_contract=row[2],
+                start_date=row[3],
+                end_date=row[4],
+                state=row[5],
+                contractor=row[6],
+                monthly_payment=row[7],
+                transport=row[8],
+                value_hour=row[9],
+                number_hour=row[10],
+                total_payment=row[11],
+                payment_frequency=row[12],
+            )
+        )
+    return contratos
 
 def actualizar_contrato(contrato_id, contrato_data):
     conn = conectar()

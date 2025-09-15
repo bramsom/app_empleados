@@ -1,66 +1,141 @@
 import sqlite3
 from bd.connection import conectar
-from models.employee import Empleado  # ¡Asegúrate de importar tu clase Empleado!
-
+from models.employee import Empleado
 
 def crear_empleado(empleado):
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO employees 
-        (name, last_name, document_type, document_number, document_issuance,
-        birthdate, phone_number, residence_address, RUT, email, position)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, empleado.to_tuple())
-    conn.commit()
-    conn.close()
+    try:
+        cursor.execute("""
+            INSERT INTO employees 
+            (name, last_name, document_type, document_number, document_issuance,
+            birthdate, phone_number, residence_address, RUT, email, position)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            empleado.name, empleado.last_name, empleado.document_type,
+            empleado.document_number, empleado.document_issuance,
+            empleado.birthdate, empleado.phone_number, empleado.residence_address,
+            empleado.RUT, empleado.email, empleado.position
+        ))
+        conn.commit()
+    except Exception as e:
+        print(f"Error al crear empleado: {e}")
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 def obtener_empleados():
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM employees")
-    datos = cursor.fetchall()
-    conn.close()
-    return datos
+    try:
+        cursor.execute("SELECT * FROM employees")
+        datos = cursor.fetchall()
+        
+        lista_empleados = []
+        for fila in datos:
+            # Asegúrate de que el orden de los datos de la base de datos
+            # coincida con el constructor de tu clase Empleado
+            lista_empleados.append(Empleado(*fila))
+        return lista_empleados
+    except Exception as e:
+        print(f"Error al obtener empleados: {e}")
+        return []
+    finally:
+        conn.close()
 
-def obtener_empleado_por_id(emp_id):
+def obtener_empleado_por_id(employee_id):
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("""
-                SELECT id, name, last_name, document_type, document_number, document_issuance,birthdate,
-                phone_number, residence_address, RUT, email, position
-                FROM employees 
-                WHERE id = ?""", (emp_id,))
-    emp_tuple = cursor.fetchone()
-    conn.close()
+    try:
+        cursor.execute("SELECT * FROM employees WHERE id = ?", (employee_id,))
+        emp_tuple = cursor.fetchone()
+        
+        if emp_tuple:
+            return Empleado(*emp_tuple)
+        return None
+    except Exception as e:
+        print(f"Error al obtener empleado por ID: {e}")
+        return None
+    finally:
+        conn.close()
 
-    if emp_tuple:
-        return Empleado(*emp_tuple)
-    return None
-
-def actualizar_empleado(emp_id, empleado):
+def actualizar_empleado(empleado_id, datos_empleado):
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE employees SET 
-        name=?, last_name=?, document_type=?, document_number=?, document_issuance=?,
-        birthdate=?, phone_number=?, residence_address=?, RUT=?, email=?, position=?
-        WHERE id=?
-    """, empleado.to_tuple() + (emp_id,))
-    conn.commit()
-    conn.close()
+    try:
+        # Se verifica si el empleado existe antes de actualizar
+        if not obtener_empleado_por_id(empleado_id):
+            raise ValueError("Empleado no encontrado.")
 
-def eliminar_empleado(emp_id):
+        cursor.execute("""
+            UPDATE employees SET 
+            name=?, last_name=?, document_type=?, document_number=?, document_issuance=?,
+            birthdate=?, phone_number=?, residence_address=?, RUT=?, email=?, position=?
+            WHERE id=?
+        """, (
+            datos_empleado.name, datos_empleado.last_name, datos_empleado.document_type,
+            datos_empleado.document_number, datos_empleado.document_issuance,
+            datos_empleado.birthdate, datos_empleado.phone_number, datos_empleado.residence_address,
+            datos_empleado.RUT, datos_empleado.email, datos_empleado.position,
+            empleado_id
+        ))
+        conn.commit()
+    except Exception as e:
+        print(f"Error al actualizar empleado: {e}")
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+def eliminar_empleado(empleado_id):
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM employees WHERE id = ?", (emp_id,))
-    conn.commit()
-    conn.close()
+    try:
+        # Se verifica si el empleado existe antes de eliminar
+        if not obtener_empleado_por_id(empleado_id):
+            raise ValueError("Empleado no encontrado.")
+
+        cursor.execute("DELETE FROM employees WHERE id = ?", (empleado_id,))
+        conn.commit()
+    except Exception as e:
+        print(f"Error al eliminar empleado: {e}")
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+def buscar_empleados_por_criterio(query):
+    conn = conectar()
+    cursor = conn.cursor()
+    try:
+        search_query = f"%{query}%"
+        cursor.execute("""
+            SELECT * FROM employees
+            WHERE name LIKE ? OR last_name LIKE ? OR position LIKE ? OR document_number LIKE ?
+        """, (search_query, search_query, search_query, search_query))
+        
+        datos = cursor.fetchall()
+        
+        lista_empleados = []
+        for fila in datos:
+            lista_empleados.append(Empleado(*fila))
+        return lista_empleados
+    except Exception as e:
+        print(f"Error al buscar empleados: {e}")
+        return []
+    finally:
+        conn.close()
 
 def obtener_empleados_para_combobox():
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name || ' ' || last_name FROM employees")
-    empleados = cursor.fetchall()
-    conn.close()
-    return empleados
+    try:
+        cursor.execute("SELECT id, name || ' ' || last_name FROM employees")
+        empleados = cursor.fetchall()
+        return empleados
+    except Exception as e:
+        print(f"Error al obtener empleados para combobox: {e}")
+        return []
+    finally:
+        conn.close()

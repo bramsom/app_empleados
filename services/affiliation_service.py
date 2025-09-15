@@ -1,6 +1,6 @@
 import sqlite3
 from bd.connection import conectar
-from models.affiliation import Afiliacion , EmpleadoAfiliacion
+from models.affiliation import Afiliacion
 
 def crear_afiliacion(afiliacion: Afiliacion):
     conn = conectar()
@@ -90,7 +90,7 @@ def obtener_afiliaciones_por_empleado(employee_id):
     cursor = conexion.cursor()
 
     cursor.execute("""
-        SELECT id, eps, arl, risk_level, afp, compensation_box, bank, account_number, account_type
+        SELECT id, employee_id, eps, arl, risk_level, afp, compensation_box, bank, account_number, account_type
         FROM affiliations
         WHERE employee_id = ?
     """, (employee_id,))
