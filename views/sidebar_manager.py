@@ -50,7 +50,7 @@ class SidebarManager:
             ("export.png", "Reportes", lambda: self.view_manager.create_view_placeholder("Reportes y Estadísticas")),
             ("config.png", "Usuarios", {
                 "Registrar Usuario": lambda: self.view_manager.show_view("usuarios_registrar"),
-                "Buscar Usuario": lambda: self.view_manager.create_view_placeholder("Búsqueda de Usuarios")
+                "Buscar Usuario": lambda: self.view_manager.show_view("usuarios_buscar")
             })
         ]
         

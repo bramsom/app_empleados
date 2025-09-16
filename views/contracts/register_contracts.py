@@ -1,29 +1,25 @@
-# C:\Users\Usuario\Documents\proyectos python\app_empleados\views\contracts\register_contracts.py
-
 import customtkinter as ctk
-from tkcalendar import Calendar
 import tkinter as tk
 from tkinter import messagebox
+from tkcalendar import Calendar
 from datetime import datetime
-from models.contract import Contrato
-from controllers import contract_controller
+from controllers import contract_controller, employee_controller
 from utils.canvas import agregar_fondo_decorativo
-from services import contract_service, employee_service
+from services import employee_service
 from utils.autocomplete import crear_autocompletado
 
 class RegistrarContrato(ctk.CTkFrame):
-    def __init__(self, parent, username=None, rol=None, volver_callback=None):
+    def __init__(self, parent, username=None, rol=None, employee_id=None, volver_callback=None):
         super().__init__(parent)
         self.username = username
         self.rol = rol
+        self.employee_id = employee_id
         self.volver_callback = volver_callback
         self.calendario_abierto = None
 
         # Estilos y configuración inicial
         self.configure(fg_color="#F5F5F5")
         agregar_fondo_decorativo(self)
-        empleados = employee_service.obtener_empleados_para_combobox()
-        self.empleados_dict = {f"{nombre}": id for id, nombre in empleados}
         self.entry_style = {"border_width": 0, "fg_color": "#D9D9D9", "text_color": "#000000", "height": 40}
         self.boton_style = {"font": ("Georgia", 14), "text_color": "black", "height": 50}
 
@@ -50,11 +46,25 @@ class RegistrarContrato(ctk.CTkFrame):
     def _crear_widgets(self):
         # Campo nombre empleado
         self.crear_label_entry("Nombre empleado", 0, 0, 2, "entry_empleado")
-        self.lista_empleados = ctk.CTkFrame(self.form_frame, fg_color="white", corner_radius=15, width=200)
-        self.entry_empleado.empleados_dict = self.empleados_dict
-        self.entry_empleado.bind("<KeyRelease>", crear_autocompletado(self.entry_empleado, self.lista_empleados, self.seleccionar_empleado))
-        self.lista_empleados.place(x=0, y=0)
-        self.lista_empleados.lower()
+
+        if self.employee_id:
+            # Si se pasó un ID, precargar el nombre y deshabilitar el campo
+            empleado = employee_controller.consultar_empleado_por_id(self.employee_id)
+            if empleado:
+                nombre_completo = f"{empleado.name} {empleado.last_name}"
+                self.entry_empleado.insert(0, nombre_completo)
+                self.entry_empleado.configure(state="disabled", fg_color="#E0E0E0")
+            else:
+                messagebox.showerror("Error", "Empleado no encontrado.")
+        else:
+            # Si no se pasó un ID, usar autocompletado
+            empleados = employee_service.obtener_empleados_para_combobox()
+            self.empleados_dict = {f"{nombre}": id for id, nombre in empleados}
+            self.lista_empleados = ctk.CTkFrame(self.form_frame, fg_color="white", corner_radius=15, width=200)
+            self.entry_empleado.empleados_dict = self.empleados_dict
+            self.entry_empleado.bind("<KeyRelease>", crear_autocompletado(self.entry_empleado, self.lista_empleados, self.seleccionar_empleado))
+            self.lista_empleados.place(x=0, y=0)
+            self.lista_empleados.lower()
 
         # Tipo de contrato
         self.crear_option_menu("Tipo contrato", 0, 2, ["CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO", "CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO", "CONTRATO SERVICIO HORA CATEDRA", "CONTRATO APRENDIZAJE SENA", "ORDEN PRESTACION DE SERVICIOS"], "tipo_contrato_var", self.actualizar_campos_pago)
@@ -80,6 +90,7 @@ class RegistrarContrato(ctk.CTkFrame):
         self.total_payment = ctk.CTkEntry(self.form_frame, placeholder_text="Pago total", **self.entry_style)
         self.label_frecuencia_pago  = ctk.CTkLabel(self.form_frame, text="Número de Cuotas", font=("Georgia", 12, "bold"))
         self.payment_frequency = ctk.CTkEntry(self.form_frame, placeholder_text="Número de cuotas", **self.entry_style)
+        
         # Otros campos que siempre son visibles
         self.crear_label_entry("Empleador", 4, 0, 2, "contractor")
         self.crear_option_menu("Estado", 4, 2, ["ACTIVO", "FINALIZADO", "RETIRADO"], "estado_var")
@@ -134,7 +145,7 @@ class RegistrarContrato(ctk.CTkFrame):
         # Lista de todos los widgets de pago
         pago_widgets = [self.label_mensualidad, self.monthly_payment, self.label_transporte, self.transport,
                         self.label_valor_hora, self.value_hour, self.label_numero_horas, self.number_hour,
-                        self.label_pago_total, self.total_payment,self.label_frecuencia_pago, self.payment_frequency]
+                        self.label_pago_total, self.total_payment, self.label_frecuencia_pago, self.payment_frequency]
 
         # Ocultar todos los widgets de pago
         for widget in pago_widgets:
@@ -178,43 +189,47 @@ class RegistrarContrato(ctk.CTkFrame):
         elif tipo_contrato == 'ORDEN PRESTACION DE SERVICIOS':
             self.label_pago_total.grid(row=2, column=2, sticky="w", pady=(5, 0), padx=5)
             self.total_payment.grid(row=3, column=2, padx=5, pady=(0, 10), sticky="ew")
-
             self.label_frecuencia_pago.grid(row=2, column=3, sticky="w", pady=(5, 0), padx=5)
             self.payment_frequency.grid(row=3, column=3, padx=5, pady=(0, 10), sticky="ew")
 
     def guardar_contrato(self):
-        empleado_nombre = self.entry_empleado.get()
-        employee_id = self.empleados_dict.get(empleado_nombre)
-
-        if employee_id is None:
-            messagebox.showerror("Error", "Debes seleccionar un empleado válido.")
-            return
-
-        tipo_contrato = self.tipo_contrato_var.get()
-        
-        contrato_data = {
-            'employee_id': employee_id,
-            'type_contract': tipo_contrato,
-            'start_date': self.start_date.get(),
-            'end_date': self.end_date.get(),
-            'state': self.estado_var.get(),
-            'contractor': self.contractor.get(),
-            'total_payment': float(self.total_payment.get()) if tipo_contrato == "ORDEN PRESTACION DE SERVICIOS" and self.total_payment.get() else 0.0,
-            'payment_frequency': float(self.payment_frequency.get()) if tipo_contrato == "ORDEN PRESTACION DE SERVICIOS" and self.payment_frequency.get() else 0.0,
-            'monthly_payment': float(self.monthly_payment.get()) if tipo_contrato in ["CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO", "CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO", "CONTRATO APRENDIZAJE SENA"] and self.monthly_payment.get() else 0.0,
-            'transport': float(self.transport.get()) if tipo_contrato in ["CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO", "CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO", "CONTRATO APRENDIZAJE SENA"] and self.transport.get() else 0.0,
-            'value_hour': float(self.value_hour.get()) if tipo_contrato == "CONTRATO SERVICIO HORA CATEDRA" and self.value_hour.get() else 0.0,
-            'number_hour': float(self.number_hour.get()) if tipo_contrato == "CONTRATO SERVICIO HORA CATEDRA" and self.number_hour.get() else 0.0
-        }
-
         try:
-            contrato = Contrato(**contrato_data)
-            contract_service.crear_contrato(contrato)
-            messagebox.showinfo("Éxito", "Contrato registrado correctamente.")
-            if self.volver_callback:
-                self.volver_callback()
+            employee_id = self.employee_id
+            if not employee_id:
+                empleado_nombre = self.entry_empleado.get()
+                if not empleado_nombre or empleado_nombre not in self.empleados_dict:
+                    messagebox.showerror("Error", "Debes seleccionar un empleado válido.")
+                    return
+                employee_id = self.empleados_dict[empleado_nombre]
+
+            tipo_contrato = self.tipo_contrato_var.get()
+            
+            contrato_data = {
+                'employee_id': employee_id,
+                'type_contract': tipo_contrato,
+                'start_date': self.start_date.get(),
+                'end_date': self.end_date.get() if self.end_date.cget("state") == "normal" else None,
+                'state': self.estado_var.get(),
+                'contractor': self.contractor.get(),
+                'total_payment': float(self.total_payment.get()) if tipo_contrato == "ORDEN PRESTACION DE SERVICIOS" and self.total_payment.get() else 0.0,
+                'payment_frequency': self.payment_frequency.get() if tipo_contrato == "ORDEN PRESTACION DE SERVICIOS" and self.payment_frequency.get() else "",
+                'monthly_payment': float(self.monthly_payment.get()) if tipo_contrato in ["CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO", "CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO", "CONTRATO APRENDIZAJE SENA"] and self.monthly_payment.get() else 0.0,
+                'transport': float(self.transport.get()) if tipo_contrato in ["CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO", "CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO", "CONTRATO APRENDIZAJE SENA"] and self.transport.get() else 0.0,
+                'value_hour': float(self.value_hour.get()) if tipo_contrato == "CONTRATO SERVICIO HORA CATEDRA" and self.value_hour.get() else 0.0,
+                'number_hour': float(self.number_hour.get()) if tipo_contrato == "CONTRATO SERVICIO HORA CATEDRA" and self.number_hour.get() else 0.0
+            }
+
+            if contract_controller.registrar_contrato(contrato_data):
+                messagebox.showinfo("Éxito", "Contrato registrado correctamente.")
+                if self.volver_callback:
+                    self.volver_callback()
+            else:
+                 messagebox.showerror("Error", "Ocurrió un error al registrar el contrato.")
+
+        except ValueError as ve:
+            messagebox.showerror("Error de formato", f"Por favor, ingrese valores numéricos válidos. {ve}")
         except Exception as e:
-            messagebox.showerror("Error", f"Error al registrar contrato: {e}")
+            messagebox.showerror("Error", f"Error inesperado: {e}")
 
     def seleccionar_empleado(self, nombre):
         self.entry_empleado.delete(0, "end")
