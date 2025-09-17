@@ -1,8 +1,7 @@
 import sqlite3
 import bcrypt
 from models.user import Usuario
-
-DATABASE_PATH = 'database/empleados.db'
+from bd.connection import conectar
 
 class UserModel:
     """
@@ -12,10 +11,10 @@ class UserModel:
     @staticmethod
     def create(username, password_hashed, rol):
         """Crea un nuevo usuario en la base de datos."""
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = conectar()
         cursor = conn.cursor()
         try:
-            cursor.execute("INSERT INTO usuarios (username, password, rol) VALUES (?, ?, ?)",
+            cursor.execute("INSERT INTO users (username, password, rol) VALUES (?, ?, ?)",
                            (username, password_hashed, rol))
             conn.commit()
             return True
@@ -27,9 +26,9 @@ class UserModel:
     @staticmethod
     def get_all():
         """Obtiene todos los usuarios de la base de datos."""
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = conectar()
         cursor = conn.cursor()
-        cursor.execute("SELECT id, username, password, rol FROM usuarios")
+        cursor.execute("SELECT id, username, password, rol FROM users")
         rows = cursor.fetchall()
         conn.close()
         return [Usuario(id=row[0], username=row[1], password=row[2], rol=row[3]) for row in rows]
@@ -37,9 +36,9 @@ class UserModel:
     @staticmethod
     def get_by_id(user_id):
         """Obtiene un usuario por su ID."""
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = conectar()
         cursor = conn.cursor()
-        cursor.execute("SELECT id, username, password, rol FROM usuarios WHERE id = ?", (user_id,))
+        cursor.execute("SELECT id, username, password, rol FROM users WHERE id = ?", (user_id,))
         row = cursor.fetchone()
         conn.close()
         if row:
@@ -49,9 +48,9 @@ class UserModel:
     @staticmethod
     def get_by_username(username):
         """Obtiene un usuario por su nombre de usuario."""
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = conectar()
         cursor = conn.cursor()
-        cursor.execute("SELECT password, rol FROM usuarios WHERE username = ?", (username,))
+        cursor.execute("SELECT password, rol FROM users WHERE username = ?", (username,))
         row = cursor.fetchone()
         conn.close()
         return row
@@ -59,10 +58,10 @@ class UserModel:
     @staticmethod
     def update(user_id, username, rol):
         """Actualiza el nombre de usuario y rol de un usuario."""
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = conectar()
         cursor = conn.cursor()
         try:
-            cursor.execute("UPDATE usuarios SET username = ?, rol = ? WHERE id = ?",
+            cursor.execute("UPDATE users SET username = ?, rol = ? WHERE id = ?",
                            (username, rol, user_id))
             conn.commit()
             return True
@@ -74,10 +73,10 @@ class UserModel:
     @staticmethod
     def update_password(user_id, new_password_hashed):
         """Actualiza la contraseña de un usuario."""
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = conectar()
         cursor = conn.cursor()
         try:
-            cursor.execute("UPDATE usuarios SET password = ? WHERE id = ?",
+            cursor.execute("UPDATE users SET password = ? WHERE id = ?",
                            (new_password_hashed, user_id))
             conn.commit()
             return True
@@ -89,10 +88,10 @@ class UserModel:
     @staticmethod
     def delete(user_id):
         """Elimina un usuario de la base de datos."""
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = conectar()
         cursor = conn.cursor()
         try:
-            cursor.execute("DELETE FROM usuarios WHERE id = ?", (user_id,))
+            cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
             conn.commit()
             return True
         except Exception:

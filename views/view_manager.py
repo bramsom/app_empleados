@@ -17,7 +17,8 @@ class ViewManager:
             "contratos_buscar": ("views.contracts.search_contracts", "BuscarContratos"),
             "afiliaciones_registrar": ("views.afilliations.register_affiliations", "RegistrarAfiliacion"),
             "afiliaciones_buscar": ("views.afilliations.search_affiliations", "BuscarAfiliaciones"),
-            "usuarios_buscar": ("views.show_users", "BuscarUsuarios")
+            "usuarios_registrar": ("views.users.register_users", "RegistrarUsuarios"),
+            "usuarios_buscar": ("views.users.search_users", "BuscarUsuarios")
         }
 
     def show_view(self, view_key, extra_args=None):

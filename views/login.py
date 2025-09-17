@@ -46,7 +46,7 @@ class LoginApp(ctk.CTk):
 
         try:
             logo_img = ctk.CTkImage(Image.open("C:/Users/Usuario/Documents/proyectos python/app_empleados/images/logo.png"), size=(140, 150))
-            logo_label = ctk.CTkLabel(frame_izquierdo, image=logo_img, text="", fg_color=frame_izquierdo.cget("fg_color"))
+            logo_label = ctk.CTkLabel(frame_izquierdo, image=logo_img, text="", fg_color="#FFEFEF")
             logo_label.place(relx=0.55, rely=0.45, anchor="center")
         except:
             # Si no se puede cargar la imagen, usar un emoji como respaldo

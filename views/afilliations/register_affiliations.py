@@ -1,6 +1,6 @@
 import customtkinter as ctk
 from tkinter import messagebox
-from models.affiliation import Afiliacion , EmpleadoAfiliacion
+from models.affiliation import Afiliacion 
 from controllers import affiliation_controller, employee_controller
 from utils.canvas import agregar_fondo_decorativo
 from services import affiliation_service, employee_service
