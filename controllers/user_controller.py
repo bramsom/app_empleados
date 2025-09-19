@@ -1,54 +1,51 @@
 from services.user_service import UserService
+from models.user import Usuario
 
 class UserController:
-    def crear(self, username, password, rol):
-        """
-        Crea un nuevo usuario a través del servicio.
-        """
-        try:
-            UserService.crear_usuario(username, password, rol)
-            return True, "Usuario creado exitosamente."
-        except ValueError as e:
-            return False, str(e)
+    def __init__(self):
+        self.user_service = UserService()
 
-    def listar(self):
+    def registrar(self, username, password, rol):
         """
-        Lista todos los usuarios.
+        Llama al servicio para registrar un nuevo usuario.
+        Lanza excepciones si hay un error.
         """
-        return UserService.obtener_usuarios()
+        self.user_service.crear_usuario(username, password, rol)
+
+    def modificar(self, user_id, username, password, rol):
+        """
+        Modifica un usuario existente.
+        Este método maneja la lógica para actualizar el usuario y la contraseña de forma separada.
+        """
+        
+        # 1. Llama al servicio para actualizar el nombre de usuario y el rol.
+        self.user_service.actualizar_usuario(user_id, username, rol)
+
+        # 2. Si se proporciona una contraseña (no es None y no está vacía), llama al servicio para cambiarla.
+        if password is not None and password.strip() != "":
+            self.user_service.cambiar_contraseña(user_id, password)
 
     def eliminar(self, user_id):
         """
-        Elimina un usuario por su ID.
+        Llama al servicio para eliminar un usuario.
+        Lanza excepciones si hay un error.
         """
-        try:
-            UserService.eliminar_usuario(user_id)
-            return True, "Usuario eliminado correctamente."
-        except ValueError as e:
-            return False, str(e)
+        self.user_service.eliminar_usuario(user_id)
 
-    def actualizar(self, user_id, username, rol):
+    def obtener_todos(self):
         """
-        Actualiza los datos de un usuario.
+        Llama al servicio para obtener todos los usuarios.
         """
-        try:
-            UserService.actualizar_usuario(user_id, username, rol)
-            return True, "Usuario actualizado correctamente."
-        except ValueError as e:
-            return False, str(e)
+        return self.user_service.obtener_usuarios()
 
-    def cambiar_password(self, user_id, nueva):
+    def obtener_por_id(self, user_id):
         """
-        Cambia la contraseña de un usuario.
+        Llama al servicio para obtener un usuario por ID.
         """
-        try:
-            UserService.cambiar_contraseña(user_id, nueva)
-            return True, "Contraseña cambiada exitosamente."
-        except ValueError as e:
-            return False, str(e)
-
+        return self.user_service.obtener_por_id(user_id)
+        
     def login(self, username, password):
         """
-        Verifica las credenciales de un usuario.
+        Llama al servicio para verificar las credenciales de un usuario.
         """
-        return UserService.verificar_credenciales(username, password)
+        return self.user_service.verificar_credenciales(username, password)

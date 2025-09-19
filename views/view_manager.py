@@ -17,7 +17,7 @@ class ViewManager:
             "contratos_buscar": ("views.contracts.search_contracts", "BuscarContratos"),
             "afiliaciones_registrar": ("views.afilliations.register_affiliations", "RegistrarAfiliacion"),
             "afiliaciones_buscar": ("views.afilliations.search_affiliations", "BuscarAfiliaciones"),
-            "usuarios_registrar": ("views.users.register_users", "RegistrarUsuarios"),
+            "usuarios_registrar": ("views.users.register_users", "FormularioRegistroEdicion"),
             "usuarios_buscar": ("views.users.search_users", "BuscarUsuarios")
         }
 
