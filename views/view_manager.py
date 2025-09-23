@@ -1,6 +1,9 @@
 import customtkinter as ctk
 import importlib
 from tkinter import messagebox
+from controllers.report_controller import obtener_datos_para_excel
+from views.reports.export_excel import ExportarExcel
+
 
 class ViewManager:
     def __init__(self, content_area, username, rol, volver_callback):
@@ -17,6 +20,7 @@ class ViewManager:
             "contratos_buscar": ("views.contracts.search_contracts", "BuscarContratos"),
             "afiliaciones_registrar": ("views.afilliations.register_affiliations", "RegistrarAfiliacion"),
             "afiliaciones_buscar": ("views.afilliations.search_affiliations", "BuscarAfiliaciones"),
+            "Reportes": ("views.reports.export_excel", "ExportarExcel"),
             "usuarios_registrar": ("views.users.register_users", "FormularioRegistroEdicion"),
             "usuarios_buscar": ("views.users.search_users", "BuscarUsuarios")
         }
@@ -25,6 +29,10 @@ class ViewManager:
         """Loads and displays a view by its key."""
         if view_key not in self.views:
             messagebox.showerror("Error", f"View '{view_key}' not found.")
+            return
+        
+        if view_key == "Reportes":
+            self._show_exportar_excel()
             return
 
         self.clear_content_area()
@@ -58,3 +66,15 @@ class ViewManager:
         """Clears all widgets from the content area."""
         for widget in self.content_area.winfo_children():
             widget.destroy()
+
+    def _show_exportar_excel(self):
+        # Limpia el área de contenido
+        for widget in self.content_area.winfo_children():
+            widget.destroy()
+        ExportarExcel(
+            parent=self.content_area,
+            username=self.username,
+            rol=self.rol,
+            obtener_datos_callback=obtener_datos_para_excel,
+            volver_callback=self.volver_callback
+        ).pack(fill="both", expand=True)

@@ -47,7 +47,7 @@ class SidebarManager:
                 "Registrar Afiliación": lambda: self.view_manager.show_view("afiliaciones_registrar"),
                 "Buscar Afiliación": lambda: self.view_manager.show_view("afiliaciones_buscar")
             }),
-            ("export.png", "Reportes", lambda: self.view_manager.create_view_placeholder("Reportes y Estadísticas")),
+            ("export.png", "Reportes", lambda: self.view_manager.show_view("Reportes")),
             ("config.png", "Usuarios", {
                 "Registrar Usuario": lambda: self.view_manager.show_view("usuarios_registrar"),
                 "Buscar Usuario": lambda: self.view_manager.show_view("usuarios_buscar")

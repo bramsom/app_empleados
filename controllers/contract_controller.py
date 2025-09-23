@@ -94,3 +94,4 @@ def borrar_contrato(contrato_id):
     except Exception as e:
         print(f"Error al eliminar contrato: {e}")
         return False
+    
