@@ -9,12 +9,12 @@ class SidebarManager:
     def __init__(self, sidebar_frame, view_manager, main_app_instance):
         self.sidebar_frame = sidebar_frame
         self.view_manager = view_manager
-        self.main_app = main_app_instance  # Reference to the main app instance
+        self.main_app = main_app_instance  # referencia a la instancia principal de la app
         
         self.menu_expanded = False
         self.menu_width = {"collapsed": 60, "expanded": 200}
         
-        # New: Create the inner frames for the menu
+        # crea los contenedores del menu
         self.menu_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="transparent")
         self.menu_frame.pack(fill="both", expand=True)
         self.menu_inner_frame = ctk.CTkFrame(self.menu_frame, fg_color="transparent")
@@ -30,10 +30,9 @@ class SidebarManager:
     def create_menu(self):
         """Creates the menu with a simplified configuration."""
         ruta_img = os.path.join(os.getcwd(), "images")
-        
+        # envia correctamente los comandos al view_manager
         menu_items = [
             ("logo.png", "MENÚ", None, True),
-            # Correctly delegate commands to the ViewManager
             ("home.png", "Home", lambda: self.main_app.show_default_view()),
             ("emplooye.png", "Empleados", {
                 "Registrar Empleado": lambda: self.view_manager.show_view("empleados_registrar"),

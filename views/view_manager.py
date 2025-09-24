@@ -2,7 +2,7 @@ import customtkinter as ctk
 import importlib
 from tkinter import messagebox
 from controllers.report_controller import obtener_datos_para_excel
-from views.reports.export_excel import ExportarExcel
+from views.reports.type_reports import ExportarTipoReporte
 
 
 class ViewManager:
@@ -12,7 +12,7 @@ class ViewManager:
         self.rol = rol
         self.volver_callback = volver_callback
         
-        # This dictionary defines all your views
+        # Este diccionario mapea las claves de vista a sus módulos y clases correspondientes
         self.views = {
             "empleados_registrar": ("views.employees.register_employees", "RegistrarEmpleados"),
             "empleados_buscar": ("views.employees.search_employees", "BuscarEmpleados"),
@@ -20,7 +20,7 @@ class ViewManager:
             "contratos_buscar": ("views.contracts.search_contracts", "BuscarContratos"),
             "afiliaciones_registrar": ("views.afilliations.register_affiliations", "RegistrarAfiliacion"),
             "afiliaciones_buscar": ("views.afilliations.search_affiliations", "BuscarAfiliaciones"),
-            "Reportes": ("views.reports.export_excel", "ExportarExcel"),
+            "Reportes": ("views.reports.type_reports", "ExportarTipoReporte"),
             "usuarios_registrar": ("views.users.register_users", "FormularioRegistroEdicion"),
             "usuarios_buscar": ("views.users.search_users", "BuscarUsuarios")
         }
@@ -43,7 +43,7 @@ class ViewManager:
             module = importlib.import_module(module_name)
             view_class = getattr(module, class_name)
             
-            # Pass all necessary args and callbacks
+            # Pasa todos los argumentos necesarios al constructor de la vista
             view_instance = view_class(
                 parent=self.content_area,
                 username=self.username,
@@ -71,7 +71,7 @@ class ViewManager:
         # Limpia el área de contenido
         for widget in self.content_area.winfo_children():
             widget.destroy()
-        ExportarExcel(
+        ExportarTipoReporte(
             parent=self.content_area,
             username=self.username,
             rol=self.rol,

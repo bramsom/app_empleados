@@ -6,7 +6,7 @@ from views.sidebar_manager import SidebarManager
 from tkinter import Canvas, messagebox
 from PIL import Image
 from utils.canvas import agregar_fondo_decorativo
-import os  # Make sure this is imported for file path operations
+import os 
 
 class Dashboard(ctk.CTk):
     def __init__(self, username, rol):
@@ -15,23 +15,21 @@ class Dashboard(ctk.CTk):
         self.rol = rol
         self.user_button_expanded = False
         
-        # Correctly define menu_width here, as it's used in create_layout
+        #Estado del menu
         self.menu_width = {"collapsed": 60, "expanded": 200}
-        
         self.setup_window()
         
-        # Initialize the main UI components
+        # Inicializa y crea el layout
         self.create_layout()
 
-        # Initialize the managers with their respective responsibilities
+        # inicializa las gestiones con sus respectivas responsabilidades
         self.view_manager = ViewManager(
             self.content_area, 
             self.username, 
             self.rol, 
             self.show_default_view
-        )
-        
-        # Pass a reference to the main app instance to the SidebarManager
+        )  
+        # pasa una referencia del sidebar al gestor de vistas
         self.sidebar_manager = SidebarManager(self.sidebar, self.view_manager, self)
         
         self.show_default_view()
@@ -48,13 +46,13 @@ class Dashboard(ctk.CTk):
         self.header.pack(side="top", fill="x")
         self.header.pack_propagate(False)
         
-        # Main container
+        # contenedor principal
         self.main_container = ctk.CTkFrame(self)
         self.main_container.pack(side="top", fill="both", expand=True)
         
         self.init_header()
         
-        # Content area
+        # area de contenido y sidebar
         self.content_area = ctk.CTkFrame(self.main_container, fg_color="#F5F5F5")
         self.content_area.pack(fill="both", expand=True, padx=2, pady=2)
         
@@ -110,7 +108,7 @@ class Dashboard(ctk.CTk):
         """Toggles the user menu."""
         if not self.user_button_expanded:
             self.user_button_expanded = True
-            # Use self.winfo_width() from the main app window
+            
             self.logout_button.place(x=self.winfo_width() - 120, y=2)
             self.logout_button.lift()
         else:
@@ -119,7 +117,7 @@ class Dashboard(ctk.CTk):
             
     def show_default_view(self):
         """Displays the home screen with geometric design."""
-        # Use the ViewManager to clear the content area
+        # use el view_manager para limpiar el area de contenido
         self.view_manager.clear_content_area()
         
         canvas = Canvas(self.content_area, bg="#F5F5F5", highlightthickness=0)
