@@ -18,8 +18,16 @@ def obtener_periodo_laborado(employee_id):
     return fecha_inicio, fecha_fin
 
 def calcular_tiempo_laborado(fecha_inicio, fecha_fin):
-    inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d")
-    fin = datetime.strptime(fecha_fin, "%Y-%m-%d")
+    # Detecta el formato de fecha automáticamente
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            inicio = datetime.strptime(fecha_inicio, fmt)
+            fin = datetime.strptime(fecha_fin, fmt)
+            break
+        except ValueError:
+            continue
+    else:
+        raise ValueError("Formato de fecha no soportado.")
     diferencia = fin - inicio
     años = diferencia.days // 365
     meses = (diferencia.days % 365) // 30

@@ -5,13 +5,15 @@ from PIL import Image
 from fpdf import FPDF
 from utils.canvas import agregar_fondo_decorativo
 from services.pdf_generator import obtener_periodo_laborado, calcular_tiempo_laborado
+from controllers.report_controller import ReportController
 
 class ExportarTipoReporte(ctk.CTkFrame):
-    def __init__(self, parent, username, rol, obtener_datos_callback, volver_callback):
+    def __init__(self, parent, username, rol, obtener_datos_excel_callback, obtener_datos_pdf_callback, volver_callback):
         super().__init__(parent)
         self.username = username
         self.rol = rol
-        self.obtener_datos_callback = obtener_datos_callback
+        self.obtener_datos_excel_callback = obtener_datos_excel_callback
+        self.obtener_datos_pdf_callback = obtener_datos_pdf_callback
         self.volver_callback = volver_callback
 
 
@@ -50,7 +52,7 @@ class ExportarTipoReporte(ctk.CTkFrame):
 
     def exportar_excel(self):
         try:
-            datos = self.obtener_datos_callback()
+            datos = self.obtener_datos_excel_callback()
             if not datos:
                 messagebox.showinfo("Sin datos", "No hay datos para exportar.")
                 return
@@ -78,14 +80,11 @@ class ExportarTipoReporte(ctk.CTkFrame):
 
         def buscar_empleado():
             texto = entry_busqueda.get().strip().lower()
-            empleados = self.obtener_datos_callback()
-            encontrados = [
-                e for e in empleados
-                if texto in e["name"].lower() or texto in str(e["document_number"]).lower()
-            ]
+            empleados = self.obtener_datos_pdf_callback()
+            encontrados = ReportController.buscar_empleado_por_nombre_o_documento(empleados, texto)
             if encontrados:
-                emp = encontrados[0]  # Solo muestra el primero encontrado
-                resultado_label.configure(text=f"Nombre: {emp['name']}\nDocumento: {emp['document_number']}")
+                emp = encontrados[0]
+                resultado_label.configure(text=f"Nombre: {emp.name}\nDocumento: {emp.document_number}")
                 ventana.selected_empleado = emp
             else:
                 resultado_label.configure(text="No encontrado")
@@ -96,16 +95,15 @@ class ExportarTipoReporte(ctk.CTkFrame):
             if not emp:
                 messagebox.showerror("Error", "No se ha seleccionado un empleado válido.")
                 return
-            fecha_inicio, fecha_fin = obtener_periodo_laborado(emp['id'])
-            tiempo_laborado = calcular_tiempo_laborado(fecha_inicio, fecha_fin)
+            fecha_inicio, fecha_fin, tiempo_laborado = ReportController.generar_info_laboral(emp.id)
             pdf = FPDF()
             pdf.add_page()
             pdf.set_font("Arial", size=14)
             pdf.cell(200, 10, txt="Reporte de Trabajo", ln=True, align="C")
             pdf.ln(10)
-            pdf.cell(0, 10, f"Nombre: {emp['name']}", ln=True)
-            pdf.cell(0, 10, f"Documento: {emp['document_number']}", ln=True)
-            pdf.cell(0, 10, f"Cargo: {emp.get('position', 'N/A')}", ln=True)
+            pdf.cell(0, 10, f"Nombre: {emp.name}", ln=True)
+            pdf.cell(0, 10, f"Documento: {emp.document_number}", ln=True)
+            pdf.cell(0, 10, f"Cargo: {getattr(emp, 'position', 'N/A')}", ln=True)
             pdf.cell(0, 10, f"Tiempo laborado: {tiempo_laborado}", ln=True)
             pdf.cell(0, 10, f"Periodo: {fecha_inicio} a {fecha_fin}", ln=True)
             ruta = "C:/Users/Usuario/Documents/reportes app empleados/reporte_empleado.pdf"

@@ -1,7 +1,7 @@
 import customtkinter as ctk
 import importlib
 from tkinter import messagebox
-from controllers.report_controller import obtener_datos_para_excel
+from controllers.report_controller import obtener_datos_para_excel, obtener_datos_para_pdf
 from views.reports.type_reports import ExportarTipoReporte
 
 
@@ -32,7 +32,7 @@ class ViewManager:
             return
         
         if view_key == "Reportes":
-            self._show_exportar_excel()
+            self._show_exportar()
             return
 
         self.clear_content_area()
@@ -66,15 +66,15 @@ class ViewManager:
         """Clears all widgets from the content area."""
         for widget in self.content_area.winfo_children():
             widget.destroy()
-
-    def _show_exportar_excel(self):
-        # Limpia el área de contenido
+            
+    def _show_exportar(self):
         for widget in self.content_area.winfo_children():
             widget.destroy()
         ExportarTipoReporte(
             parent=self.content_area,
             username=self.username,
             rol=self.rol,
-            obtener_datos_callback=obtener_datos_para_excel,
+            obtener_datos_excel_callback=obtener_datos_para_excel,  # Para Excel
+            obtener_datos_pdf_callback=obtener_datos_para_pdf,      # Para PDF
             volver_callback=self.volver_callback
         ).pack(fill="both", expand=True)
