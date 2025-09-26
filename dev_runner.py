@@ -12,7 +12,7 @@ ARCHIVO = os.path.join(BASE_DIR, "views", "crud_employees.py")
 
 # Ruta al Python del entorno virtual
 # Usa la ruta relativa para que funcione en cualquier equipo
-PYTHON_EXECUTABLE = os.path.join(BASE_DIR, ".venv", "Scripts", "python.exe")
+PYTHON_EXECUTABLE = os.path.join(BASE_DIR, "venv", "Scripts", "python.exe")
 
 # Archivo principal a ejecutar (login.py o main.py)
 MAIN = os.path.join(BASE_DIR, "main.py")
