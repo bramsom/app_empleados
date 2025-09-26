@@ -4,14 +4,18 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import os
 
+# Directorio base del proyecto (donde está dev_runner.py)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # Archivo que estás observando
-ARCHIVO = "views/crud_employees.py"
+ARCHIVO = os.path.join(BASE_DIR, "views", "crud_employees.py")
 
 # Ruta al Python del entorno virtual
-PYTHON_EXECUTABLE = r"C:\Users\Usuario\Documents\proyectos python\app_empleados\venv\Scripts\python.exe"
+# Usa la ruta relativa para que funcione en cualquier equipo
+PYTHON_EXECUTABLE = os.path.join(BASE_DIR, ".venv", "Scripts", "python.exe")
 
-# Archivo principal a ejecutar (login.py)
-MAIN = "main.py"
+# Archivo principal a ejecutar (login.py o main.py)
+MAIN = os.path.join(BASE_DIR, "main.py")
 
 PROCESO = None
 
