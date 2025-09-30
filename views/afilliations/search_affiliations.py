@@ -121,15 +121,15 @@ class BuscarAfiliaciones(ctk.CTkFrame):
             afiliaciones = list(filter(cumple_filtros, afiliaciones))
 
         columnas = [
-            ("Empleado", 200),
-            ("EPS", 70),
-            ("ARL", 70),
+            ("Empleado", 260),
+            ("EPS", 90),
+            ("ARL", 90),
             ("Riesgo", 60),
-            ("AFP", 70),
-            ("Caja Compensacion.", 110),
+            ("AFP", 90),
+            ("Caja Compensacion.", 150),
             ("Banco", 80),
             ("Cuenta", 90),
-            ("Tipo", 90),
+            ("Tipo", 140),
             ("Editar", 50),
             ("Eliminar", 50)
         ]
