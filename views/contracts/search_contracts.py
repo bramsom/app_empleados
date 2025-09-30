@@ -152,8 +152,8 @@ class BuscarContratos(ctk.CTkFrame):
 
         # Crear encabezado
         for col, (nombre, _) in enumerate(columnas):
-            celda = ctk.CTkFrame(self.scroll_frame, fg_color="#A9A9A9", corner_radius=5)
-            celda.grid(row=0, column=col, padx=2, pady=5, sticky="nsew")
+            celda = ctk.CTkFrame(self.scroll_frame, fg_color="#D12B1B", corner_radius=3)
+            celda.grid(row=0, column=col, padx=1, pady=5, sticky="nsew")
             label = ctk.CTkLabel(celda, text=nombre, font=("Georgia", 11, "bold"), text_color="black")
             label.pack(expand=True)
 
@@ -181,6 +181,10 @@ class BuscarContratos(ctk.CTkFrame):
             else:
                 tipo_contrato_mostrar = tipo_contrato_original
             
+            if row % 2 == 0:
+                color_fila = "#F0F0F0"  # Gris claro
+            else:
+                color_fila = "#D9D9D9"  # Gris más oscuro
             # Crear fila
             valores = [
                 contrato["empleado"],
@@ -192,24 +196,32 @@ class BuscarContratos(ctk.CTkFrame):
                 f"${valor_estimado:,.2f}"
             ]
             for col, valor in enumerate(valores):
-                celda = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
-                celda.grid(row=row, column=col, padx=1, pady=2, sticky="nsew")
+                celda = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila,corner_radius=0)
+                celda.grid(row=row, column=col, padx=0, pady=2, sticky="nsew")
                 ctk.CTkLabel(celda, text=valor, font=("Arial", 9)).pack(expand=True)
 
-            # Botones de acción
+                # Botones de acción (puedes dejar fg_color="transparent" o usar color_fila)
             acciones = [
                 ("", self.icon_ver, lambda c=contrato: self.ver_detalle(c)),
                 ("", self.icon_editar, lambda c=contrato: self.editar_contrato(c)),
                 ("", self.icon_eliminar, lambda c=contrato: self.eliminar_contrato(c))
             ]
-            
             for i, (texto, icono, comando) in enumerate(acciones):
+                celda_btn = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila, corner_radius=0)
+                celda_btn.grid(row=row, column=7 + i, padx=0, pady=2, sticky="nsew")
                 btn = ctk.CTkButton(
-                    self.scroll_frame, text=texto, image=icono, width=40, height=30,
-                    fg_color="transparent", hover_color="#D3D3D3", command=comando
+                    celda_btn,
+                    text=texto,
+                    image=icono,
+                    width=25,
+                    height=25,
+                    fg_color=color_fila,         # Mismo color que la fila
+                    hover_color="#B0B0B0",       # Color de hover para distinguir
+                    corner_radius=5,
+                    command=comando
                 )
-                btn.grid(row=row, column=7 + i, padx=1, pady=2)
-            
+                btn.pack(padx=4, pady=4)
+
             row += 1
     def ver_detalle(self, contrato):
         self.pack_forget()

@@ -100,15 +100,15 @@ class BuscarAfiliaciones(ctk.CTkFrame):
         self.mostrar_afiliaciones()
 
     def mostrar_afiliaciones(self, filtros=None):
+        # 1. Eliminar widgets anteriores
         for widget in self.scroll_frame.winfo_children():
             widget.destroy()
 
-        # Ahora el servicio devuelve una lista de diccionarios
+        # 2. Obtener datos y aplicar filtros
         afiliaciones = affiliation_controller.listar_afiliaciones()
     
         if filtros:
             def cumple_filtros(afi):
-            # Usar la clave 'empleado' del diccionario para el filtro
                 nombre_empleado = (afi.get('empleado') or "").lower()
                 return (
                     filtros["nombre"] in nombre_empleado and
@@ -133,16 +133,27 @@ class BuscarAfiliaciones(ctk.CTkFrame):
             ("Editar", 50),
             ("Eliminar", 50)
         ]
+        
+        # Asegurar que el scroll_frame tenga configuradas las columnas
+        for col_index in range(len(columnas)):
+            self.scroll_frame.grid_columnconfigure(col_index, weight=0)
 
         # === ENCABEZADOS ===
         for col_index, (texto, ancho) in enumerate(columnas):
             label = ctk.CTkLabel(self.scroll_frame, text=texto, font=("Georgia", 11, "bold"),
-                                width=ancho, anchor="w", fg_color="#A9A9A9", corner_radius=8, text_color="black")
-            label.grid(row=0, column=col_index, padx=2, pady=5, sticky="nsew")
+                                 width=ancho, anchor="w", fg_color="#D12B1B", corner_radius=3, text_color="black")
+            label.grid(row=0, column=col_index, padx=1, pady=5, sticky="nsew")
 
-        # === FILAS DE DATOS ===
+        
+        # === FILAS DE DATOS (CON COLORES ALTERNOS) ===
         for row_index, afiliacion in enumerate(afiliaciones, start=1):
-            # Acceder a los valores usando claves de diccionario (get() es seguro para claves faltantes)
+            
+            # 1. Definir color de fila
+            if row_index % 2 == 0:
+                color_fila = "#F0F0F0"  # Gris claro
+            else:
+                color_fila = "#D9D9D9"  # Gris más oscuro
+                
             valores = [
                 afiliacion.get('empleado') or "-",
                 afiliacion.get('eps') or "-",
@@ -155,22 +166,41 @@ class BuscarAfiliaciones(ctk.CTkFrame):
                 afiliacion.get('account_type') or "-"
             ]
 
+            # 2. Crear las celdas de datos con el color de fondo de la fila
             for col_index, valor in enumerate(valores):
-                campo = ctk.CTkLabel(self.scroll_frame, text=valor, anchor="w", font=("Arial", 11),
-                                    width=columnas[col_index][1], fg_color="#F2F2F2", text_color="black")
-                campo.grid(row=row_index, column=col_index, padx=10, pady=5, sticky="nsew")
+                
+                # Usamos un CTkFrame para contener la etiqueta y darle el color
+                celda_frame = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila, corner_radius=0, 
+                                           width=columnas[col_index][1], height=30)
+                celda_frame.grid(row=row_index, column=col_index, padx=0, pady=0, sticky="nsew")
+                
+                # La etiqueta dentro del frame usa el mismo color de fondo
+                campo = ctk.CTkLabel(celda_frame, text=valor, anchor="w", font=("Arial", 11), 
+                                     fg_color="transparent", text_color="black")
+                campo.pack(fill="both", expand=True, padx=10, pady=5) # Usamos pack para centrar verticalmente
 
+            # 3. Botones de acción (Editar y Eliminar)
+            
             # Botón Editar
+            col_editar = len(columnas) - 2
+            celda_editar = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila, corner_radius=0, width=columnas[col_editar][1], height=30)
+            celda_editar.grid(row=row_index, column=col_editar, padx=0, pady=0, sticky="nsew")
+            
             ctk.CTkButton(
-                self.scroll_frame, image=self.icon_editar, text="", width=30, height=30,
-                fg_color="transparent", command=lambda id=afiliacion['id']: self.editar_afiliacion(id), hover_color="#D3D3D3"
-            ).grid(row=row_index, column=len(columnas)-2, padx=5, pady=5)
+                celda_editar, image=self.icon_editar, text="", width=30, height=30,
+                fg_color="transparent", command=lambda id=afiliacion['id']: self.editar_afiliacion(id), hover_color="#B0B0B0"
+            ).pack(expand=True, padx=4, pady=4)
 
             # Botón Eliminar
+            col_eliminar = len(columnas) - 1
+            celda_eliminar = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila, corner_radius=0, width=columnas[col_eliminar][1], height=30)
+            celda_eliminar.grid(row=row_index, column=col_eliminar, padx=0, pady=0, sticky="nsew")
+            
             ctk.CTkButton(
-                self.scroll_frame, image=self.icon_eliminar, text="", width=30, height=30,
-                fg_color="transparent", command=lambda a=afiliacion: self.eliminar_afiliacion(a['id']), hover_color="#D3D3D3"
-            ).grid(row=row_index, column=len(columnas)-1, padx=5, pady=5)
+                celda_eliminar, image=self.icon_eliminar, text="", width=30, height=30,
+                fg_color="transparent", command=lambda id=afiliacion['id']: self.eliminar_afiliacion(id), hover_color="#B0B0B0"
+            ).pack(expand=True, padx=4, pady=4)
+
 
     def buscar_afiliaciones(self, event=None):
         filtros = {

@@ -66,7 +66,7 @@ class BuscarEmpleados(ctk.CTkFrame):
 
         # Título fuera del scroll, dentro de la tarjeta
         titulo = ctk.CTkLabel(self.card, text="EMPLEADOS", font=("Georgia", 16), text_color="#06A051")
-        titulo.pack(pady=(10, 5), padx=(20, 0), anchor="w") 
+        titulo.pack(pady=(10, 0), padx=(20, 0), anchor="w") 
 
         # Lista scrollable de empleados
         self.scroll_frame = ctk.CTkScrollableFrame(self.card, height=300, fg_color="transparent")
@@ -133,34 +133,43 @@ class BuscarEmpleados(ctk.CTkFrame):
                    "Teléfono", "Correo", "Cargo", "Ver", "Editar", "Eliminar"]
 
         for i, header in enumerate(headers):
-            cell = ctk.CTkFrame(self.scroll_frame, fg_color="#A9A9A9", corner_radius=5)
-            cell.grid(row=0, column=i, padx=2, pady=5, sticky="nsew")
+            cell = ctk.CTkFrame(self.scroll_frame, fg_color="#D12B1B", corner_radius=3)
+            cell.grid(row=0, column=i, padx=1, pady=5, sticky="nsew")
             label = ctk.CTkLabel(cell, text=header, font=("Georgia", 11, "bold"), text_color="black")
             label.pack(expand=True)
 
         # Filas de empleados filtrados
         row = 1
-        for emp in empleados_a_mostrar: # Ahora itera sobre la lista ya filtrada
+        for emp in empleados_a_mostrar:
+            # Alterna el color de la fila
+            color_fila = "#F0F0F0" if row % 2 == 0 else "#D9D9D9"
             valores = [emp.name, emp.last_name, emp.document_type, emp.document_number,
                        emp.birthdate, emp.phone_number, emp.email, emp.position]
-
             for col, texto in enumerate(valores):
-                cell = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
-                cell.grid(row=row, column=col, padx=2, pady=3, sticky="nsew")
-                ctk.CTkLabel(cell, text=texto, font=("Arial", 10.5), anchor="center").pack(expand=True)
-
+                celda = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila, corner_radius=0)
+                celda.grid(row=row, column=col, padx=0, pady=2, sticky="nsew")
+                ctk.CTkLabel(celda, text=texto, font=("Arial", 10.5)).pack(expand=True)
             # Botones
             btns = [
                 ("", self.icon_ver, lambda e=emp: self.mostrar_detalle(e)),
                 ("", self.icon_editar, lambda e=emp: self.editar_empleado(e)),
-                ("", self.icon_eliminar, lambda e=emp: self.mostrar_detalle(e))
+                ("", self.icon_eliminar, lambda e=emp: self.eliminar_empleado(e))
             ]
             for i, (txt, icon, cmd) in enumerate(btns):
-                btn = ctk.CTkButton(self.scroll_frame, text=txt, image=icon, width=40, height=30,
-                                     fg_color="transparent", hover_color="#D3D3D3",
-                                     command=cmd, compound="left")
-                btn.grid(row=row, column=8 + i, padx=2, pady=3)
-
+                celda_btn = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila, corner_radius=0)
+                celda_btn.grid(row=row, column=8 + i, padx=0, pady=2, sticky="nsew")
+                btn = ctk.CTkButton(
+                    celda_btn,
+                    text=txt,
+                    image=icon,
+                    width=25,
+                    height=25,
+                    fg_color=color_fila,
+                    hover_color="#B0B0B0",
+                    corner_radius=5,
+                    command=cmd
+                )
+                btn.pack(padx=4, pady=4)
             row += 1
 
     def mostrar_detalle(self, empleado):
