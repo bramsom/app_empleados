@@ -4,9 +4,11 @@ import pandas as pd
 from PIL import Image
 from fpdf import FPDF
 from utils.canvas import agregar_fondo_decorativo
+from controllers.report_controller import obtener_datos_para_excel
 from services.pdf_generator import obtener_periodo_laborado, calcular_tiempo_laborado
 from controllers.report_controller import ReportController
 from tkinter import filedialog
+from utils.modal_excel_selection import ModalSeleccionExcel
 
 class ExportarTipoReporte(ctk.CTkFrame):
     def __init__(self, parent, username, rol, obtener_datos_excel_callback, obtener_datos_pdf_callback, volver_callback):
@@ -46,23 +48,34 @@ class ExportarTipoReporte(ctk.CTkFrame):
         self.btn_exportar_excel = ctk.CTkButton(
             self, image=self.icon_excel, text="Exportar Excel", width=480, height=550, font=("Georgia", 30),
             fg_color="#FFEFEF", hover_color="#D9D9D9", text_color="black",
-            compound="top",  # Imagen arriba del texto
+            compound="top",
             command=self.exportar_excel
         )
         self.btn_exportar_excel.pack(side="left", padx=(130, 10), pady=20)
 
     def exportar_excel(self):
-        try:
-            datos = self.obtener_datos_excel_callback()
-            if not datos:
-                messagebox.showinfo("Sin datos", "No hay datos para exportar.")
-                return
-            df = pd.DataFrame(datos)
-            ruta = "C:/Users/Usuario/Documents/reportes app empleados/reporte.xlsx"
-            df.to_excel(ruta, index=False)
+        def exportar_callback(tablas_a_exportar):
+            ruta = filedialog.asksaveasfilename(
+                defaultextension=".xlsx",
+                filetypes=[("Excel files", "*.xlsx")],
+                title="Guardar reporte Excel"
+            )
+            if not ruta:
+                return  # El usuario canceló
+
+            # Usa el controlador para obtener los datos
+            datos = obtener_datos_para_excel(tablas_a_exportar)
+            import pandas as pd
+            with pd.ExcelWriter(ruta) as writer:
+                if "empleados" in tablas_a_exportar and "empleados" in datos:
+                    pd.DataFrame(datos["empleados"]).to_excel(writer, sheet_name="Empleados", index=False)
+                if "contratos" in tablas_a_exportar and "contratos" in datos:
+                    pd.DataFrame(datos["contratos"]).to_excel(writer, sheet_name="Contratos", index=False)
+                if "afiliaciones" in tablas_a_exportar and "afiliaciones" in datos:
+                    pd.DataFrame(datos["afiliaciones"]).to_excel(writer, sheet_name="Afiliaciones", index=False)
             messagebox.showinfo("Éxito", f"Datos exportados correctamente a {ruta}")
-        except Exception as e:
-            messagebox.showerror("Error", f"No se pudo exportar: {e}")
+
+        ModalSeleccionExcel(self, exportar_callback)
 
     def exportar_pdf(self):
         # Ventana emergente para buscar empleado
@@ -117,7 +130,6 @@ class ExportarTipoReporte(ctk.CTkFrame):
                 print(f"Reporte guardado en: {ruta}")
             else:
                 print("Guardado cancelado por el usuario.")
-            messagebox.showinfo("Éxito", f"PDF exportado correctamente a {ruta}")
             ventana.destroy()
 
         def cancelar():

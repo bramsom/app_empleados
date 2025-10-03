@@ -1,12 +1,22 @@
 from services.pdf_generator import obtener_periodo_laborado, calcular_tiempo_laborado
 
-def obtener_datos_para_excel():
-    # Retorna lista de contratos
-    from services.excel_generator import obtener_datos_contratos
-    return obtener_datos_contratos()
+def obtener_datos_para_excel(tablas=None):
+    # Importa las funciones necesarias
+    from services.excel_generator import (
+        obtener_datos_contratos,
+        obtener_datos_empleados,
+        obtener_datos_afiliaciones
+    )
+    datos = {}
+    if not tablas or "contratos" in tablas:
+        datos["contratos"] = obtener_datos_contratos()
+    if not tablas or "empleados" in tablas:
+        datos["empleados"] = obtener_datos_empleados()
+    if not tablas or "afiliaciones" in tablas:
+        datos["afiliaciones"] = obtener_datos_afiliaciones()
+    return datos
 
 def obtener_datos_para_pdf():
-    # Retorna lista de empleados
     from services.employee_service import obtener_empleados
     return obtener_empleados()
 
