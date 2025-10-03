@@ -12,8 +12,8 @@ ARCHIVO = os.path.join(BASE_DIR, "views", "crud_employees.py")
 
 # Ruta al Python del entorno virtual
 # Usa la ruta relativa para que funcione en cualquier equipo
-PYTHON_EXECUTABLE = os.path.join(BASE_DIR, "venv", "Scripts", "python.exe")
-
+PYTHON_EXECUTABLE = os.path.join(BASE_DIR, ".venv", "Scripts", "python.exe")
+#PYTHON_EXECUTABLE = "python.exe"
 # Archivo principal a ejecutar (login.py o main.py)
 MAIN = os.path.join(BASE_DIR, "main.py")
 
@@ -32,6 +32,7 @@ def ejecutar_main_con_modo_dev():
     global PROCESO
     env = os.environ.copy()
     env["DEV_MODE"] = "1"  # Activar modo desarrollo
+    print(f"[DEBUG] Ejecutando: {PYTHON_EXECUTABLE} {MAIN}")
     PROCESO = subprocess.Popen([PYTHON_EXECUTABLE, MAIN], env=env)
 
 if __name__ == "__main__":

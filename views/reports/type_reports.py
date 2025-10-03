@@ -6,6 +6,7 @@ from fpdf import FPDF
 from utils.canvas import agregar_fondo_decorativo
 from services.pdf_generator import obtener_periodo_laborado, calcular_tiempo_laborado
 from controllers.report_controller import ReportController
+from tkinter import filedialog
 
 class ExportarTipoReporte(ctk.CTkFrame):
     def __init__(self, parent, username, rol, obtener_datos_excel_callback, obtener_datos_pdf_callback, volver_callback):
@@ -106,8 +107,16 @@ class ExportarTipoReporte(ctk.CTkFrame):
             pdf.cell(0, 10, f"Cargo: {getattr(emp, 'position', 'N/A')}", ln=True)
             pdf.cell(0, 10, f"Tiempo laborado: {tiempo_laborado}", ln=True)
             pdf.cell(0, 10, f"Periodo: {fecha_inicio} a {fecha_fin}", ln=True)
-            ruta = "C:/Users/Usuario/Documents/reportes app empleados/reporte_empleado.pdf"
-            pdf.output(ruta)
+            ruta = filedialog.asksaveasfilename(
+                defaultextension=".pdf",
+                filetypes=[("PDF files", "*.pdf")],
+                title="Guardar reporte PDF"
+            )
+            if ruta:
+                pdf.output(ruta)
+                print(f"Reporte guardado en: {ruta}")
+            else:
+                print("Guardado cancelado por el usuario.")
             messagebox.showinfo("Éxito", f"PDF exportado correctamente a {ruta}")
             ventana.destroy()
 
