@@ -158,17 +158,32 @@ class BuscarEmpleados(ctk.CTkFrame):
             for i, (txt, icon, cmd) in enumerate(btns):
                 celda_btn = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila, corner_radius=0)
                 celda_btn.grid(row=row, column=8 + i, padx=0, pady=2, sticky="nsew")
-                btn = ctk.CTkButton(
-                    celda_btn,
-                    text=txt,
-                    image=icon,
-                    width=25,
-                    height=25,
-                    fg_color=color_fila,
-                    hover_color="#B0B0B0",
-                    corner_radius=5,
-                    command=cmd
-                )
+                if icon == self.icon_eliminar:
+                    btn = ctk.CTkButton(
+                        celda_btn,
+                        text=txt,
+                        image=icon,
+                        width=25,
+                        height=25,
+                        fg_color=color_fila,
+                        hover_color=color_fila if self.rol == "aprendiz" else "#B0B0B0",
+                        corner_radius=5,
+                        command=cmd if self.rol != "aprendiz" else None,
+                        state="disabled" if self.rol == "aprendiz" else "normal",
+                        text_color="gray60" if self.rol == "aprendiz" else "black"
+                    )
+                else:
+                    btn = ctk.CTkButton(
+                        celda_btn,
+                        text=txt,
+                        image=icon,
+                        width=25,
+                        height=25,
+                        fg_color=color_fila,
+                        hover_color="#B0B0B0",
+                        corner_radius=5,
+                        command=cmd
+                    )
                 btn.pack(padx=4, pady=4)
             row += 1
 
@@ -193,6 +208,21 @@ class BuscarEmpleados(ctk.CTkFrame):
             volver_callback=lambda: BuscarEmpleados(self.master, self.username, self.rol).pack(fill="both", expand=True),
             employee_id=empleado.id  # <-- Aquí pasas el id correcto
         ).pack(fill="both", expand=True)
+
+    def eliminar_empleado(self, empleado):
+        if self.rol == "aprendiz":
+            messagebox.showwarning("Permiso denegado", "No tienes permiso para eliminar empleados.")
+            return
+
+        respuesta = messagebox.askyesno("Confirmar eliminación", f"¿Seguro que deseas eliminar a {empleado.name} {empleado.last_name}?\nEsta acción es irreversible y también eliminará todos sus contratos y afiliaciones.")
+        if respuesta:
+            try:
+                # Llama al controlador para eliminar el empleado
+                employee_controller.eliminar_empleado(empleado.id)
+                messagebox.showinfo("Eliminado", "Empleado eliminado correctamente.")
+                self.cargar_empleados()  # Refresca la lista
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo eliminar el empleado: {str(e)}")
     def volver_al_panel(self):
         if self.volver_callback:
             self.volver_callback()

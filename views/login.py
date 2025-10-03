@@ -10,7 +10,6 @@ import os
 MODO_DESARROLLO = os.environ.get("DEV_MODE") == "1"
 
 
-
 class LoginApp(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -21,7 +20,7 @@ class LoginApp(ctk.CTk):
         MODO_DESARROLLO = True  # ⚠️ Cambia a False al finalizar desarrollo
 
         if MODO_DESARROLLO:
-            self.after(100, lambda: self.abrir_dashboard("admin1", "administrador"))
+            self.after(100, lambda: self.abrir_dashboard("aprendizsena", "administrador"))
             return
 
         # === Frame Izquierdo con decoraciones ===
