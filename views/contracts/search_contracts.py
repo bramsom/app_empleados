@@ -1,0 +1,262 @@
+import customtkinter as ctk
+from PIL import Image
+from tkinter import Canvas, messagebox
+from controllers import employee_controller
+from services import contract_service, employee_service
+from controllers import contract_controller
+from datetime import datetime, date
+from utils.canvas import agregar_fondo_decorativo
+from utils.contract_filters import crear_filtro_fecha, abrir_calendario_avanzado,crear_combobox,filtrar_contratos
+
+
+class BuscarContratos(ctk.CTkFrame):
+    def __init__(self, parent, username, rol, volver_callback=None, ver_detalle_callback=None, editar_callback=None):
+        super().__init__(parent)
+        self.username = username
+        self.rol = rol
+        self.volver_callback = volver_callback
+        self.ver_detalle_callback = ver_detalle_callback
+        self.editar_callback = editar_callback
+        
+        agregar_fondo_decorativo(self)
+        self.configurar_iconos()
+        self.configurar_filtros()
+        self.configurar_tabla()
+        self.actualizar_lista()
+        
+        # Iconos
+    def configurar_iconos(self):
+        self.icon_ver = ctk.CTkImage(light_image=Image.open("images/read.png"), size=(20, 20))
+        self.icon_editar = ctk.CTkImage(light_image=Image.open("images/edit.png"), size=(20, 20))
+        self.icon_eliminar = ctk.CTkImage(light_image=Image.open("images/delete.png"), size=(20, 20))
+        self.icon_calendar = ctk.CTkImage(light_image=Image.open("images/calendar.png"), size=(20, 20))
+        self.icon_back = ctk.CTkImage(Image.open("images/arrow.png"), size=(30, 30))
+        self.icon_seeker = ctk.CTkImage(Image.open("images/seeker.png"), size=(25, 25))
+
+        # Configuración del contenedor principal
+        self.configure(fg_color="#F5F5F5")
+
+        # Tarjeta principal
+        self.card = ctk.CTkFrame(self, fg_color="#F3EFEF", corner_radius=10)
+        self.card.place(relx=0.52, rely=0.55, anchor="center", relwidth=0.92, relheight=0.80)
+        self.card.lift()
+    
+
+    def configurar_filtros(self):
+        # === CONTENEDOR DE BARRA Y FILTROS EN UNA MISMA FILA ===
+        barra_filtros_frame = ctk.CTkFrame(self, fg_color="#F5F5F5", width=700, corner_radius=10)
+        barra_filtros_frame.place(relx=0.06, rely=0.01, relwidth=0.92, relheight=0.1)
+        # Crea un canvas dentro del frame
+        canvas = Canvas(barra_filtros_frame, bg="#F5F5F5", highlightthickness=0)
+        canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
+        canvas.create_polygon(783, 0, 914, 0, 1243, 330, 1180, 395, fill="#D2D2D2", outline="")
+        canvas.create_polygon(983, 0, 1134, 0, 1263, 130, 1188, 205, fill="#D12B1B", outline="")
+        canvas.create_polygon(1164, 0, 1284, 0, 1284, 120, 1284, 120, fill="#D2D2D2", outline="")
+        canvas.create_polygon(854, 0, 860, 0, 1118, 259, 1114, 260, fill="#FCFCFC", outline="")
+        canvas.create_polygon(1054, 0, 1059, 0, 1184, 125, 1184, 130, fill="#FCFCFC", outline="")
+        # === BARRA DE BÚSQUEDA ===
+        # Frame con borde visible
+        barra_busqueda_frame = ctk.CTkFrame(
+            barra_filtros_frame,border_width=2,border_color="#B0B0B0",fg_color="white", corner_radius=20,width=300
+        )
+        barra_busqueda_frame.pack(side="left", padx=(10, 10), pady=10)
+
+        self.btn_volver = ctk.CTkButton(
+        barra_filtros_frame,image=self.icon_back,text="",corner_radius=0,hover_color="#F3EFEF", width=30,height=30,command=self.volver_al_panel,fg_color="#d2d2d2"
+        )
+        self.btn_volver.place(relx=1.001, rely=0.2, anchor="ne")
+
+        # Entry y botón más pequeños y con fondo blanco
+        self.barra_busqueda = ctk.CTkEntry(
+            barra_busqueda_frame,placeholder_text="Buscar por nombre...",border_width=0,width=200,height=36,corner_radius=20,fg_color="white"
+        )
+        self.barra_busqueda.pack(side="left", padx=(8, 0), pady=6)
+        self.barra_busqueda.bind("<Return>", self.actualizar_lista)
+
+        btn_buscar = ctk.CTkButton(
+            barra_busqueda_frame,text="",image=self.icon_seeker,width=36,height=36,corner_radius=20,fg_color="white",hover_color="#F0F0F0",command=self.actualizar_lista
+        )
+        btn_buscar.pack(side="left", padx=(0, 8), pady=6)
+
+        # === FILTROS ===
+        filtro_frame = ctk.CTkFrame(barra_filtros_frame, fg_color="transparent")
+        filtro_frame.pack(side="left")
+
+        self.filtro_tipo = crear_combobox(
+        filtro_frame, ["Todos", "FIJO", "INDEFINIDO", "HORA CATEDRA", "APRENDIZAJE", "SERVICIOS"], 160,
+        )
+        self.filtro_tipo.bind("<<ComboboxSelected>>", self.actualizar_lista)
+        self.filtro_tipo.bind("<Return>", self.actualizar_lista)
+        self.filtro_estado = crear_combobox(
+            filtro_frame, ["Todos", "ACTIVO", "FINALIZADO", "RETIRADO"], 130,
+        )
+        self.filtro_estado.bind("<<ComboboxSelected>>", self.actualizar_lista)
+        self.filtro_estado.bind("<Return>", self.actualizar_lista)
+
+        # Filtros de fecha usando utilidades y lambdas para limpiar
+        self.fecha_inicio_cal, _ = crear_filtro_fecha(
+            filtro_frame, "Desde:", lambda: self.fecha_inicio_cal.delete(0, "end"), lambda: None
+        )
+        self.fecha_inicio_cal.bind("<Button-1>", lambda e: abrir_calendario_avanzado(self, self.fecha_inicio_cal, self.fecha_corte_cal, lambda: None))
+        self.fecha_inicio_cal.bind("<KeyRelease>", self.actualizar_lista)
+        self.fecha_corte_cal, _ = crear_filtro_fecha(
+            filtro_frame, "Hasta:", lambda: self.fecha_corte_cal.delete(0, "end"), lambda: None
+        )
+        self.fecha_corte_cal.bind("<Button-1>", lambda e: abrir_calendario_avanzado(self, self.fecha_inicio_cal, self.fecha_corte_cal, lambda: None))
+        self.fecha_corte_cal.bind("<KeyRelease>", self.actualizar_lista)
+        # Variables de control (si las necesitas para lógica adicional)
+        self.fecha_inicio_activa = False
+        self.fecha_corte_activa = False
+
+    def configurar_tabla(self):
+        # Título de la tabla
+        titulo_tabla = ctk.CTkLabel(self.card, text="CONTRATOS", font=("Georgia", 16), text_color="#06A051")
+        titulo_tabla.pack(pady=(5, 5), padx=(20, 0), anchor="w")
+
+        # Lista scrollable
+        self.scroll_frame = ctk.CTkScrollableFrame(self.card, height=300, fg_color="transparent")
+        self.scroll_frame.pack(fill="both", expand=True, padx=5, pady=0)
+
+    def actualizar_lista(self, event=None):
+        self.todos_los_contratos = contract_service.obtener_contratos()
+        # Limpiar frame anterior
+        for widget in self.scroll_frame.winfo_children():
+            widget.destroy()
+
+        # Obtener valores de los filtros
+        filtro = self.barra_busqueda.get()
+        tipo_filtro = self.filtro_tipo.get()
+        estado_filtro = self.filtro_estado.get()
+        fecha_inicio_cal = self.fecha_inicio_cal.get()
+        fecha_corte_cal = self.fecha_corte_cal.get()
+        
+        # === LLAMAR A LA FUNCIÓN DE FILTRADO ===
+        contratos_filtrados = filtrar_contratos(
+            self.todos_los_contratos, 
+            filtro, 
+            tipo_filtro, 
+            estado_filtro,
+            fecha_inicio_cal, 
+            fecha_corte_cal
+        )
+
+        # Definir columnas
+        columnas = [
+            ("Empleado", 220), ("Tipo", 220), ("Inicio", 90), ("Corte", 90),
+            ("Estado", 90), ("Contratante", 170), ("Valor Estimado", 130),
+            ("Ver", 60), ("Editar", 60), ("Eliminar", 70)
+        ]
+        
+        for i, (_, ancho) in enumerate(columnas):
+            self.scroll_frame.grid_columnconfigure(i, minsize=ancho)
+
+        # Crear encabezado
+        for col, (nombre, _) in enumerate(columnas):
+            celda = ctk.CTkFrame(self.scroll_frame, fg_color="#D12B1B", corner_radius=3)
+            celda.grid(row=0, column=col, padx=1, pady=5, sticky="nsew")
+            label = ctk.CTkLabel(celda, text=nombre, font=("Georgia", 11, "bold"), text_color="black")
+            label.pack(expand=True)
+
+        # Mostrar contratos filtrados
+        row = 1
+        for contrato in contratos_filtrados:
+            # Convertir fechas para mostrar en formato día/mes/año
+            try:
+                inicio_mostrar = datetime.strptime(contrato["inicio"], '%Y-%m-%d').strftime('%d/%m/%Y')
+            except Exception:
+                inicio_mostrar = contrato["inicio"]
+            try:
+                corte_mostrar = datetime.strptime(contrato["corte"], '%Y-%m-%d').strftime('%d/%m/%Y')
+            except Exception:
+                corte_mostrar = contrato["corte"]
+                
+            valor_estimado = contrato.get("valor_estimado", 0)
+
+            # Código para truncar el tipo de contrato
+            tipo_contrato_original = contrato["tipo"]
+            largo_maximo = 25  
+            
+            if len(tipo_contrato_original) > largo_maximo:
+                tipo_contrato_mostrar = tipo_contrato_original[:largo_maximo] + "..."
+            else:
+                tipo_contrato_mostrar = tipo_contrato_original
+            
+            if row % 2 == 0:
+                color_fila = "#F0F0F0"  # Gris claro
+            else:
+                color_fila = "#D9D9D9"  # Gris más oscuro
+            # Crear fila
+            valores = [
+                contrato["empleado"],
+                tipo_contrato_mostrar,
+                inicio_mostrar,
+                corte_mostrar,
+                contrato["estado"],
+                contrato["contratante"],
+                f"${valor_estimado:,.2f}"
+            ]
+            for col, valor in enumerate(valores):
+                celda = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila,corner_radius=0)
+                celda.grid(row=row, column=col, padx=0, pady=2, sticky="nsew")
+                ctk.CTkLabel(celda, text=valor, font=("Arial", 9)).pack(expand=True)
+
+                # Botones de acción (puedes dejar fg_color="transparent" o usar color_fila)
+            acciones = [
+                ("", self.icon_ver, lambda c=contrato: self.ver_detalle(c)),
+                ("", self.icon_editar, lambda c=contrato: self.editar_contrato(c)),
+                ("", self.icon_eliminar, lambda c=contrato: self.eliminar_contrato(c))
+            ]
+            for i, (texto, icono, comando) in enumerate(acciones):
+                celda_btn = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila, corner_radius=0)
+                celda_btn.grid(row=row, column=7 + i, padx=0, pady=2, sticky="nsew")
+                btn = ctk.CTkButton(
+                    celda_btn,
+                    text=texto,
+                    image=icono,
+                    width=25,
+                    height=25,
+                    fg_color=color_fila,         # Mismo color que la fila
+                    hover_color="#B0B0B0",       # Color de hover para distinguir
+                    corner_radius=5,
+                    command=comando
+                )
+                btn.pack(padx=4, pady=4)
+
+            row += 1
+    def ver_detalle(self, contrato):
+        self.pack_forget()
+        from views.contracts.detail_contracts import MostrarContrato
+        MostrarContrato(
+            parent=self.master,
+            username=self.username,
+            rol=self.rol,
+            contract_id=contrato["id"],
+            volver_callback=lambda: self.pack(fill="both", expand=True)
+        ).pack(fill="both", expand=True)
+
+    def editar_contrato(self, contrato):
+        self.pack_forget()
+
+        from views.contracts.edit_contracts import EditarContrato
+
+        volver_callback = lambda: [self.pack(fill="both", expand=True), self.actualizar_lista()]
+
+        EditarContrato(
+            parent=self.master,
+            contract_id=contrato["id"],
+            volver_callback=volver_callback, 
+            username=self.username,
+            rol=self.rol
+        ).pack(fill="both", expand=True)
+
+    def eliminar_contrato(self, contrato):
+        respuesta = messagebox.askyesno("Confirmar", "¿Estás seguro de eliminar esta afiliación?")
+        if respuesta:
+            contract_service.eliminar_contrato(contrato['id'])
+            messagebox.showinfo("Éxito", "Afiliación eliminada correctamente.")
+
+    def volver_al_panel(self):
+        if self.volver_callback:
+            self.destroy()
+            self.volver_callback.pack(fill="both", expand=True)
+

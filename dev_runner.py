@@ -4,33 +4,47 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import os
 
-# Ruta directa al archivo que estás observando
-ARCHIVO = "views/apprentice_panel.py"
+# Directorio base del proyecto (donde está dev_runner.py)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Ruta completa al Python del entorno virtual (ajústala si es necesario)
-PYTHON_EXECUTABLE = r"C:\Users\Usuario\Documents\proyectos python\app_empleados\venv\Scripts\python.exe"
+# Archivo que estás observando
+ARCHIVO = os.path.join(BASE_DIR, "views", "crud_employees.py")
+
+# Ruta al Python del entorno virtual
+# Usa la ruta relativa para que funcione en cualquier equipo
+PYTHON_EXECUTABLE = os.path.join(BASE_DIR, ".venv", "Scripts", "python.exe")
+#PYTHON_EXECUTABLE = "python.exe"
+# Archivo principal a ejecutar (login.py o main.py)
+MAIN = os.path.join(BASE_DIR, "main.py")
 
 PROCESO = None
 
 class Recargador(FileSystemEventHandler):
     def on_modified(self, event):
         global PROCESO
-        if event.src_path.endswith("apprentice_panel.py"):
+        if event.src_path.endswith(".py"):
             print("[INFO] Cambios detectados. Recargando vista...")
             if PROCESO:
                 PROCESO.kill()
-            PROCESO = subprocess.Popen([PYTHON_EXECUTABLE, ARCHIVO])
+            ejecutar_main_con_modo_dev()
+
+def ejecutar_main_con_modo_dev():
+    global PROCESO
+    env = os.environ.copy()
+    env["DEV_MODE"] = "1"  # Activar modo desarrollo
+    print(f"[DEBUG] Ejecutando: {PYTHON_EXECUTABLE} {MAIN}")
+    PROCESO = subprocess.Popen([PYTHON_EXECUTABLE, MAIN], env=env)
 
 if __name__ == "__main__":
-    print("[INFO] Modo desarrollo iniciado (CTRL+C para detener)...")
+    print("[INFO] Modo desarrollo con recarga automática iniciado (CTRL+C para detener)...")
 
     event_handler = Recargador()
     observer = Observer()
-    observer.schedule(event_handler, path="views", recursive=False)
+    observer.schedule(event_handler, path="views", recursive=True)
     observer.start()
 
     # Ejecutar por primera vez
-    PROCESO = subprocess.Popen([PYTHON_EXECUTABLE, ARCHIVO])
+    ejecutar_main_con_modo_dev()
 
     try:
         while True:

@@ -3,7 +3,12 @@ from tkinter import Canvas
 from PIL import Image
 from tkinter import messagebox
 from bd.users import verificar_credenciales
-from views.apprentice_panel import Dashboard  # <-- Cambié el import al dashboard
+from views.dashboard import Dashboard # <-- Cambié el import al dashboard
+import os
+
+
+MODO_DESARROLLO = os.environ.get("DEV_MODE") == "1"
+
 
 class LoginApp(ctk.CTk):
     def __init__(self):
@@ -11,6 +16,12 @@ class LoginApp(ctk.CTk):
         self.geometry("600x500")
         self.resizable(False, False)
         self.title("Inicio de sesión")
+        # login.py
+        MODO_DESARROLLO = True  # ⚠️ Cambia a False al finalizar desarrollo
+
+        if MODO_DESARROLLO:
+            self.after(100, lambda: self.abrir_dashboard("aprendizsena", "aprendiz"))
+            return
 
         # === Frame Izquierdo con decoraciones ===
         frame_izquierdo = ctk.CTkFrame(self, width=300, corner_radius=0)
@@ -34,7 +45,7 @@ class LoginApp(ctk.CTk):
 
         try:
             logo_img = ctk.CTkImage(Image.open("C:/Users/Usuario/Documents/proyectos python/app_empleados/images/logo.png"), size=(140, 150))
-            logo_label = ctk.CTkLabel(frame_izquierdo, image=logo_img, text="", fg_color=frame_izquierdo.cget("fg_color"))
+            logo_label = ctk.CTkLabel(frame_izquierdo, image=logo_img, text="", fg_color="#FFEFEF")
             logo_label.place(relx=0.55, rely=0.45, anchor="center")
         except:
             # Si no se puede cargar la imagen, usar un emoji como respaldo

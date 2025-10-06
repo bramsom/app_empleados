@@ -3,17 +3,20 @@
 # from views.login import LoginApp
 # from views.create_user import CrearUsuario
 # from views.data_management import GestionUsuarios
-# from bd.setup import crear_tablas
+#from bd.setup import crear_tablas
 # from views.crud_employees import CrudEmpleados
 # from views.crud_contracts import CrudContratos
 # from views.crud_afiliations import CrudAfiliaciones
-from views.login import LoginApp
-from views.apprentice_panel import Dashboard
+#from views.login import LoginApp
+#from bd.setup import crear_tablas, migrar_datos
+from views.login import LoginApp  # Agrega esta importación para poder iniciar la app
 
-# if __name__ == "__main__":
-#     crear_tablas()
+#if __name__ == "__main__":
+    #print("Iniciando proceso de migración de datos...")
+    #migrar_datos()
+    #print("Proceso de migración finalizado.")
 
-# from bd.users import crear_usuario, obtener_usuarios, verificar_credenciales
+    #crear_tablas()
 
 # crear_usuario("admin1", "admin123", "administrador")
 # crear_usuario("aprendiz1", "aprendiz123", "aprendiz")

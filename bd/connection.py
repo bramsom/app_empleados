@@ -3,4 +3,6 @@
 import sqlite3
 
 def conectar():
-    return sqlite3.connect("empleados.db")
+    conn = sqlite3.connect("empleados.db")  # Usa la ruta correcta
+    conn.execute("PRAGMA foreign_keys = ON")  # Activa las claves foráneas
+    return conn
