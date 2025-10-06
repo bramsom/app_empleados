@@ -20,7 +20,7 @@ class LoginApp(ctk.CTk):
         MODO_DESARROLLO = True  # ⚠️ Cambia a False al finalizar desarrollo
 
         if MODO_DESARROLLO:
-            self.after(100, lambda: self.abrir_dashboard("aprendizsena", "administrador"))
+            self.after(100, lambda: self.abrir_dashboard("aprendizsena", "aprendiz"))
             return
 
         # === Frame Izquierdo con decoraciones ===
