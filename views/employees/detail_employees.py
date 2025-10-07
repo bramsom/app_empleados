@@ -257,6 +257,10 @@ class MostrarEmpleado(ctk.CTkFrame):
         self.cargar_datos_empleado()
 
     def eliminar_empleado(self):
+
+        if self.rol == "aprendiz":
+            messagebox.showwarning("Permiso denegado", "No tienes permiso para eliminar empleados.")
+            return
         """
         Maneja la eliminación de un empleado después de la confirmación del usuario.
         """
