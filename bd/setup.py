@@ -4,6 +4,15 @@ from datetime import date
 
 # --- Lógica de migración ---
 # Esta función solo se ejecuta una vez para pasar los datos antiguos a la nueva estructura.
+import os
+
+def eliminar_base_de_datos():
+    db_path = "empleados.db"  # Ajusta la ruta si tu archivo está en otra carpeta
+    if os.path.exists(db_path):
+        os.remove(db_path)
+        print("✅ Base de datos eliminada correctamente.")
+    else:
+        print("La base de datos no existe.")
 def migrar_datos():
     conn = conectar()
     cursor = conn.cursor()

@@ -8,11 +8,12 @@
 # from views.crud_contracts import CrudContratos
 # from views.crud_afiliations import CrudAfiliaciones
 #from views.login import LoginApp
-#from bd.setup import crear_tablas, migrar_datos
+#from bd.setup import crear_tablas, migrar_datos,eliminar_base_de_datos
 from views.login import LoginApp  # Agrega esta importación para poder iniciar la app
 
 #if __name__ == "__main__":
     #print("Iniciando proceso de migración de datos...")
+    #eliminar_base_de_datos()
     #migrar_datos()
     #print("Proceso de migración finalizado.")
 

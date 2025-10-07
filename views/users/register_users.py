@@ -5,7 +5,7 @@ from PIL import Image
 from utils.canvas import agregar_fondo_decorativo
 
 class FormularioRegistroEdicion(ctk.CTkFrame):
-    def __init__(self, parent, user_controller=None, usuario_a_editar=None,username=None, rol=None, volver_callback=None):
+    def __init__(self, parent, user_controller=UserController(), usuario_a_editar=None,username=None, rol=None, volver_callback=None):
         super().__init__(parent)
         self.username = username
         self.rol = rol
@@ -140,10 +140,14 @@ class FormularioRegistroEdicion(ctk.CTkFrame):
             
     def _save_user(self):
         username = self.username_entry.get()
-        rol = self.role_combobox.get()
-        
+        rol = self.role_combobox.get().lower()  # <-- Convierte a minúsculas
+
         if not username or not rol:
             messagebox.showerror("Error", "Todos los campos son obligatorios.")
+            return
+
+        if rol not in ["aprendiz", "administrador"]:
+            messagebox.showerror("Error", "Selecciona un rol válido.")
             return
 
         if not self.usuario_a_editar:
