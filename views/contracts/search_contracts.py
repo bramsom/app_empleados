@@ -62,7 +62,15 @@ class BuscarContratos(ctk.CTkFrame):
         barra_busqueda_frame.pack(side="left", padx=(10, 10), pady=10)
 
         self.btn_volver = ctk.CTkButton(
-        barra_filtros_frame,image=self.icon_back,text="",corner_radius=0,hover_color="#F3EFEF", width=30,height=30,command=self.volver_al_panel,fg_color="#d2d2d2"
+            barra_filtros_frame,
+            image=self.icon_back,
+            text="",
+            corner_radius=0,
+            hover_color="#F3EFEF",
+            width=30,
+            height=30,
+            command=self.volver_al_panel,
+            fg_color="#D2D2D2"
         )
         self.btn_volver.place(relx=1.001, rely=0.2, anchor="ne")
 
@@ -209,17 +217,46 @@ class BuscarContratos(ctk.CTkFrame):
             for i, (texto, icono, comando) in enumerate(acciones):
                 celda_btn = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila, corner_radius=0)
                 celda_btn.grid(row=row, column=7 + i, padx=0, pady=2, sticky="nsew")
-                btn = ctk.CTkButton(
-                    celda_btn,
-                    text=texto,
-                    image=icono,
-                    width=25,
-                    height=25,
-                    fg_color=color_fila,         # Mismo color que la fila
-                    hover_color="#B0B0B0",       # Color de hover para distinguir
-                    corner_radius=5,
-                    command=comando
-                )
+
+                # Si es el icono de eliminar, muestra aviso para 'aprendiz' o ejecuta la acción
+                if icono == self.icon_eliminar:
+                    if getattr(self, "rol", None) == "aprendiz":
+                        btn = ctk.CTkButton(
+                            celda_btn,
+                            text=texto,
+                            image=icono,
+                            width=25,
+                            height=25,
+                            fg_color=color_fila,
+                            hover_color=color_fila,      # no cambia al pasar el mouse
+                            corner_radius=5,
+                            command=lambda c=contrato: messagebox.showwarning("Permiso denegado", "No tienes permiso para eliminar contratos."),
+                            text_color="gray60"
+                        )
+                    else:
+                        btn = ctk.CTkButton(
+                            celda_btn,
+                            text=texto,
+                            image=icono,
+                            width=25,
+                            height=25,
+                            fg_color=color_fila,
+                            hover_color="#B0B0B0",
+                            corner_radius=5,
+                            command=comando
+                        )
+                else:
+                    btn = ctk.CTkButton(
+                        celda_btn,
+                        text=texto,
+                        image=icono,
+                        width=25,
+                        height=25,
+                        fg_color=color_fila,
+                        hover_color="#B0B0B0",
+                        corner_radius=5,
+                        command=comando
+                    )
                 btn.pack(padx=4, pady=4)
 
             row += 1
@@ -256,7 +293,9 @@ class BuscarContratos(ctk.CTkFrame):
             messagebox.showinfo("Éxito", "Afiliación eliminada correctamente.")
 
     def volver_al_panel(self):
-        if self.volver_callback:
+        if callable(self.volver_callback):
             self.destroy()
-            self.volver_callback.pack(fill="both", expand=True)
+            self.volver_callback()
+        else:
+            self.destroy()
 

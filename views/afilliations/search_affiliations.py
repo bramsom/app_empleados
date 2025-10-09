@@ -56,7 +56,7 @@ class BuscarAfiliaciones(ctk.CTkFrame):
         barra_busqueda_frame.pack(side="left", padx=(10, 10), pady=10)
 
         self.btn_volver = ctk.CTkButton(
-        barra_filtros_frame,image=self.icon_back,text="",corner_radius=0,hover_color="#F3EFEF", width=30,height=30,command=self.volver_al_panel,fg_color="#d2d2d2"
+        barra_filtros_frame,image=self.icon_back,text="",corner_radius=0,hover_color="#F3EFEF", width=30,height=30,command=self.volver_al_panel,fg_color="#D2D2D2"
         )
         self.btn_volver.place(relx=1.001, rely=0.2, anchor="ne")
 
@@ -195,11 +195,33 @@ class BuscarAfiliaciones(ctk.CTkFrame):
             col_eliminar = len(columnas) - 1
             celda_eliminar = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila, corner_radius=0, width=columnas[col_eliminar][1], height=30)
             celda_eliminar.grid(row=row_index, column=col_eliminar, padx=0, pady=0, sticky="nsew")
-            
-            ctk.CTkButton(
-                celda_eliminar, image=self.icon_eliminar, text="", width=30, height=30,
-                fg_color="transparent", command=lambda id=afiliacion['id']: self.eliminar_afiliacion(id), hover_color="#B0B0B0"
-            ).pack(expand=True, padx=4, pady=4)
+
+            # Mostrar aspecto "deshabilitado" para rol 'aprendiz' pero mostrar aviso al hacer clic
+            if getattr(self, "rol", None) == "aprendiz":
+                ctk.CTkButton(
+                    celda_eliminar,
+                    image=self.icon_eliminar,
+                    text="",
+                    width=30,
+                    height=30,
+                    fg_color="transparent",
+                    hover_color=color_fila,    # no cambio visual al pasar el mouse
+                    corner_radius=5,
+                    command=lambda id=afiliacion['id']: messagebox.showwarning("Permiso denegado", "No tienes permiso para eliminar afiliaciones."),
+                    text_color="gray60"
+                ).pack(expand=True, padx=4, pady=4)
+            else:
+                ctk.CTkButton(
+                    celda_eliminar,
+                    image=self.icon_eliminar,
+                    text="",
+                    width=30,
+                    height=30,
+                    fg_color="transparent",
+                    hover_color="#B0B0B0",
+                    corner_radius=5,
+                    command=lambda id=afiliacion['id']: self.eliminar_afiliacion(id)
+                ).pack(expand=True, padx=4, pady=4)
 
 
     def buscar_afiliaciones(self, event=None):
@@ -236,5 +258,13 @@ class BuscarAfiliaciones(ctk.CTkFrame):
     
     def volver_al_panel(self):
         if self.volver_callback:
+            # destruir la vista actual y ejecutar el callback
             self.destroy()
-            self.volver_callback()
+            try:
+                self.volver_callback()
+            except TypeError:
+                # si el callback no es callable, ignorar
+                pass
+        else:
+            # comportamiento por defecto: destruir la vista
+            self.destroy()

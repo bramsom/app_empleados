@@ -62,10 +62,14 @@ class MostrarEmpleado(ctk.CTkFrame):
         btn_nuevo_contrato = ctk.CTkButton(self,height=40,width=200, text="Nuevo contrato", fg_color="#06A051", text_color="black", hover_color="#088D48",font=("Georgia", 14),command=self.crear_contrato_callback)
         btn_nuevo_contrato.grid(row=2, column=0, padx=(340, 10), pady=(20, 60), sticky="w")
         
-        btn_eliminar = ctk.CTkButton(self,height=40,width=200, text="Eliminar empleado", fg_color="#D12B1B", text_color="black", hover_color="#BB1E10",font=("Georgia", 14), command=self.eliminar_empleado)
+        btn_eliminar = ctk.CTkButton(self,height=40,width=200,text="Eliminar empleado",fg_color="#D12B1B",text_color="black",hover_color="#BB1E10",font=("Georgia", 14),command=self._on_eliminar_click  # usa el manejador intermedio
+        )
         btn_eliminar.grid(row=2, column=0, padx=(570, 10), pady=(20, 60), sticky="w")
 
-        # Cargar los datos iniciales
+        # Mostrar aspecto "deshabilitado" para rol 'aprendiz' pero mantener el botón activo
+        if getattr(self, "rol", None) == "aprendiz":
+            btn_eliminar.configure(fg_color="#D9D9D9", hover_color="#D9D9D9", text_color="gray")
+
         self.cargar_datos_empleado()
 
     def limpiar_vista(self):
@@ -257,31 +261,40 @@ class MostrarEmpleado(ctk.CTkFrame):
         self.cargar_datos_empleado()
 
     def eliminar_empleado(self):
+        """
+        Intenta eliminar el empleado. Devuelve True si se eliminó, False si no por permisos u otros motivos.
+        La UI ya se encarga de avisar al usuario si no tiene permiso.
+        """
+        # Comprobación de seguridad (sin messagebox para evitar duplicados)
+        if getattr(self, "rol", None) == "aprendiz":
+            return False
 
-        if self.rol == "aprendiz":
-            messagebox.showwarning("Permiso denegado", "No tienes permiso para eliminar empleados.")
-            return
-        """
-        Maneja la eliminación de un empleado después de la confirmación del usuario.
-        """
         # Mostrar cuadro de diálogo de confirmación
         respuesta = messagebox.askyesno(
             "Confirmar Eliminación",
             f"¿Está seguro de que desea eliminar a {self.empleado.name} {self.empleado.last_name}?\nEsta acción es irreversible y también eliminará todos sus contratos y afiliaciones."
         )
 
-        # Si el usuario confirma
-        if respuesta:
-            try:
-                # Lógica para eliminar el empleado
-                if employee_controller.eliminar_empleado(self.empleado.id):
-                    messagebox.showinfo("Éxito", f"Empleado {self.empleado.name} {self.empleado.last_name} eliminado correctamente.")
-                    self.cancelar() # Volver a la vista anterior después de la eliminación
-                else:
-                    messagebox.showerror("Error", "No se pudo eliminar al empleado.")
-            except Exception as e:
-                messagebox.showerror("Error", f"Ocurrió un error al intentar eliminar el empleado: {e}")
+        if not respuesta:
+            return False
 
+        try:
+            if employee_controller.eliminar_empleado(self.empleado.id):
+                messagebox.showinfo("Éxito", f"Empleado {self.empleado.name} {self.empleado.last_name} eliminado correctamente.")
+                self.cancelar()
+                return True
+            else:
+                messagebox.showerror("Error", "No se pudo eliminar al empleado.")
+                return False
+        except Exception as e:
+            messagebox.showerror("Error", f"Ocurrió un error al intentar eliminar el empleado: {e}")
+            return False
+    def _on_eliminar_click(self):
+        if getattr(self, "rol", None) == "aprendiz":
+            messagebox.showwarning("Permiso denegado", "No tienes permiso para eliminar empleados.")
+            return
+        # Si tiene permiso, llama al método que hace la eliminación
+        self.eliminar_empleado()
     def editar_empleado_callback(self):
         """Muestra la vista para editar la información del empleado."""
         self.pack_forget()

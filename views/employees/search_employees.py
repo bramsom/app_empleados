@@ -159,19 +159,32 @@ class BuscarEmpleados(ctk.CTkFrame):
                 celda_btn = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila, corner_radius=0)
                 celda_btn.grid(row=row, column=8 + i, padx=0, pady=2, sticky="nsew")
                 if icon == self.icon_eliminar:
-                    btn = ctk.CTkButton(
-                        celda_btn,
-                        text=txt,
-                        image=icon,
-                        width=25,
-                        height=25,
-                        fg_color=color_fila,
-                        hover_color=color_fila if self.rol == "aprendiz" else "#B0B0B0",
-                        corner_radius=5,
-                        command=cmd if self.rol != "aprendiz" else None,
-                        state="disabled" if self.rol == "aprendiz" else "normal",
-                        text_color="gray60" if self.rol == "aprendiz" else "black"
-                    )
+                    # Mostrar aspecto "deshabilitado" para aprendices pero conectar un handler
+                    if self.rol == "aprendiz":
+                        btn = ctk.CTkButton(
+                            celda_btn,
+                            text=txt,
+                            image=icon,
+                            width=25,
+                            height=25,
+                            fg_color=color_fila,
+                            hover_color=color_fila,  # no cambia al pasar el mouse
+                            corner_radius=5,
+                            command=lambda e=emp: messagebox.showwarning("Permiso denegado", "No tienes permiso para eliminar empleados."),
+                            text_color="gray60"
+                        )
+                    else:
+                        btn = ctk.CTkButton(
+                            celda_btn,
+                            text=txt,
+                            image=icon,
+                            width=25,
+                            height=25,
+                            fg_color=color_fila,
+                            hover_color="#B0B0B0",
+                            corner_radius=5,
+                            command=cmd
+                        )
                 else:
                     btn = ctk.CTkButton(
                         celda_btn,
