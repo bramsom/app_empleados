@@ -1,51 +1,42 @@
 from services.user_service import UserService
-from models.user import Usuario
 
 class UserController:
-    def __init__(self):
-        self.user_service = UserService()
-
-    def registrar(self, username, password, rol):
-        """
-        Llama al servicio para registrar un nuevo usuario.
-        Lanza excepciones si hay un error.
-        """
-        self.user_service.crear_usuario(username, password, rol)
-
-    def modificar(self, user_id, username, password, rol):
-        """
-        Modifica un usuario existente.
-        Este método maneja la lógica para actualizar el usuario y la contraseña de forma separada.
-        """
-        
-        # 1. Llama al servicio para actualizar el nombre de usuario y el rol.
-        self.user_service.actualizar_usuario(user_id, username, rol)
-
-        # 2. Si se proporciona una contraseña (no es None y no está vacía), llama al servicio para cambiarla.
-        if password is not None and password.strip() != "":
-            self.user_service.cambiar_contraseña(user_id, password)
-
-    def eliminar(self, user_id):
-        """
-        Llama al servicio para eliminar un usuario.
-        Lanza excepciones si hay un error.
-        """
-        self.user_service.eliminar_usuario(user_id)
+    def __init__(self, current_username=None, current_role=None, user_service=None):
+        self.user_service = user_service or UserService()
+        self.current_username = current_username
+        self.current_role = current_role
 
     def obtener_todos(self):
-        """
-        Llama al servicio para obtener todos los usuarios.
-        """
-        return self.user_service.obtener_usuarios()
+        usuarios = self.user_service.obtener_usuarios()
+        # Si es aprendiz, devuelve solo su propio usuario
+        if self.current_role == "aprendiz" and self.current_username:
+            return [u for u in usuarios if u.username == self.current_username]
+        return usuarios
 
-    def obtener_por_id(self, user_id):
-        """
-        Llama al servicio para obtener un usuario por ID.
-        """
-        return self.user_service.obtener_por_id(user_id)
-        
-    def login(self, username, password):
-        """
-        Llama al servicio para verificar las credenciales de un usuario.
-        """
-        return self.user_service.verificar_credenciales(username, password)
+    def eliminar(self, user_id):
+        if self.current_role == "aprendiz":
+            raise PermissionError("No tienes permiso para eliminar usuarios.")
+        self.user_service.eliminar_usuario(user_id)
+
+    def crear(self, username, password, rol):
+        if self.current_role == "aprendiz":
+            raise PermissionError("No tienes permiso para crear usuarios.")
+        self.user_service.crear_usuario(username, password, rol)
+
+    def actualizar(self, user_id, username, rol, new_password=None):
+        # aprendiz solo puede modificar su propio usuario y no cambiar rol
+        if self.current_role == "aprendiz":
+            # obtener su usuario para comparar
+            usuarios = self.user_service.obtener_usuarios()
+            usuario_actual = next((u for u in usuarios if u.username == self.current_username), None)
+            if usuario_actual is None or usuario_actual.id != user_id:
+                raise PermissionError("No tienes permiso para modificar este usuario.")
+            if rol != "aprendiz":
+                raise PermissionError("No puedes cambiar tu rol.")
+        # aplicar cambios
+        if new_password:
+            self.user_service.cambiar_contraseña(user_id, new_password)
+        # finalmente actualizar nombre y rol
+        # Si rol es None o vacío, se asume que no se cambia
+        rol_final = rol if rol else (self.user_service.get_by_id(user_id).rol if hasattr(self.user_service, "get_by_id") else rol)
+        self.user_service.actualizar_usuario(user_id, username, rol_final)

@@ -12,7 +12,7 @@ class BuscarUsuarios(ctk.CTkFrame):
         self.volver_callback = volver_callback
         self.username = username
         self.rol = rol
-        self.user_controller = UserController()
+        self.user_controller = UserController(current_username=self.username, current_role=self.rol)
         
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -112,6 +112,7 @@ class BuscarUsuarios(ctk.CTkFrame):
         button_frame.grid_columnconfigure(0, weight=1)
         button_frame.grid_columnconfigure(1, weight=1)
         
+        can_edit = not (self.rol == "aprendiz" and usuario.username != self.username)
         edit_button = ctk.CTkButton(
             button_frame,
             height=40,
@@ -124,6 +125,7 @@ class BuscarUsuarios(ctk.CTkFrame):
         )
         edit_button.grid(row=0, column=0, padx=(0, 5), sticky="ew")
         
+        can_delete = self.rol != "aprendiz"
         delete_button = ctk.CTkButton(
             button_frame,
             height=40,
@@ -139,17 +141,13 @@ class BuscarUsuarios(ctk.CTkFrame):
     def cargar_usuarios(self):
         for widget in self.card_frame.winfo_children():
             widget.destroy()
-        
         usuarios = self.user_controller.obtener_todos()
-        
-        col = 0
-        row = 0
+        col = 0; row = 0
         for usuario in usuarios:
             self.crear_tarjeta_usuario(usuario, row, col)
             col += 1
             if col > 2:
-                col = 0
-                row += 1
+                col = 0; row += 1
             
     def crear_usuario(self):
         for widget in self.master.winfo_children():
