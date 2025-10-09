@@ -15,6 +15,7 @@ from utils.contract_helpers import (
     parse_money_from_entry,
     abrir_calendario
 )
+from utils.date_utils import to_db, to_display
 
 class EditarContrato(ctk.CTkFrame):
     def __init__(self, parent, contract_id, username=None, rol=None, volver_callback=None):
@@ -166,8 +167,12 @@ class EditarContrato(ctk.CTkFrame):
         fill_entry_field(self.entry_empleado, empleado_nombre)
         self.entry_empleado.employee_id = employee_id
 
-        fill_entry_field(self.start_date, format_date_for_entry(start_date))
-        fill_entry_field(self.end_date, format_date_for_entry(end_date))
+        # Guardar originales en formato de almacenamiento (DB)
+        self._original_start_db = start_date
+        self._original_end_db = end_date
+        # Mostrar en UI en formato DD/MM/YYYY
+        fill_entry_field(self.start_date, to_display(start_date))
+        fill_entry_field(self.end_date, to_display(end_date))
         fill_entry_field(self.contractor, contractor)
     
         self.tipo_contrato_var.set(type_contract)
@@ -224,19 +229,25 @@ class EditarContrato(ctk.CTkFrame):
 
         type_contract = self.tipo_contrato_var.get()
         
-        try:
-            start_date = datetime.strptime(self.start_date.get(), '%d/%m/%Y').strftime('%Y-%m-%d')
-        except ValueError:
-            messagebox.showerror("Error", "Formato de fecha de inicio inválido. Use DD/MM/YYYY.")
-            return
-        
-        end_date = None
-        if self.end_date.get():
-            try:
-                end_date = datetime.strptime(self.end_date.get(), '%d/%m/%Y').strftime('%Y-%m-%d')
-            except ValueError:
+        # Fechas: si el usuario dejó el campo vacío, conservar el original.
+        # Si puso una fecha, normalizar con to_db (acepta DD/MM/YYYY y otros formatos).
+        start_raw = self.start_date.get().strip()
+        if start_raw:
+            start_db = to_db(start_raw)
+            if not start_db:
+                messagebox.showerror("Error", "Formato de fecha de inicio inválido. Use DD/MM/YYYY.")
+                return
+        else:
+            start_db = getattr(self, "_original_start_db", None)
+
+        end_raw = self.end_date.get().strip()
+        if end_raw:
+            end_db = to_db(end_raw)
+            if not end_db:
                 messagebox.showerror("Error", "Formato de fecha fin inválido. Use DD/MM/YYYY.")
                 return
+        else:
+            end_db = getattr(self, "_original_end_db", None)
 
         monthly_payment = None
         transport = None
@@ -269,8 +280,8 @@ class EditarContrato(ctk.CTkFrame):
                 id=self.contrato_id,
                 employee_id=employee_id,
                 type_contract=type_contract,
-                start_date=start_date,
-                end_date=end_date,
+                start_date=start_db,
+                end_date=end_db,
                 state=self.estado_var.get(),
                 contractor=self.contractor.get(),
                 total_payment=total_payment,

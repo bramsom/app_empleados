@@ -7,6 +7,7 @@ from controllers import contract_controller, employee_controller
 from utils.canvas import agregar_fondo_decorativo
 from services import employee_service
 from utils.autocomplete import crear_autocompletado
+from utils.date_utils import to_display, to_db
 
 class RegistrarContrato(ctk.CTkFrame):
     def __init__(self, parent, username=None, rol=None, employee_id=None, volver_callback=None):
@@ -204,11 +205,15 @@ class RegistrarContrato(ctk.CTkFrame):
 
             tipo_contrato = self.tipo_contrato_var.get()
             
+            # normalizar fechas para almacenamiento en DB (to_db acepta DD/MM/YYYY, date or ISO)
+            start_db = to_db(self.start_date.get()) if self.start_date.get() else None
+            end_db = to_db(self.end_date.get()) if (self.end_date.get() and self.end_date.cget("state") == "normal") else None
+
             contrato_data = {
                 'employee_id': employee_id,
                 'type_contract': tipo_contrato,
-                'start_date': self.start_date.get(),
-                'end_date': self.end_date.get() if self.end_date.cget("state") == "normal" else None,
+                'start_date': start_db,
+                'end_date': end_db,
                 'state': self.estado_var.get(),
                 'contractor': self.contractor.get(),
                 'total_payment': float(self.total_payment.get()) if tipo_contrato == "ORDEN PRESTACION DE SERVICIOS" and self.total_payment.get() else 0.0,
@@ -230,6 +235,7 @@ class RegistrarContrato(ctk.CTkFrame):
             messagebox.showerror("Error de formato", f"Por favor, ingrese valores numéricos válidos. {ve}")
         except Exception as e:
             messagebox.showerror("Error", f"Error inesperado: {e}")
+# ...existing code...
 
     def seleccionar_empleado(self, nombre):
         self.entry_empleado.delete(0, "end")

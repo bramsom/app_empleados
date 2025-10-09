@@ -1,5 +1,6 @@
 from models.contract import Contrato
 from services.contract_service import *
+from utils.date_utils import to_db, to_display
 
 def registrar_contrato(datos_contrato_dict):
     """
@@ -11,8 +12,9 @@ def registrar_contrato(datos_contrato_dict):
             id=None,
             employee_id=datos_contrato_dict.get('employee_id'),
             type_contract=datos_contrato_dict.get('type_contract'),
-            start_date=datos_contrato_dict.get('start_date'),
-            end_date=datos_contrato_dict.get('end_date'),
+            # normalizar fechas a formato de DB
+            start_date=to_db(datos_contrato_dict.get('start_date')),
+            end_date=to_db(datos_contrato_dict.get('end_date')),
             state=datos_contrato_dict.get('state'),
             contractor=datos_contrato_dict.get('contractor'),
             total_payment=datos_contrato_dict.get('total_payment'),
@@ -50,12 +52,12 @@ def consultar_contrato(contrato_id):
 def modificar_contrato(contrato_id, datos_contrato_dict):
     """Modifica los datos principales de un contrato existente"""
     try:
-        # Aquí solo se actualizan los datos del contrato principal
         contrato = Contrato(
             employee_id=datos_contrato_dict.get('employee_id'),
             type_contract=datos_contrato_dict.get('type_contract'),
-            start_date=datos_contrato_dict.get('start_date'),
-            end_date=datos_contrato_dict.get('end_date'),
+            # normalizar; si el campo viene vacío o None, enviar None y el servicio conservará lo original
+            start_date=to_db(datos_contrato_dict.get('start_date')) if datos_contrato_dict.get('start_date') is not None else None,
+            end_date=to_db(datos_contrato_dict.get('end_date')) if datos_contrato_dict.get('end_date') is not None else None,
             state=datos_contrato_dict.get('state'),
             contractor=datos_contrato_dict.get('contractor'),
             total_payment=datos_contrato_dict.get('total_payment'),
@@ -80,7 +82,9 @@ def consultar_contratos_por_empleado(employee_id):
 def modificar_pago_contrato(contrato_id, datos_pago_dict, fecha_efectiva):
     """Registra un cambio de pago en el historial del contrato"""
     try:
-        actualizar_pago_contrato(contrato_id, datos_pago_dict, fecha_efectiva)
+        # normalizar fecha efectiva
+        fecha_norm = to_db(fecha_efectiva)
+        actualizar_pago_contrato(contrato_id, datos_pago_dict, fecha_norm)
         return True
     except Exception as e:
         print(f"Error al modificar pago del contrato: {e}")
@@ -94,4 +98,3 @@ def borrar_contrato(contrato_id):
     except Exception as e:
         print(f"Error al eliminar contrato: {e}")
         return False
-    

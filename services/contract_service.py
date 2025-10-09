@@ -10,6 +10,13 @@ def crear_contrato(contrato):
     try:
         cursor.execute("BEGIN TRANSACTION;")
 
+        # Evitar crear duplicados (mismo empleado y misma fecha de inicio)
+        cursor.execute("SELECT id FROM contracts WHERE employee_id = ? AND start_date = ? LIMIT 1",
+                       (contrato.employee_id, contrato.start_date))
+        exists = cursor.fetchone()
+        if exists:
+            raise ValueError("Ya existe un contrato con el mismo empleado y fecha de inicio. Si quiere modificar, use la edición.")
+
         # Paso 1: Insertar en la tabla principal de contratos
         cursor.execute("""
             INSERT INTO contracts 
@@ -50,7 +57,6 @@ def crear_contrato(contrato):
         conn.commit()
         return True # Devuelve True en caso de éxito
     except Exception as e:
-        print("Error al crear el contrato:", e)
         conn.rollback()
         raise
     finally:
@@ -289,19 +295,11 @@ def actualizar_contrato(contrato_id, contrato_data):
     conn = conectar()
     cursor = conn.cursor()
     
-    # 1. Obtener los datos originales del contrato para compararlos
-    # Se usa la misma funcion que la vista detalle
+    # 1. Obtener los datos del contrato principal
     contrato_original = obtener_contrato_por_id(contrato_id)
     if not contrato_original:
         conn.close()
         raise ValueError("Contrato no encontrado.")
-    
-    # Se desempaquetan los datos originales
-    (
-        id_, emp_id_original, empleado_nombre, type_contract_original, start_date_original, end_date_original, state_original,
-        contractor_original, total_payment_original, payment_frequency_original, monthly_payment_original, transport_original,
-        value_hour_original, number_hour_original, new_total_payment_original, new_payment_frequency_original
-    ) = contrato_original
     
     try:
         # 2. Actualizar los campos principales de la tabla 'contracts'
@@ -327,30 +325,54 @@ def actualizar_contrato(contrato_id, contrato_data):
             contrato_data.payment_frequency,
             contrato_id
         ))
-        
-        # 3. Insertar nuevos registros en las tablas de historial si los valores cambian
-        if contrato_data.type_contract in ['CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO', 'CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO', 'CONTRATO APRENDIZAJE SENA']:
-            if contrato_data.monthly_payment != monthly_payment_original or contrato_data.transport != transport_original:
+
+        # 3. Obtener los últimos valores de historial directamente (más robusto)
+        # salary_history latest
+        cursor.execute("SELECT monthly_payment, transport FROM salary_history WHERE contract_id = ? ORDER BY effective_date DESC LIMIT 1", (contrato_id,))
+        last_salary = cursor.fetchone() or (None, None)
+        last_monthly, last_transport = last_salary[0], last_salary[1]
+
+        # hourly_history latest
+        cursor.execute("SELECT value_hour, number_hour FROM hourly_history WHERE contract_id = ? ORDER BY effective_date DESC LIMIT 1", (contrato_id,))
+        last_hourly = cursor.fetchone() or (None, None)
+        last_value_hour, last_number_hour = last_hourly[0], last_hourly[1]
+
+        # service_order_history latest
+        cursor.execute("SELECT old_total_payment, new_total_payment, old_payment_frequency, new_payment_frequency FROM service_order_history WHERE contract_id = ? ORDER BY effective_date DESC LIMIT 1", (contrato_id,))
+        last_soh = cursor.fetchone() or (None, None, None, None)
+        last_old_total, last_new_total, last_old_freq, last_new_freq = last_soh
+
+        # 4. Insertar nuevos registros en las tablas de historial solo si cambian
+        now_str = datetime.now().strftime('%Y-%m-%d')
+        if contrato_data.type_contract in ['CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO',
+                                           'CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO',
+                                           'CONTRATO APRENDIZAJE SENA']:
+            # normalizar None vs 0 y comparar
+            if (contrato_data.monthly_payment is not None and contrato_data.monthly_payment != last_monthly) or \
+               (contrato_data.transport is not None and contrato_data.transport != last_transport):
                 cursor.execute("""
                     INSERT INTO salary_history (contract_id, monthly_payment, transport, effective_date)
                     VALUES (?, ?, ?, ?)
-                """, (contrato_id, contrato_data.monthly_payment, contrato_data.transport, datetime.now().strftime('%Y-%m-%d')))
+                """, (contrato_id, contrato_data.monthly_payment, contrato_data.transport, now_str))
         
         elif contrato_data.type_contract == 'CONTRATO SERVICIO HORA CATEDRA':
-            if contrato_data.value_hour != value_hour_original or contrato_data.number_hour != number_hour_original:
+            if (contrato_data.value_hour is not None and contrato_data.value_hour != last_value_hour) or \
+               (contrato_data.number_hour is not None and contrato_data.number_hour != last_number_hour):
                 cursor.execute("""
                     INSERT INTO hourly_history (contract_id, value_hour, number_hour, effective_date)
                     VALUES (?, ?, ?, ?)
-                """, (contrato_id, contrato_data.value_hour, contrato_data.number_hour, datetime.now().strftime('%Y-%m-%d')))
+                """, (contrato_id, contrato_data.value_hour, contrato_data.number_hour, now_str))
         
         elif contrato_data.type_contract == 'ORDEN PRESTACION DE SERVICIOS':
-            if contrato_data.total_payment != new_total_payment_original or contrato_data.payment_frequency != new_payment_frequency_original:
+            # Insertar old+new para mantener trazabilidad
+            if (contrato_data.total_payment is not None and contrato_data.total_payment != last_new_total) or \
+               (contrato_data.payment_frequency is not None and contrato_data.payment_frequency != last_new_freq):
                 cursor.execute("""
-                    INSERT INTO service_order_history (contract_id, new_total_payment, new_payment_frequency, effective_date)
-                    VALUES (?, ?, ?, ?)
-                """, (contrato_id, contrato_data.total_payment, contrato_data.payment_frequency, datetime.now().strftime('%Y-%m-%d')))
+                    INSERT INTO service_order_history (contract_id, old_total_payment, new_total_payment, old_payment_frequency, new_payment_frequency, effective_date)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (contrato_id, last_new_total, contrato_data.total_payment, last_new_freq, contrato_data.payment_frequency, now_str))
 
-        # 4. Confirmar la transacción
+        # 5. Confirmar la transacción
         conn.commit()
         
     except sqlite3.Error as e:
