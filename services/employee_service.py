@@ -88,18 +88,21 @@ def actualizar_empleado(empleado_id, datos_empleado):
     finally:
         conn.close()
 
-def eliminar_empleado(empleado_id):
+def eliminar_empleado(employee_id):
+    """
+    Elimina un empleado; las filas relacionadas deben eliminarse por ON DELETE CASCADE.
+    """
     conn = conectar()
     cursor = conn.cursor()
     try:
-        # Se verifica si el empleado existe antes de eliminar
-        if not obtener_empleado_por_id(empleado_id):
-            raise ValueError("Empleado no encontrado.")
-
-        cursor.execute("DELETE FROM employees WHERE id = ?", (empleado_id,))
+        cursor.execute("BEGIN TRANSACTION;")
+        cursor.execute("DELETE FROM employees WHERE id = ?", (employee_id,))
+        if cursor.rowcount == 0:
+            conn.rollback()
+            return False
         conn.commit()
+        return True
     except Exception as e:
-        print(f"Error al eliminar empleado: {e}")
         conn.rollback()
         raise
     finally:

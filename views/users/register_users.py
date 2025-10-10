@@ -44,7 +44,7 @@ class FormularioRegistroEdicion(ctk.CTkFrame):
         self.username_entry.grid(row=2, column=0, sticky="ew", pady=(0, 10))
 
         # valores internos en minúsculas (se muestran tal cual)
-        opciones_tipo_rol = ["", "administrador", "aprendiz"]
+        opciones_tipo_rol = ["", "ADMINISTRADOR", "APRENDIZ"]
         ctk.CTkLabel(self.form_frame, text="Rol", font=("Georgia", 14,"bold"), anchor="w").grid(row=3, column=0, sticky="ew", pady=(5, 0))
         self.role_combobox = ctk.CTkOptionMenu(self.form_frame, height=40, fg_color="#D9D9D9", dropdown_fg_color="#F3EFEF", button_color="#06A051", button_hover_color="#048B45", values=opciones_tipo_rol, font=("Georgia", 14), text_color="black")
         self.role_combobox.grid(row=4, column=0, sticky="ew", pady=(0, 10))
@@ -171,7 +171,7 @@ class FormularioRegistroEdicion(ctk.CTkFrame):
             messagebox.showerror("Error", "Todos los campos son obligatorios.")
             return
 
-        if rol and rol not in ["aprendiz", "administrador"]:
+        if rol and rol not in ["APRENDIZ", "ADMINISTRADOR"]:
             messagebox.showerror("Error", "Selecciona un rol válido.")
             return
 

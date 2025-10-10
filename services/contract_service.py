@@ -62,10 +62,9 @@ def crear_contrato(contrato):
     finally:
         conn.close()
 def obtener_contratos():
-    conn = conectar() 
+    conn = conectar()
     cursor = conn.cursor()
-    
-    # 1. Usar subconsultas para obtener los registros de historial más recientes
+
     cursor.execute("""
         SELECT
             c.id,
@@ -73,48 +72,23 @@ def obtener_contratos():
             c.type_contract,
             c.start_date,
             c.end_date,
-            sh.monthly_payment,
-            sh.transport,
-            hh.value_hour,
-            hh.number_hour,
-            soh.new_total_payment,
-            soh.new_payment_frequency,
+            -- obtener último salario y transporte como subconsultas (evita duplicados)
+            (SELECT monthly_payment FROM salary_history sh WHERE sh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS monthly_payment,
+            (SELECT transport FROM salary_history sh WHERE sh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS transport,
+            (SELECT value_hour FROM hourly_history hh WHERE hh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS value_hour,
+            (SELECT number_hour FROM hourly_history hh WHERE hh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS number_hour,
+            (SELECT new_total_payment FROM service_order_history soh WHERE soh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS new_total_payment,
+            (SELECT new_payment_frequency FROM service_order_history soh WHERE soh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS new_payment_frequency,
             c.state,
             c.contractor
         FROM contracts c
-        JOIN employees e ON e.id = c.employee_id
-        
-        -- Subconsulta para el historial de salario más reciente
-        LEFT JOIN salary_history sh ON sh.contract_id = c.id
-        AND sh.effective_date = (
-            SELECT MAX(effective_date)
-            FROM salary_history
-            WHERE contract_id = sh.contract_id
-        )
-        
-        -- Subconsulta para el historial de horas más reciente
-        LEFT JOIN hourly_history hh ON hh.contract_id = c.id
-        AND hh.effective_date = (
-            SELECT MAX(effective_date)
-            FROM hourly_history
-            WHERE contract_id = hh.contract_id
-        )
-        
-        -- Subconsulta para el historial de orden de servicio más reciente
-        LEFT JOIN service_order_history soh ON soh.contract_id = c.id
-        AND soh.effective_date = (
-            SELECT MAX(effective_date)
-            FROM service_order_history
-            WHERE contract_id = soh.contract_id
-        );
+        JOIN employees e ON e.id = c.employee_id;
     """)
-    
     contratos_raw = cursor.fetchall()
     conn.close()
-    
+
     contratos = []
     for row in contratos_raw:
-        # Aquí la lógica de procesamiento de los datos es la misma, no necesitas cambiarla.
         (
             id_, empleado, tipo, inicio, corte, mensualidad, transporte,
             valor_hora, num_horas, pago_total, frecuencia_pago, estado, contratante
@@ -124,7 +98,7 @@ def obtener_contratos():
             valor_estimado = valor_hora * num_horas if valor_hora and num_horas else 0
         elif tipo == 'ORDEN PRESTACION DE SERVICIOS':
             valor_estimado = pago_total or 0
-        else: # Contratos fijos, indefinidos y de aprendizaje
+        else:
             valor_estimado = mensualidad or 0
 
         contratos.append({
@@ -150,12 +124,11 @@ def obtener_contratos():
 def obtener_contrato_por_id(contrato_id):
     conn = conectar()
     cursor = conn.cursor()
-    
-    # 1. Start a single SELECT statement
+
     cursor.execute("""
         SELECT
             c.id,
-            e.id,
+            c.employee_id,
             e.name || ' ' || e.last_name AS empleado,
             c.type_contract,
             c.start_date,
@@ -164,70 +137,26 @@ def obtener_contrato_por_id(contrato_id):
             c.contractor,
             c.total_payment,
             c.payment_frequency,
-            sh.monthly_payment,
-            sh.transport,
-            hh.value_hour,
-            hh.number_hour,
-            soh.new_total_payment,
-            soh.new_payment_frequency
+            (SELECT monthly_payment FROM salary_history sh WHERE sh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS monthly_payment,
+            (SELECT transport FROM salary_history sh WHERE sh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS transport,
+            (SELECT value_hour FROM hourly_history hh WHERE hh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS value_hour,
+            (SELECT number_hour FROM hourly_history hh WHERE hh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS number_hour,
+            (SELECT new_total_payment FROM service_order_history soh WHERE soh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS new_total_payment,
+            (SELECT new_payment_frequency FROM service_order_history soh WHERE soh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS new_payment_frequency
         FROM contracts c
         LEFT JOIN employees e ON e.id = c.employee_id
-        
-        -- Subconsulta para el historial de salario más reciente
-        LEFT JOIN (
-            SELECT 
-                contract_id, 
-                monthly_payment, 
-                transport
-            FROM salary_history
-            WHERE effective_date = (
-                SELECT MAX(effective_date) 
-                FROM salary_history 
-                WHERE contract_id = salary_history.contract_id
-            )
-        ) sh ON sh.contract_id = c.id
-        
-        -- Subconsulta para el historial de horas más reciente
-        LEFT JOIN (
-            SELECT 
-                contract_id, 
-                value_hour, 
-                number_hour
-            FROM hourly_history
-            WHERE effective_date = (
-                SELECT MAX(effective_date) 
-                FROM hourly_history 
-                WHERE contract_id = hourly_history.contract_id
-            )
-        ) hh ON hh.contract_id = c.id
-        
-        -- Subconsulta para el historial de orden de servicio más reciente
-        LEFT JOIN (
-            SELECT 
-                contract_id, 
-                new_total_payment, 
-                new_payment_frequency
-            FROM service_order_history
-            WHERE effective_date = (
-                SELECT MAX(effective_date) 
-                FROM service_order_history 
-                WHERE contract_id = service_order_history.contract_id
-            )
-        ) soh ON soh.contract_id = c.id
-
         WHERE c.id = ?
-        GROUP BY c.id
     """, (contrato_id,))
-    
+
     contrato = cursor.fetchone()
     conn.close()
-    
+
     return contrato
 
 def obtener_contratos_por_empleado(employee_id):
     conn = conectar()
     cursor = conn.cursor()
-    
+
     cursor.execute("""
         SELECT
             c.id,
@@ -237,41 +166,22 @@ def obtener_contratos_por_empleado(employee_id):
             c.end_date,
             c.state,
             c.contractor,
-            sh.monthly_payment,
-            sh.transport,
-            hh.value_hour,
-            hh.number_hour,
-            soh.new_total_payment,
-            soh.new_payment_frequency
+            (SELECT monthly_payment FROM salary_history sh WHERE sh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS monthly_payment,
+            (SELECT transport FROM salary_history sh WHERE sh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS transport,
+            (SELECT value_hour FROM hourly_history hh WHERE hh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS value_hour,
+            (SELECT number_hour FROM hourly_history hh WHERE hh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS number_hour,
+            (SELECT new_total_payment FROM service_order_history soh WHERE soh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS new_total_payment,
+            (SELECT new_payment_frequency FROM service_order_history soh WHERE soh.contract_id = c.id ORDER BY effective_date DESC LIMIT 1) AS new_payment_frequency
         FROM contracts c
-        LEFT JOIN salary_history sh ON sh.contract_id = c.id
-        AND sh.effective_date = (
-            SELECT MAX(effective_date)
-            FROM salary_history
-            WHERE contract_id = sh.contract_id
-        )
-        LEFT JOIN hourly_history hh ON hh.contract_id = c.id
-        AND hh.effective_date = (
-            SELECT MAX(effective_date)
-            FROM hourly_history
-            WHERE contract_id = hh.contract_id
-        )
-        LEFT JOIN service_order_history soh ON soh.contract_id = c.id
-        AND soh.effective_date = (
-            SELECT MAX(effective_date)
-            FROM service_order_history
-            WHERE contract_id = soh.contract_id
-        )
         WHERE c.employee_id = ?
         ORDER BY c.start_date DESC
     """, (employee_id,))
-    
+
     contratos_raw = cursor.fetchall()
     conn.close()
-    
+
     contratos = []
     for row in contratos_raw:
-        # Crea una instancia de Contrato para cada fila
         contratos.append(
             Contrato(
                 id=row[0],
@@ -291,95 +201,166 @@ def obtener_contratos_por_empleado(employee_id):
         )
     return contratos
 
-def actualizar_contrato(contrato_id, contrato_data):
+def actualizar_contrato(contrato_id, contrato_data, applied_date=None):
+    """
+    Actualiza campos principales sólo si vienen presentes en contrato_data (no sobrescribe con None).
+    Inserta registros de historial sólo si hay cambio respecto al último registro.
+    applied_date: string ya normalizado (YYYY-MM-DD) o None -> hoy.
+    """
     conn = conectar()
     cursor = conn.cursor()
-    
-    # 1. Obtener los datos del contrato principal
+
     contrato_original = obtener_contrato_por_id(contrato_id)
     if not contrato_original:
         conn.close()
         raise ValueError("Contrato no encontrado.")
-    
-    try:
-        # 2. Actualizar los campos principales de la tabla 'contracts'
-        cursor.execute("""
-            UPDATE contracts SET
-                employee_id = ?,
-                type_contract = ?,
-                start_date = ?,
-                end_date = ?,
-                state = ?,
-                contractor = ?,
-                total_payment = ?,
-                payment_frequency = ?
-            WHERE id = ?
-        """, (
-            contrato_data.employee_id,
-            contrato_data.type_contract,
-            contrato_data.start_date,
-            contrato_data.end_date,
-            contrato_data.state,
-            contrato_data.contractor,
-            contrato_data.total_payment,
-            contrato_data.payment_frequency,
-            contrato_id
-        ))
 
-        # 3. Obtener los últimos valores de historial directamente (más robusto)
-        # salary_history latest
+    try:
+        cursor.execute("BEGIN TRANSACTION;")
+
+        # Construir UPDATE dinámico sólo con campos no-None
+        set_clauses = []
+        params = []
+        fields = [
+            ('employee_id', contrato_data.employee_id),
+            ('type_contract', contrato_data.type_contract),
+            ('start_date', contrato_data.start_date),
+            ('end_date', contrato_data.end_date),
+            ('state', contrato_data.state),
+            ('contractor', contrato_data.contractor),
+            ('total_payment', contrato_data.total_payment),
+            ('payment_frequency', contrato_data.payment_frequency),
+        ]
+        for col, value in fields:
+            if value is not None:
+                set_clauses.append(f"{col} = ?")
+                params.append(value)
+
+        if set_clauses:
+            sql = "UPDATE contracts SET " + ", ".join(set_clauses) + " WHERE id = ?"
+            params.append(contrato_id)
+            cursor.execute(sql, tuple(params))
+
+        # obtener últimos historiales actuales
         cursor.execute("SELECT monthly_payment, transport FROM salary_history WHERE contract_id = ? ORDER BY effective_date DESC LIMIT 1", (contrato_id,))
         last_salary = cursor.fetchone() or (None, None)
         last_monthly, last_transport = last_salary[0], last_salary[1]
 
-        # hourly_history latest
         cursor.execute("SELECT value_hour, number_hour FROM hourly_history WHERE contract_id = ? ORDER BY effective_date DESC LIMIT 1", (contrato_id,))
         last_hourly = cursor.fetchone() or (None, None)
         last_value_hour, last_number_hour = last_hourly[0], last_hourly[1]
 
-        # service_order_history latest
         cursor.execute("SELECT old_total_payment, new_total_payment, old_payment_frequency, new_payment_frequency FROM service_order_history WHERE contract_id = ? ORDER BY effective_date DESC LIMIT 1", (contrato_id,))
         last_soh = cursor.fetchone() or (None, None, None, None)
-        last_old_total, last_new_total, last_old_freq, last_new_freq = last_soh
+        _, last_new_total, _, last_new_freq = last_soh
 
-        # 4. Insertar nuevos registros en las tablas de historial solo si cambian
-        now_str = datetime.now().strftime('%Y-%m-%d')
+        # fecha efectiva
+        eff_str = applied_date if applied_date else datetime.now().strftime('%Y-%m-%d')
+
+        # insertar historiales sólo si hay cambios explícitos en contrato_data (y no son None)
         if contrato_data.type_contract in ['CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO',
                                            'CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO',
                                            'CONTRATO APRENDIZAJE SENA']:
-            # normalizar None vs 0 y comparar
-            if (contrato_data.monthly_payment is not None and contrato_data.monthly_payment != last_monthly) or \
-               (contrato_data.transport is not None and contrato_data.transport != last_transport):
+            if (hasattr(contrato_data, 'monthly_payment') and contrato_data.monthly_payment is not None and contrato_data.monthly_payment != last_monthly) or \
+               (hasattr(contrato_data, 'transport') and contrato_data.transport is not None and contrato_data.transport != last_transport):
                 cursor.execute("""
                     INSERT INTO salary_history (contract_id, monthly_payment, transport, effective_date)
                     VALUES (?, ?, ?, ?)
-                """, (contrato_id, contrato_data.monthly_payment, contrato_data.transport, now_str))
-        
+                """, (contrato_id, contrato_data.monthly_payment, contrato_data.transport, eff_str))
+
         elif contrato_data.type_contract == 'CONTRATO SERVICIO HORA CATEDRA':
-            if (contrato_data.value_hour is not None and contrato_data.value_hour != last_value_hour) or \
-               (contrato_data.number_hour is not None and contrato_data.number_hour != last_number_hour):
+            if (hasattr(contrato_data, 'value_hour') and contrato_data.value_hour is not None and contrato_data.value_hour != last_value_hour) or \
+               (hasattr(contrato_data, 'number_hour') and contrato_data.number_hour is not None and contrato_data.number_hour != last_number_hour):
                 cursor.execute("""
                     INSERT INTO hourly_history (contract_id, value_hour, number_hour, effective_date)
                     VALUES (?, ?, ?, ?)
-                """, (contrato_id, contrato_data.value_hour, contrato_data.number_hour, now_str))
-        
+                """, (contrato_id, contrato_data.value_hour, contrato_data.number_hour, eff_str))
+
         elif contrato_data.type_contract == 'ORDEN PRESTACION DE SERVICIOS':
-            # Insertar old+new para mantener trazabilidad
-            if (contrato_data.total_payment is not None and contrato_data.total_payment != last_new_total) or \
-               (contrato_data.payment_frequency is not None and contrato_data.payment_frequency != last_new_freq):
+            # Normalizar y comparar como strings para evitar diferencias de tipo
+            new_total = getattr(contrato_data, 'total_payment', None)
+            new_freq = getattr(contrato_data, 'payment_frequency', None)
+
+            last_new_total_str = "" if last_new_total is None else str(last_new_total)
+            last_new_freq_str = "" if last_new_freq is None else str(last_new_freq)
+            new_total_str = "" if new_total is None else str(new_total)
+            new_freq_str = "" if new_freq is None else str(new_freq)
+
+            if (new_total is not None and new_total_str != last_new_total_str) or \
+               (new_freq is not None and new_freq_str != last_new_freq_str):
+                old_total = last_new_total if last_new_total is not None else contrato_original[8]
+                old_freq = last_new_freq if last_new_freq is not None else contrato_original[9]
                 cursor.execute("""
                     INSERT INTO service_order_history (contract_id, old_total_payment, new_total_payment, old_payment_frequency, new_payment_frequency, effective_date)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (contrato_id, last_new_total, contrato_data.total_payment, last_new_freq, contrato_data.payment_frequency, now_str))
+                """, (contrato_id, old_total, new_total, old_freq, new_freq, eff_str))
 
-        # 5. Confirmar la transacción
         conn.commit()
-        
     except sqlite3.Error as e:
         conn.rollback()
         raise e
     finally:
         conn.close()
+def actualizar_pago_contrato(contrato_id, datos_pago_dict, fecha_efectiva):
+    """
+    Wrapper para compatibilidad: construye un objeto Contrato con los campos de pago
+    y delega en actualizar_contrato(...) usando fecha_efectiva como applied_date.
+    Devuelve True si la operación se ejecutó sin errores.
+    """
+    contrato = obtener_contrato_por_id(contrato_id)
+    if not contrato:
+        raise ValueError("Contrato no encontrado.")
+
+    type_contract = contrato[3]  # índice según obtener_contrato_por_id
+
+    # Construir Contrato mínimo con sólo campos relevantes
+    contrato_obj = Contrato(
+        id=contrato_id,
+        employee_id=contrato[1],
+        type_contract=type_contract,
+        # dejar otros campos como None por defecto
+    )
+
+    if type_contract in ['CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO',
+                         'CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO',
+                         'CONTRATO APRENDIZAJE SENA']:
+        contrato_obj.monthly_payment = datos_pago_dict.get('monthly_payment')
+        contrato_obj.transport = datos_pago_dict.get('transport')
+
+    elif type_contract == 'CONTRATO SERVICIO HORA CATEDRA':
+        contrato_obj.value_hour = datos_pago_dict.get('value_hour')
+        contrato_obj.number_hour = datos_pago_dict.get('number_hour')
+
+    elif type_contract == 'ORDEN PRESTACION DE SERVICIOS':
+        # aceptar ambas claves
+        contrato_obj.total_payment = datos_pago_dict.get('new_total_payment') if datos_pago_dict.get('new_total_payment') is not None else datos_pago_dict.get('total_payment')
+        contrato_obj.payment_frequency = datos_pago_dict.get('new_payment_frequency') if datos_pago_dict.get('new_payment_frequency') is not None else datos_pago_dict.get('payment_frequency')
+
+    else:
+        raise ValueError("Tipo de contrato no soportado para modificar pago.")
+
+    # fecha_efectiva ya normalizada por la vista según dijiste
+    actualizar_contrato(contrato_id, contrato_obj, applied_date=fecha_efectiva)
+    return True
+
+def obtener_historial_pagos(contrato_id):
+    conn = conectar()
+    cursor = conn.cursor()
+    result = {}
+    cursor.execute("SELECT monthly_payment, transport, effective_date FROM salary_history WHERE contract_id = ? ORDER BY effective_date DESC", (contrato_id,))
+    rows = cursor.fetchall()
+    result['salary_history'] = [{'monthly_payment': r[0], 'transport': r[1], 'effective_date': r[2]} for r in rows]
+
+    cursor.execute("SELECT value_hour, number_hour, effective_date FROM hourly_history WHERE contract_id = ? ORDER BY effective_date DESC", (contrato_id,))
+    rows = cursor.fetchall()
+    result['hourly_history'] = [{'value_hour': r[0], 'number_hour': r[1], 'effective_date': r[2]} for r in rows]
+
+    cursor.execute("SELECT old_total_payment, new_total_payment, old_payment_frequency, new_payment_frequency, effective_date FROM service_order_history WHERE contract_id = ? ORDER BY effective_date DESC", (contrato_id,))
+    rows = cursor.fetchall()
+    result['service_order_history'] = [{'old_total_payment': r[0], 'new_total_payment': r[1], 'old_payment_frequency': r[2], 'new_payment_frequency': r[3], 'effective_date': r[4]} for r in rows]
+
+    conn.close()
+    return result
 def eliminar_contrato(contrato_id):
     conn = conectar()
     try:

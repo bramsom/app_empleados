@@ -106,7 +106,7 @@ class UserService:
     """
     @staticmethod
     def crear_usuario(username, password, rol):
-        if rol not in ['aprendiz', 'administrador']:
+        if rol not in ['APRENDIZ', 'ADMINISTRADOR']:
             raise ValueError("Rol no válido")
         
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')

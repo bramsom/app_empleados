@@ -112,7 +112,7 @@ class BuscarUsuarios(ctk.CTkFrame):
         button_frame.grid_columnconfigure(0, weight=1)
         button_frame.grid_columnconfigure(1, weight=1)
         
-        can_edit = not (self.rol == "aprendiz" and usuario.username != self.username)
+        can_edit = not (self.rol == "APRENDIZ" and usuario.username != self.username)
         edit_button = ctk.CTkButton(
             button_frame,
             height=40,
@@ -125,7 +125,7 @@ class BuscarUsuarios(ctk.CTkFrame):
         )
         edit_button.grid(row=0, column=0, padx=(0, 5), sticky="ew")
         
-        can_delete = self.rol != "aprendiz"
+        can_delete = self.rol != "APRENDIZ"
         delete_button = ctk.CTkButton(
             button_frame,
             height=40,

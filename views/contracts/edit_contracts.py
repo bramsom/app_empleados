@@ -16,7 +16,6 @@ from utils.contract_helpers import (
     abrir_calendario
 )
 from utils.date_utils import to_db, to_display
-
 class EditarContrato(ctk.CTkFrame):
     def __init__(self, parent, contract_id, username=None, rol=None, volver_callback=None):
         super().__init__(parent)
@@ -70,6 +69,10 @@ class EditarContrato(ctk.CTkFrame):
             botones_frame, text="Guardar cambios", fg_color="#06A051", hover_color="#048B45",
             command=self.guardar_cambios, **self.boton_style, corner_radius=10
         ).grid(row=0, column=0, padx=30, pady=30, sticky="ew")
+        #ctk.CTkButton(
+        #    botones_frame, text="Ver historial de pagos", fg_color="#D9D9D9", hover_color="#CCCCCC",
+        #    command=self._open_payment_history, **self.boton_style, corner_radius=10
+        #).grid(row=0, column=2, padx=10, pady=30, sticky="ew")
         ctk.CTkButton(
             botones_frame, text="Cancelar", fg_color="#D12B1B", hover_color="#B81D0F",
             command=self.cancelar, **self.boton_style, corner_radius=10
@@ -110,6 +113,9 @@ class EditarContrato(ctk.CTkFrame):
         self.end_date = create_field("Fecha fin", 2, 1, 1, "end_date")
         self.end_date.bind("<Button-1>", lambda e: abrir_calendario(self, self.end_date))
         
+        self.effective_date = create_field("Fecha efectividad (opcional)", 2, 2, 1, "effective_date", placeholder="DD/MM/YYYY")
+        self.effective_date.bind("<Button-1>", lambda e: abrir_calendario(self, self.effective_date))
+        
         self.label_pago1 = ctk.CTkLabel(self.form_frame, text="", **self.label_style)
         self.entry_pago1 = ctk.CTkEntry(self.form_frame, **self.entry_style)
         self.label_pago2 = ctk.CTkLabel(self.form_frame, text="", **self.label_style)
@@ -118,7 +124,7 @@ class EditarContrato(ctk.CTkFrame):
         self.contractor = create_field("Contratante", 4, 0, 2, "contractor")
         
         ctk.CTkLabel(self.form_frame, text="Estado", **self.label_style).grid(
-            row=4, column=2, columnspan=2, sticky="w", pady=(5, 0), padx=5
+            row=2, column=3, columnspan=1, sticky="w", pady=(5, 0), padx=5
         )
         opciones_estado = ["ACTIVO", "FINALIZADO", "RETIRADO"]
         self.estado_var = ctk.StringVar(value=opciones_estado[0])
@@ -128,7 +134,7 @@ class EditarContrato(ctk.CTkFrame):
             button_color="#06A051", button_hover_color="#048B45",
             dropdown_fg_color="white", dropdown_text_color="black"
         )
-        self.estado_menu.grid(row=5, column=2, columnspan=2, padx=5, pady=(0, 10), sticky="ew")
+        self.estado_menu.grid(row=3, column=3, columnspan=1, padx=5, pady=(0, 10), sticky="ew")
         
         self.entry_empleado.empleados_dict = self.empleados_dict
         self.lista_empleados = ctk.CTkFrame(self.form_frame, fg_color="white", corner_radius=15, width=200)
@@ -191,30 +197,35 @@ class EditarContrato(ctk.CTkFrame):
         campos_a_mostrar = []
         if type_contract in ['CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO', 'CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO', 'CONTRATO APRENDIZAJE SENA']:
             campos_a_mostrar = [
-                ("Mensualidad", format_money_for_entry(monthly_payment)),
-                ("Transporte", format_money_for_entry(transport))
+                ("Nueva Mensualidad", format_money_for_entry(monthly_payment)),
+                ("Nuevo Transporte", format_money_for_entry(transport))
             ]
         elif type_contract == 'CONTRATO SERVICIO HORA CATEDRA':
             campos_a_mostrar = [
-                ("Valor Hora", format_money_for_entry(value_hour)),
-                ("Número de Horas", number_hour)
+                ("Nuevo Valor Hora", format_money_for_entry(value_hour)),
+                ("Nuevo Número de Horas", number_hour)
             ]
         elif type_contract == 'ORDEN PRESTACION DE SERVICIOS':
             campos_a_mostrar = [
-                ("Pago Total", format_money_for_entry(total_payment)),
-                ("Frecuencia de Pago", payment_frequency)
+                ("Nuevo Pago Total", format_money_for_entry(total_payment)),
+                ("Nueva Frecuencia de Pago", payment_frequency)
             ]
         
+        # Colocarlos en filas separadas para no solapar con la fecha de efectividad
         if len(campos_a_mostrar) == 2:
+            # usar filas 4 y 5 (o cualquier fila libre debajo de los demás campos)
+            row_label = 4
+            row_entry = 5
+
             self.label_pago1.configure(text=campos_a_mostrar[0][0])
             fill_entry_field(self.entry_pago1, campos_a_mostrar[0][1])
-            self.label_pago1.grid(row=2, column=2, sticky="w", pady=(5, 0), padx=5)
-            self.entry_pago1.grid(row=3, column=2, padx=5, pady=(0, 10), sticky="ew")
+            self.label_pago1.grid(row=row_label, column=2, sticky="w", pady=(5, 0), padx=5)
+            self.entry_pago1.grid(row=row_entry, column=2, padx=5, pady=(0, 10), sticky="ew")
 
             self.label_pago2.configure(text=campos_a_mostrar[1][0])
             fill_entry_field(self.entry_pago2, campos_a_mostrar[1][1])
-            self.label_pago2.grid(row=2, column=3, sticky="w", pady=(5, 0), padx=5)
-            self.entry_pago2.grid(row=3, column=3, padx=5, pady=(0, 10), sticky="ew")
+            self.label_pago2.grid(row=row_label, column=3, sticky="w", pady=(5, 0), padx=5)
+            self.entry_pago2.grid(row=row_entry, column=3, padx=5, pady=(0, 10), sticky="ew")
 
     def guardar_cambios(self):
         empleado_nombre = self.entry_empleado.get()
@@ -248,6 +259,15 @@ class EditarContrato(ctk.CTkFrame):
                 return
         else:
             end_db = getattr(self, "_original_end_db", None)
+
+        # Fecha de efectividad opcional: normalizar si se ingresó, pero NO programar.
+        effective_raw = self.effective_date.get().strip()
+        effective_db = None
+        if effective_raw:
+            effective_db = to_db(effective_raw)
+            if not effective_db:
+                messagebox.showerror("Error", "Formato de fecha de efectividad inválido. Use DD/MM/YYYY.")
+                return
 
         monthly_payment = None
         transport = None
@@ -292,17 +312,17 @@ class EditarContrato(ctk.CTkFrame):
                 number_hour=number_hour
             )
 
-            
-            contract_service.actualizar_contrato(self.contrato_id, contrato_actualizado)
-        
+            # Aplicar los cambios inmediatamente; pasar effective_db si el usuario la indicó.
+            contract_service.actualizar_contrato(self.contrato_id, contrato_actualizado, applied_date=effective_db)
+
             messagebox.showinfo("Éxito", "Contrato actualizado exitosamente.")
         
-            # Si la actualización fue exitosa, entonces se llama al callback
+            # Recargar datos para mostrar el estado actual y evitar duplicados en la vista
+            self.cargar_datos()
             if self.volver_callback:
                 self.destroy()
                 self.volver_callback()
                 
-            
         except Exception as e:
             messagebox.showerror("Error al guardar", f"No se pudo actualizar el contrato: {e}")
 
