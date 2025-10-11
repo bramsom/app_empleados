@@ -2,6 +2,20 @@ import sqlite3
 from bd.connection import conectar
 from datetime import datetime
 from fpdf import FPDF
+import unicodedata
+
+# helper para normalizar texto a Latin-1 aceptable por FPDF
+def _safe_text(s: object) -> str:
+    s = "" if s is None else str(s)
+    # reemplazos comunes de caracteres “fancy” por equivalentes ASCII
+    s = s.replace("\u2013", "-").replace("\u2014", "-") \
+         .replace("\u2018", "'").replace("\u2019", "'") \
+         .replace("\u201c", '"').replace("\u201d", '"') \
+         .replace("\u2026", "...").replace("\xa0", " ")
+    # normalizar acentos (opcional) y eliminar combinantes si es necesario
+    s = unicodedata.normalize("NFKD", s)
+    # forzar codificación a latin-1 reemplazando caracteres no representables por '?'
+    return s.encode("latin-1", "replace").decode("latin-1")
 
 def obtener_periodo_laborado(employee_id):
     conn = conectar()
@@ -68,13 +82,10 @@ class CertPDF(FPDF):
     def footer(self):
         # posición a 15mm del final
         self.set_y(-15)
-        # línea separadora opcional
-        # self.set_draw_color(200,200,200)
-        # self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
         # Pie de página: texto pequeño, cursiva ligera y centrado
         self.set_font("Arial", "I", 8)
         self.set_text_color(100, 100, 100)
-        footer_text = "Web: www.ccp.com.co - Email: colecipi@hotmail.com – Teléfono: 3146233137 - Dirección: Cll. 2 No. 4-80 Barrio San Cayetano"
+        footer_text = _safe_text("Web: www.ccp.com.co - Email: colecipi@hotmail.com - Teléfono: 3146233137 - Dirección: Cll. 2 No. 4-80 Barrio San Cayetano")
         # cell ancho 0 para usar el ancho util y centrar
         self.cell(0, 6, footer_text, ln=0, align="C")
 
@@ -138,19 +149,19 @@ def generar_certificado_contratos(emp, contratos, ruta_salida,
     pdf.set_font("Arial", size=12)
 
     pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 6, entidad_nombre, ln=True, align="C")
+    pdf.cell(0, 6, _safe_text(entidad_nombre), ln=True, align="C")
     pdf.set_font("Arial","B", size=10)
-    pdf.cell(0, 6, nit, ln=True, align="C")
+    pdf.cell(0, 6, _safe_text(nit), ln=True, align="C")
     pdf.ln(8)
 
   # Centrar el texto del representante, NIT y el título "CERTIFICA"
-    pdf.multi_cell(0, 6, "El Representante Legal del " + entidad_nombre + ",", align="C")
+    pdf.multi_cell(0, 6, _safe_text("El Representante Legal del " + entidad_nombre + ","), align="C")
     pdf.ln(2)
     pdf.set_font("Arial","B", size=10)
     pdf.ln(4)
 
     pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 6, "C E R T I F I C A:", ln=True, align="C")
+    pdf.cell(0, 6, _safe_text("C E R T I F I C A:"), ln=True, align="C")
     pdf.ln(6)
     pdf.set_font("Arial", size=11)
 
@@ -158,7 +169,7 @@ def generar_certificado_contratos(emp, contratos, ruta_salida,
         f"Que, {nombre_completo}, identificada con la cédula de ciudadanía número "
         f"{documento}, prestó sus servicios como {labores} en los siguientes períodos y bajo los siguientes contratos:"
     )
-    pdf.multi_cell(0, 6, intro)
+    pdf.multi_cell(0, 6, _safe_text(intro))
     pdf.ln(6)
 
     pdf.set_font("Arial", "B", 10)
@@ -238,11 +249,11 @@ def generar_certificado_contratos(emp, contratos, ruta_salida,
         pdf.set_font("Arial", "I", 10)
         for sig, meaning in siglas_usadas.items():
             line = f"({sig}) {meaning}" if meaning else f"({sig})"
-            pdf.multi_cell(0, 6, line)
+            pdf.multi_cell(0, 6, _safe_text(line))
         pdf.ln(6)
         pdf.set_font("Arial", size=11)
 
-    pdf.multi_cell(0, 6, f"Se expide a solicitud de la persona interesada.\nDado en Piendamó Cauca,el dia {fecha_expedicion}.")
+    pdf.multi_cell(0, 6, _safe_text(f"Se expide a solicitud de la persona interesada.\nDado en Piendamó Cauca, el día {fecha_expedicion}."))
     pdf.ln(20)
 
     # reemplazar bloque de firma actual por uno centrado y en negrilla
@@ -253,9 +264,9 @@ def generar_certificado_contratos(emp, contratos, ruta_salida,
     # Usar fuente en negrilla para firma y título, centrados
     pdf.set_font("Arial", "B", 11)
     # cell width 0 con align='C' centra en el ancho util (considera los márgenes)
-    pdf.cell(0, 6, representante, ln=True, align="C")
+    pdf.cell(0, 6, _safe_text(representante), ln=True, align="C")
     pdf.ln(4)
-    pdf.cell(0, 6, "Representante Legal", ln=True, align="C")
+    pdf.cell(0, 6, _safe_text("Representante Legal"), ln=True, align="C")
     # volver a fuente normal si se necesita más texto después
     pdf.set_font("Arial", size=11)
 
