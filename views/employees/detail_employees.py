@@ -12,6 +12,15 @@ from views.employees.edit_employees import EditarEmpleado
 from utils.autocomplete import crear_autocompletado
 from views.contracts.register_contracts import RegistrarContrato # Importar la vista de registro
 
+def _truncate(text, max_chars):
+    """Trunca text a max_chars y añade elipsis si sobra."""
+    if text is None:
+        return "-"
+    s = str(text)
+    if len(s) <= max_chars:
+        return s
+    return s[:max_chars-3].rstrip() + "..."
+
 class MostrarEmpleado(ctk.CTkFrame):
     def __init__(self, parent, employee_id, username=None, rol=None, volver_callback=None):
         super().__init__(parent)
@@ -144,7 +153,6 @@ class MostrarEmpleado(ctk.CTkFrame):
             ("Dirección residencia:", self.empleado.residence_address, 2, 2, 2),
             ("RUT:", self.empleado.RUT, 2, 4),
             ("Correo electrónico:", self.empleado.email, 3, 0, 2),
-            ("Cargo:", self.empleado.position, 3, 2),
         ]
         
         for campo in campos:
@@ -200,34 +208,40 @@ class MostrarEmpleado(ctk.CTkFrame):
             
             # Un solo frame para toda la fila del contrato, actuando como una "tarjeta"
             contrato_frame = ctk.CTkFrame(parent_frame, fg_color="#FFFFFF", corner_radius=10)
-            # Usar 'sticky="ew"' para expandir en la dirección este-oeste
             contrato_frame.grid(row=fila_contrato, column=0, pady=5, padx=10, sticky="ew")
             
-            # Recolectar todos los campos para el contrato actual
+            # Preferir el valor ya calculado por el servicio: contrato.valor_estimado o campo 'valor_estimado' en dict
+            pre_val = None
+            if isinstance(contrato, dict):
+                pre_val = contrato.get("valor_estimado")
+            else:
+                pre_val = getattr(contrato, "valor_estimado", None)
+
+            if pre_val is None:
+                # Si el servicio no proporcionó el valor, mostrar guion en lugar de calcular en la vista
+                valor_str = "-"
+            else:
+                try:
+                    valor = float(pre_val)
+                    valor_str = f"${valor:,.2f}"
+                except Exception:
+                    # Si no es convertible a float, mostrar tal cual
+                    valor_str = str(pre_val)
+            # Truncar campos largos para que las tarjetas queden homogéneas
+            tipo_disp = _truncate(contrato.type_contract or "-", 30)
+            cargo_disp = _truncate(contrato.position or "-", 20)
+
+            # Recolectar todos los campos para el contrato actual, incluyendo cargo truncado y valor estimado
             campos_contrato = [
                 ("Fecha de inicio:", contrato.start_date),
                 ("Fecha de corte:", contrato.end_date or "Actual"),
-                ("Tipo de contrato:", contrato.type_contract),
+                ("Tipo de contrato:", tipo_disp),
                 ("Estado:", contrato.state),
-                ("Empleador:", contrato.contractor or "-")
+                ("Empleador:", contrato.contractor or "-"),
+                ("Cargo:", cargo_disp),
+                ("Valor estimado:", valor_str)
             ]
 
-            if contrato.type_contract in ['CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO', 'CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO', 'CONTRATO APRENDIZAJE SENA']:
-                campos_contrato.extend([
-                    ("Mensualidad:", f"${contrato.monthly_payment:,.2f}" if contrato.monthly_payment is not None else "-"),
-                    ("Transporte:", f"${contrato.transport:,.2f}" if contrato.transport is not None else "-")
-                ])
-            elif contrato.type_contract == 'CONTRATO SERVICIO HORA CATEDRA':
-                campos_contrato.extend([
-                    ("Valor hora:", f"${contrato.value_hour:,.2f}" if contrato.value_hour is not None else "-"),
-                    ("No horas:", contrato.number_hour or "-")
-                ])
-            elif contrato.type_contract == 'ORDEN PRESTACION DE SERVICIOS':
-                campos_contrato.extend([
-                    ("Valor total:", f"${contrato.total_payment:,.2f}" if contrato.total_payment is not None else "-"),
-                    ("Frecuencia de pago:", contrato.payment_frequency or "-")
-                ])
-            
             # Configurar las columnas dentro del frame del contrato para que se expandan uniformemente
             for i in range(len(campos_contrato)):
                 contrato_frame.grid_columnconfigure(i, weight=1)

@@ -87,6 +87,9 @@ class MostrarContrato(ctk.CTkFrame):
         self.end_date = create_field("Fecha Fin", 2, 1, 1, "end_date")[1]
         self.contractor = create_field("Contratante", 4, 0, 2, "contractor")[1]
 
+        # Nuevo campo: Cargo (position) — debajo de Contratante para mantener orden
+        self.position = create_field("Cargo", 6, 0, 4, "position")[1]
+
         # Campo estado (usando un Label)
         ctk.CTkLabel(self.form_frame, text="Estado", **self.label_style).grid(row=4, column=2, columnspan=2, sticky="w", pady=(5, 0), padx=5)
         self.estado_var = ctk.StringVar(value="")
@@ -138,17 +141,43 @@ class MostrarContrato(ctk.CTkFrame):
                 self.volver_callback()
             return
     
-        (
-            id_, employee_id, empleado_nombre, type_contract, start_date, end_date, state,
-            contractor, total_payment, payment_frequency, monthly_payment, transport,
-            value_hour, number_hour, new_total_payment, new_payment_frequency
-        ) = contrato_data
+        # contrato_data puede ser una tupla con 16 campos (antiguo) o 17+ (si incluye position).
+        # Extraer de forma segura por índice.
+        def _get(i):
+            try:
+                return contrato_data[i]
+            except Exception:
+                return None
+
+        id_ = _get(0)
+        employee_id = _get(1)
+        empleado_nombre = _get(2)
+        type_contract = _get(3)
+        start_date = _get(4)
+        end_date = _get(5)
+        state = _get(6)
+        contractor = _get(7)
+        total_payment = _get(8)
+        payment_frequency = _get(9)
+        monthly_payment = _get(10)
+        transport = _get(11)
+        value_hour = _get(12)
+        number_hour = _get(13)
+        new_total_payment = _get(14)
+        new_payment_frequency = _get(15)
+        # position, si el servicio lo devuelve, suele venir como campo adicional al final
+        position = _get(16) or ""
 
         # Rellenar campos comunes
         self._fill_entry_field(self.entry_empleado, empleado_nombre)
         self._fill_entry_field(self.start_date, self._format_date(start_date))
         self._fill_entry_field(self.end_date, self._format_date(end_date))
         self._fill_entry_field(self.contractor, contractor)
+        # Rellenar nuevo campo Cargo
+        try:
+            self._fill_entry_field(self.position, position)
+        except Exception:
+            pass
         self.tipo_contrato_var.set(type_contract)
         self.estado_var.set(state)
         self._mostrar_campos_pago(

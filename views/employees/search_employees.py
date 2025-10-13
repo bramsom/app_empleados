@@ -8,6 +8,7 @@ from controllers import affiliation_controller
 from controllers import contract_controller
 from views.employees.detail_employees import MostrarEmpleado
 from views.employees.edit_employees import EditarEmpleado
+from bd.connection import conectar
 
 class BuscarEmpleados(ctk.CTkFrame):
     def __init__(self, parent,username,rol, volver_callback=None):
@@ -72,7 +73,18 @@ class BuscarEmpleados(ctk.CTkFrame):
         self.scroll_frame = ctk.CTkScrollableFrame(self.card, height=300, fg_color="transparent")
         self.scroll_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
+        # Límites de visualización
+        self.MAX_EMAIL_LEN = 100
+        self.MAX_POSITION_LEN = 60
+
         self.cargar_empleados()
+
+    def _truncar(self, texto, max_len):
+        """Devuelve texto truncado con '...' si excede max_len."""
+        if texto is None:
+            return ""
+        s = str(texto)
+        return s if len(s) <= max_len else s[: max_len - 3] + "..."
 
     def cargar_empleados(self):
         try:
@@ -81,6 +93,33 @@ class BuscarEmpleados(ctk.CTkFrame):
             if not self.empleados:
                 messagebox.showinfo("Información", "No hay empleados registrados.")
             
+            # Prefetch: obtener position del contrato más reciente por empleado
+            try:
+                conn = conectar()
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT c.employee_id, c.position
+                    FROM contracts c
+                    JOIN (
+                        SELECT employee_id, MAX(start_date) AS max_start
+                        FROM contracts
+                        WHERE start_date IS NOT NULL
+                        GROUP BY employee_id
+                    ) m ON c.employee_id = m.employee_id AND c.start_date = m.max_start
+                """)
+                pos_map = dict(cur.fetchall())  # {employee_id: position}
+            except Exception:
+                pos_map = {}
+            finally:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
+            # Asignar position (vacío si no hay contrato)
+            for emp in self.empleados:
+                emp.position = pos_map.get(emp.id) or ""
+
             self.actualizar_lista() # Muestra todos los empleados al cargar
 
         except Exception as e:
@@ -143,8 +182,11 @@ class BuscarEmpleados(ctk.CTkFrame):
         for emp in empleados_a_mostrar:
             # Alterna el color de la fila
             color_fila = "#F0F0F0" if row % 2 == 0 else "#D9D9D9"
+            # Usar versiones truncadas para correo y cargo
+            email_disp = self._truncar(emp.email, self.MAX_EMAIL_LEN)
+            position_disp = self._truncar(emp.position, self.MAX_POSITION_LEN)
             valores = [emp.name, emp.last_name, emp.document_type, emp.document_number,
-                       emp.birthdate, emp.phone_number, emp.email, emp.position]
+                       emp.birthdate, emp.phone_number, email_disp, position_disp]
             for col, texto in enumerate(valores):
                 celda = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila, corner_radius=0)
                 celda.grid(row=row, column=col, padx=0, pady=2, sticky="nsew")

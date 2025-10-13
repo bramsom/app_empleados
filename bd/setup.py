@@ -41,8 +41,9 @@ def migrar_datos():
                 end_date DATE,
                 state TEXT NOT NULL CHECK (state IN ('ACTIVO','FINALIZADO','RETIRADO')),
                 contractor TEXT,
-                total_payment REAL, 
+                total_payment REAL,
                 payment_frequency INTEGER,
+                position TEXT,
                 FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
             )
         """)
@@ -90,11 +91,16 @@ def migrar_datos():
                 id, employee_id, type_contract, start_date, end_date, state, contractor, total_payment, payment_frequency
             ) = contrato
 
-            # Insert into the new contracts table
+            # Obtener position del empleado (si existe)
+            cursor.execute("SELECT position FROM employees WHERE id = ?", (employee_id,))
+            emp_pos_row = cursor.fetchone()
+            position = emp_pos_row[0] if emp_pos_row and emp_pos_row[0] is not None else None
+
+            # Insert into the new contracts table (incluyendo position)
             cursor.execute("""
-                INSERT INTO contracts (id, employee_id, type_contract, start_date, end_date, state, contractor, total_payment, payment_frequency)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-            """, (id, employee_id, type_contract, start_date, end_date, state, contractor, total_payment, payment_frequency))
+                INSERT INTO contracts (id, employee_id, type_contract, start_date, end_date, state, contractor, total_payment, payment_frequency, position)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """, (id, employee_id, type_contract, start_date, end_date, state, contractor, total_payment, payment_frequency, position))
 
             # Insert into the appropriate history table based on contract type
             if type_contract == 'ORDEN PRESTACION DE SERVICIOS' and total_payment is not None and payment_frequency is not None:
@@ -164,6 +170,7 @@ def crear_tablas():
             contractor TEXT,
             total_payment REAL,
             payment_frequency INTEGER,
+            position TEXT,
         FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
         )"""
     )

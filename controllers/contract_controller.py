@@ -23,6 +23,7 @@ def registrar_contrato(datos_contrato_dict):
             transport=datos_contrato_dict.get('transport'),
             value_hour=datos_contrato_dict.get('value_hour'),
             number_hour=datos_contrato_dict.get('number_hour'),
+            position=datos_contrato_dict.get('position')  # <-- agregado
         )
         return crear_contrato(contrato_obj)
     except Exception as e:
@@ -75,6 +76,7 @@ def modificar_contrato(contrato_id, datos_contrato_dict):
             transport=datos_contrato_dict.get('transport'),
             value_hour=datos_contrato_dict.get('value_hour'),
             number_hour=datos_contrato_dict.get('number_hour'),
+            position=datos_contrato_dict.get('position')  # <-- agregado
         )
 
         actualizar_contrato(contrato_id, contrato, applied_date=fecha_norm)

@@ -37,18 +37,18 @@ def agregar_empleado(datos_empleado):
     try:
         # El servicio ya espera un objeto Empleado, no un diccionario
         empleado = Empleado(
-            id_=datos_empleado['id'],
-            name=datos_empleado['name'],
-            last_name=datos_empleado['last_name'],
-            document_type=datos_empleado['document_type'],
-            document_number=datos_empleado['document_number'],
-            document_issuance=datos_empleado['document_issuance'],
-            birthdate=datos_empleado['birthdate'],
-            phone_number=datos_empleado['phone_number'],
-            residence_address=datos_empleado['residence_address'],
-            RUT=datos_empleado['RUT'],
-            email=datos_empleado['email'],
-            position=datos_empleado['position']
+            id_=datos_empleado.get('id'),
+            name=datos_empleado.get('name'),
+            last_name=datos_empleado.get('last_name'),
+            document_type=datos_empleado.get('document_type'),
+            document_number=datos_empleado.get('document_number'),
+            document_issuance=datos_empleado.get('document_issuance'),
+            birthdate=datos_empleado.get('birthdate'),
+            phone_number=datos_empleado.get('phone_number'),
+            residence_address=datos_empleado.get('residence_address'),
+            RUT=datos_empleado.get('RUT'),
+            email=datos_empleado.get('email')
+            # NOTA: no pasar 'position' aquí — ahora viene desde contracts
         )
         employee_service.crear_empleado(empleado)
         return True

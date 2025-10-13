@@ -4,7 +4,7 @@ class Contrato:
     def __init__(self, id=None, employee_id=None, type_contract="",
                  start_date="", end_date="", state="", contractor="",
                  total_payment=None, payment_frequency=None, monthly_payment=None, 
-                 transport=None, value_hour=None, number_hour=None):
+                 transport=None, value_hour=None, number_hour=None, position=""):
 
         self.id = id
         self.employee_id = employee_id
@@ -13,6 +13,7 @@ class Contrato:
         self.end_date = str(end_date).strip()
         self.state = state.strip()
         self.contractor = contractor.strip()
+        self.position = position.strip() if position is not None else None
         
         # --- CORRECCIÓN: Manejar los valores None antes de la conversión ---
         self.total_payment = float(total_payment) if total_payment is not None else None
@@ -54,5 +55,6 @@ class Contrato:
             self.state,
             self.contractor,
             self.total_payment,
-            self.payment_frequency
+            self.payment_frequency,
+            self.position
         )

@@ -100,8 +100,7 @@ class EditarEmpleado(ctk.CTkFrame):
         crear_label_entry("Numero de telefono", 4, 0, 1, "phone_number")
         crear_label_entry("Direccion de residencia", 4, 1, 2, "residence_address")
         crear_label_entry("RUT", 4, 3, 1, "RUT")
-        crear_label_entry("Correo electronico", 6, 0, 2, "email")
-        crear_label_entry("Cargo", 6, 2, 2, "position")
+        crear_label_entry("Correo electronico", 6, 0, 4, "email")
 
         # ==== Botones ====
         botones_frame = ctk.CTkFrame(self.card, fg_color="transparent")
@@ -166,7 +165,6 @@ class EditarEmpleado(ctk.CTkFrame):
         self.residence_address.insert(0, empleado.residence_address)
         self.RUT.insert(0, empleado.RUT)
         self.email.insert(0, empleado.email)
-        self.position.insert(0, empleado.position)
 
         # Usar .set(...) para CTkOptionMenu (StringVar)
         self.tipo_documento_var.set(empleado.document_type)
@@ -186,8 +184,7 @@ class EditarEmpleado(ctk.CTkFrame):
             phone_number=self.phone_number.get(),
             residence_address=self.residence_address.get(),
             RUT=self.RUT.get(),
-            email=self.email.get(),
-            position=self.position.get()
+            email=self.email.get()
         )
 
         employee_service.actualizar_empleado(self.empleado_id,empleado)

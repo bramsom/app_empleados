@@ -95,6 +95,7 @@ class RegistrarContrato(ctk.CTkFrame):
         # Otros campos que siempre son visibles
         self.crear_label_entry("Empleador", 4, 0, 2, "contractor")
         self.crear_option_menu("Estado", 4, 2, ["ACTIVO", "FINALIZADO", "RETIRADO"], "estado_var")
+        self.crear_label_entry("Cargo", 6, 0, 4, "position")
 
     def crear_label_entry(self, texto, fila, col, colspan=1, atributo="", parent_frame=None, placeholder=""):
         parent_frame = parent_frame or self.form_frame
@@ -216,6 +217,7 @@ class RegistrarContrato(ctk.CTkFrame):
                 'end_date': end_db,
                 'state': self.estado_var.get(),
                 'contractor': self.contractor.get(),
+                'position': self.position.get() if hasattr(self, "position") else "",
                 'total_payment': float(self.total_payment.get()) if tipo_contrato == "ORDEN PRESTACION DE SERVICIOS" and self.total_payment.get() else 0.0,
                 'payment_frequency': self.payment_frequency.get() if tipo_contrato == "ORDEN PRESTACION DE SERVICIOS" and self.payment_frequency.get() else "",
                 'monthly_payment': float(self.monthly_payment.get()) if tipo_contrato in ["CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO", "CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO", "CONTRATO APRENDIZAJE SENA"] and self.monthly_payment.get() else 0.0,

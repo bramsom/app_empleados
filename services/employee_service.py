@@ -9,13 +9,13 @@ def crear_empleado(empleado):
         cursor.execute("""
             INSERT INTO employees 
             (name, last_name, document_type, document_number, document_issuance,
-            birthdate, phone_number, residence_address, RUT, email, position)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            birthdate, phone_number, residence_address, RUT, email)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             empleado.name, empleado.last_name, empleado.document_type,
             empleado.document_number, empleado.document_issuance,
             empleado.birthdate, empleado.phone_number, empleado.residence_address,
-            empleado.RUT, empleado.email, empleado.position
+            empleado.RUT, empleado.email
         ))
         conn.commit()
     except Exception as e:
@@ -29,13 +29,16 @@ def obtener_empleados():
     conn = conectar()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT * FROM employees")
+        cursor.execute("""
+            SELECT
+                id, name, last_name, document_type, document_number, document_issuance,
+                birthdate, phone_number, residence_address, RUT, email
+            FROM employees
+        """)
         datos = cursor.fetchall()
         
         lista_empleados = []
         for fila in datos:
-            # Asegúrate de que el orden de los datos de la base de datos
-            # coincida con el constructor de tu clase Empleado
             lista_empleados.append(Empleado(*fila))
         return lista_empleados
     except Exception as e:
@@ -48,7 +51,13 @@ def obtener_empleado_por_id(employee_id):
     conn = conectar()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT * FROM employees WHERE id = ?", (employee_id,))
+        cursor.execute("""
+            SELECT
+                id, name, last_name, document_type, document_number, document_issuance,
+                birthdate, phone_number, residence_address, RUT, email
+            FROM employees
+            WHERE id = ?
+        """, (employee_id,))
         emp_tuple = cursor.fetchone()
         
         if emp_tuple:
@@ -71,13 +80,13 @@ def actualizar_empleado(empleado_id, datos_empleado):
         cursor.execute("""
             UPDATE employees SET 
             name=?, last_name=?, document_type=?, document_number=?, document_issuance=?,
-            birthdate=?, phone_number=?, residence_address=?, RUT=?, email=?, position=?
+            birthdate=?, phone_number=?, residence_address=?, RUT=?, email=?
             WHERE id=?
         """, (
             datos_empleado.name, datos_empleado.last_name, datos_empleado.document_type,
             datos_empleado.document_number, datos_empleado.document_issuance,
             datos_empleado.birthdate, datos_empleado.phone_number, datos_empleado.residence_address,
-            datos_empleado.RUT, datos_empleado.email, datos_empleado.position,
+            datos_empleado.RUT, datos_empleado.email,
             empleado_id
         ))
         conn.commit()
@@ -114,8 +123,11 @@ def buscar_empleados_por_criterio(query):
     try:
         search_query = f"%{query}%"
         cursor.execute("""
-            SELECT * FROM employees
-            WHERE name LIKE ? OR last_name LIKE ? OR position LIKE ? OR document_number LIKE ?
+            SELECT
+                id, name, last_name, document_type, document_number, document_issuance,
+                birthdate, phone_number, residence_address, RUT, email
+            FROM employees
+            WHERE name LIKE ? OR last_name LIKE ? OR document_number LIKE ? OR email LIKE ?
         """, (search_query, search_query, search_query, search_query))
         
         datos = cursor.fetchall()
@@ -140,5 +152,25 @@ def obtener_empleados_para_combobox():
     except Exception as e:
         print(f"Error al obtener empleados para combobox: {e}")
         return []
+    finally:
+        conn.close()
+
+def obtener_cargo_actual(employee_id):
+    """
+    Retorna el 'position' del contrato más reciente (por start_date) para el empleado,
+    o None si no existe o la posición es NULL.
+    """
+    conn = conectar()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT position FROM contracts
+            WHERE employee_id = ?
+              AND start_date IS NOT NULL
+            ORDER BY date(start_date) DESC
+            LIMIT 1
+        """, (employee_id,))
+        row = cur.fetchone()
+        return row[0] if row and row[0] is not None else None
     finally:
         conn.close()

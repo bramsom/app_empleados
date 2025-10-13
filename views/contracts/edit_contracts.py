@@ -122,7 +122,8 @@ class EditarContrato(ctk.CTkFrame):
         self.entry_pago2 = ctk.CTkEntry(self.form_frame, **self.entry_style)
         
         self.contractor = create_field("Contratante", 4, 0, 2, "contractor")
-        
+        self.position = create_field("Cargo", 6, 0, 4, "position")
+
         ctk.CTkLabel(self.form_frame, text="Estado", **self.label_style).grid(
             row=2, column=3, columnspan=1, sticky="w", pady=(5, 0), padx=5
         )
@@ -164,11 +165,33 @@ class EditarContrato(ctk.CTkFrame):
             return
 
         self.original_contract_data = contrato_data
-    
-        # Actualizar la línea de desempaquetado para que coincida con la consulta
-        (id_, employee_id, empleado_nombre, type_contract, start_date, end_date, state,
-         contractor, total_payment, payment_frequency, monthly_payment, transport,
-         value_hour, number_hour, new_total_payment, new_payment_frequency) = contrato_data
+
+        # contrato_data puede venir con 16 o más campos (si se agregó `position` u otros).
+        # Extraer de forma segura por índice para evitar ValueError.
+        def _get(i):
+            try:
+                return contrato_data[i]
+            except Exception:
+                return None
+
+        id_ = _get(0)
+        employee_id = _get(1)
+        empleado_nombre = _get(2)
+        type_contract = _get(3)
+        start_date = _get(4)
+        end_date = _get(5)
+        state = _get(6)
+        contractor = _get(7)
+        total_payment = _get(8)
+        payment_frequency = _get(9)
+        monthly_payment = _get(10)
+        transport = _get(11)
+        value_hour = _get(12)
+        number_hour = _get(13)
+        new_total_payment = _get(14)
+        new_payment_frequency = _get(15)
+        # position (nuevo campo) si está presente
+        position = _get(16) or ""
 
         fill_entry_field(self.entry_empleado, empleado_nombre)
         self.entry_empleado.employee_id = employee_id
@@ -183,6 +206,12 @@ class EditarContrato(ctk.CTkFrame):
     
         self.tipo_contrato_var.set(type_contract)
         self.estado_var.set(state)
+
+        try:
+            fill_entry_field(self.position, position or "")
+        except Exception:
+            # en caso de que el campo no exista por alguna razón, ignorar
+            pass
 
         # La lógica para mostrar los campos de pago debe usar las nuevas variables
         # para los contratos de "Orden de Prestación de Servicios".
@@ -304,6 +333,7 @@ class EditarContrato(ctk.CTkFrame):
                 end_date=end_db,
                 state=self.estado_var.get(),
                 contractor=self.contractor.get(),
+                position=self.position.get().strip() if hasattr(self, "position") else None,
                 total_payment=total_payment,
                 payment_frequency=payment_frequency,
                 monthly_payment=monthly_payment,
