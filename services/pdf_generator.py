@@ -1,21 +1,8 @@
 import sqlite3
 from bd.connection import conectar
 from datetime import datetime
-from fpdf import FPDF
-import unicodedata
-
-# helper para normalizar texto a Latin-1 aceptable por FPDF
-def _safe_text(s: object) -> str:
-    s = "" if s is None else str(s)
-    # reemplazos comunes de caracteres “fancy” por equivalentes ASCII
-    s = s.replace("\u2013", "-").replace("\u2014", "-") \
-         .replace("\u2018", "'").replace("\u2019", "'") \
-         .replace("\u201c", '"').replace("\u201d", '"') \
-         .replace("\u2026", "...").replace("\xa0", " ")
-    # normalizar acentos (opcional) y eliminar combinantes si es necesario
-    s = unicodedata.normalize("NFKD", s)
-    # forzar codificación a latin-1 reemplazando caracteres no representables por '?'
-    return s.encode("latin-1", "replace").decode("latin-1")
+import os
+from utils.pdf_layout import CertPDF, _safe_text, prepare_header_info
 
 def obtener_periodo_laborado(employee_id):
     conn = conectar()
@@ -77,18 +64,19 @@ def _format_money(val):
     except Exception:
         return ""
 
-# Añadir clase con footer personalizado
-class CertPDF(FPDF):
-    def footer(self):
-        # posición a 15mm del final
-        self.set_y(-15)
-        # Pie de página: texto pequeño, cursiva ligera y centrado
-        self.set_font("Arial", "I", 8)
-        self.set_text_color(100, 100, 100)
-        footer_text = _safe_text("Web: www.ccp.com.co - Email: colecipi@hotmail.com - Teléfono: 3146233137 - Dirección: Cll. 2 No. 4-80 Barrio San Cayetano")
-        # cell ancho 0 para usar el ancho util y centrar
-        self.cell(0, 6, footer_text, ln=0, align="C")
+def _format_fecha_spanish(val):
+    """
+    Acepta datetime u object convertible a fecha (usa _parse_date).
+    Devuelve '13 de octubre de 2025' (mes en español, en minúscula).
+    """
+    d = val if isinstance(val, datetime) else _parse_date(val)
+    if not d:
+        return ""
+    meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio",
+             "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+    return f"{d.day} de {meses[d.month - 1]} de {d.year}"
 
+# Añadir clase con footer personalizado y header configurable
 def generar_certificado_contratos(emp, contratos, ruta_salida,
                                   entidad_nombre="COLEGIO CIUDAD DE PIENDAMÓ",
                                   nit="NIT.817001256-7",
@@ -102,7 +90,7 @@ def generar_certificado_contratos(emp, contratos, ruta_salida,
     ruta_salida: ruta .pdf donde guardar
     """
     if fecha_expedicion is None:
-        fecha_expedicion = datetime.now().strftime("%d de %B %Y")
+        fecha_expedicion = _format_fecha_spanish(datetime.now())
 
     def to_dict(c):
         if isinstance(c, dict):
@@ -134,8 +122,85 @@ def generar_certificado_contratos(emp, contratos, ruta_salida,
 
     labores = ultimo.get("position") or ultimo.get("cargo") or posicion_emp or ""
 
+    # reunir todos los cargos de los contratos (preservando orden y eliminando duplicados)
+    cargos_raw = []
+    for c in contratos_norm:
+        pos = (c.get("position") or c.get("cargo") or "").strip()
+        if pos:
+            cargos_raw.append(pos)
+    # añadir cargo actual/registro del empleado como fallback (al final)
+    if posicion_emp and posicion_emp.strip() and posicion_emp.strip() not in cargos_raw:
+        cargos_raw.append(posicion_emp.strip())
+
+    # eliminar duplicados preservando orden
+    seen = set()
+    cargos = []
+    for p in cargos_raw:
+        if p and p not in seen:
+            seen.add(p)
+            cargos.append(p)
+
+    # construir texto legible para el párrafo
+    if not cargos:
+        labores_text = ""
+    elif len(cargos) == 1:
+        labores_text = f"como {cargos[0]}"
+    else:
+        # juntar con comas y "y" antes del último
+        if len(cargos) <= 3:
+            joined = ", ".join(cargos[:-1]) + " y " + cargos[-1]
+        else:
+            # si hay muchos, mostrar los primeros 3 y "etc."
+            joined = ", ".join(cargos[:3]) + ", etc."
+        labores_text = f"desempeñando los cargos de {joined}"
+
     # usar la clase con footer
-    pdf = CertPDF()
+    # resolver ruta del proyecto
+    script_dir = os.path.dirname(__file__)
+    project_root = os.path.abspath(os.path.join(script_dir, ".."))
+
+    # márgenes (ejemplo) -> definir antes de usarlos
+    left_margin = 20
+    right_margin = 20
+    top_margin = 20
+
+    # crear PDF en tamaño Letter (8.5"x11")
+    pdf = CertPDF(orientation='P', unit='mm', format='letter')
+
+    # preparar header_info (prepare_header_info debe devolver las claves esperadas)
+    pdf.header_info = prepare_header_info(
+        project_root,
+        entidad_nombre=entidad_nombre,
+        nit=" ",
+        contacto="Web: www.ccp.com.co - Email: colecipi@hotmail.com - Tel: 3146233137 - Cll. 2 No. 4-80 Barrio San Cayetano",
+        logo_left_name="logo_institucional.png",
+        logo_right_name="logo_fundacion.png",
+        watermark_name="watermark.png",
+        watermark_opacity=0.12,
+        watermark_scale=0.95,
+        separator_name="separator.png",
+        separator_scale=0.95
+    )
+    # pasar project_root dentro de header_info por si lo necesita el header/footer
+    pdf.header_info["_project_root"] = project_root
+
+    # aplicar márgenes al PDF (ahora que están definidos)
+    pdf.set_left_margin(left_margin)
+    pdf.set_right_margin(right_margin)
+    pdf.set_top_margin(top_margin)
+
+    # calcular ancho util y forzar el ancho del separador (header + footer)
+    util_width = pdf.w - pdf.l_margin - pdf.r_margin
+    pdf.header_info["separator_width_mm"] = util_width * 0.95  # 95% del ancho util
+    pdf.header_info["separator_scale"] = 0.95
+
+    # añadir la primera página (ejecuta header)
+    pdf.add_page()
+    # si prepare_header_info no expone project_root, pasarlo manualmente para resolver ruta interna
+    pdf.header_info["_project_root"] = project_root
+
+    # Debug temporal eliminado: se quitaron los prints que mostraban rutas y metadatos de imagen.
+    
     # Márgenes: ajustar según prefieras (en mm). Aquí 20mm a izquierda/derecha/arriba.
     left_margin = 20
     right_margin = 20
@@ -143,7 +208,8 @@ def generar_certificado_contratos(emp, contratos, ruta_salida,
     pdf.set_left_margin(left_margin)
     pdf.set_right_margin(right_margin)
     pdf.set_top_margin(top_margin)
-    pdf.add_page()
+    # No volver a llamar add_page con 'format' — ya se añadió la página antes para ejecutar header()
+    # pdf.add_page(format='letter')  # añade página Letter (opcional)
     # Auto page break mantiene el margen inferior (15 por defecto) o puedes ajustarlo:
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Arial", size=12)
@@ -165,16 +231,18 @@ def generar_certificado_contratos(emp, contratos, ruta_salida,
     pdf.ln(6)
     pdf.set_font("Arial", size=11)
 
+    # construir intro de forma segura (usar concatenación explícita)
     intro = (
-        f"Que, {nombre_completo}, identificada con la cédula de ciudadanía número "
-        f"{documento}, prestó sus servicios como {labores} en los siguientes períodos y bajo los siguientes contratos:"
+        f"Que, {nombre_completo}, titular de la cédula de ciudadanía número {documento}, "
+        + (f"prestó sus servicios {labores_text} " if labores_text else "prestó sus servicios ")
+        + "en los siguientes períodos y bajo los siguientes contratos:"
     )
     pdf.multi_cell(0, 6, _safe_text(intro))
     pdf.ln(6)
 
     pdf.set_font("Arial", "B", 10)
     # Ajustes: tamaños y espaciado más compactos
-    base_col_w = [30, 30, 40, 30, 50]  # anchos base (última columna más ancha para CARGO)
+    base_col_w = [30, 30, 40, 30, 60]  # anchos base (última columna más ancha para CARGO)
     # ancho interior de la página (considera márgenes ya definidos)
     page_inner_width = pdf.w - pdf.l_margin - pdf.r_margin
     table_width = sum(base_col_w)
@@ -185,13 +253,15 @@ def generar_certificado_contratos(emp, contratos, ruta_salida,
     start_x = pdf.l_margin + max(0, (page_inner_width - sum(col_w)) / 2)
 
     # Cabecera compacta
-    pdf.set_font("Arial", "B", 9)
-    headers = ["FECHA INIC", "FECHA FINAL", "SAL. MENSUAL", "TIPO CONT.", "CARGO"]
+    pdf.set_font("Arial", "B", 8)
+    headers = ["FECHA INICIO", "FECHA FINAL", "SAL. MENSUAL", "TIPO CONT.", "CARGO"]
     pdf.set_x(start_x)
     for i, h in enumerate(headers):
         pdf.cell(col_w[i], 6, h, border=0, align="C")
     pdf.ln(6)
-    pdf.set_font("Arial", size=9)
+    # Reducir tamaño de fuente y alto de fila para las filas de contratos
+    pdf.set_font("Arial", size=8)
+    row_h = 5
 
     # mapa de siglas/meanings (mismo que en type_reports.py)
     contract_type_map = {
@@ -233,33 +303,32 @@ def generar_certificado_contratos(emp, contratos, ruta_salida,
             or ""
         )
         pdf.set_x(start_x)
-        pdf.cell(col_w[0], 6, start, border=0, align="C")
-        pdf.cell(col_w[1], 6, end, border=0, align="C")
+        pdf.cell(col_w[0], row_h, start, border=0, align="C")
+        pdf.cell(col_w[1], row_h, end, border=0, align="C")
         # Alineación de salario: derecha o centrada según prefieras ("R" o "C")
-        pdf.cell(col_w[2], 6, sal, border=0, align="C")
-        pdf.cell(col_w[3], 6, tipo[:20], border=0, align="C")
+        pdf.cell(col_w[2], row_h, sal, border=0, align="C")
+        pdf.cell(col_w[3], row_h, tipo[:20], border=0, align="C")
         # Ajustar cargo (recorta si es demasiado largo)
-        pdf.cell(col_w[4], 6, cargo[: int(col_w[4] / 2)], border=0, align="C")
-        pdf.ln(6)
+        # usar get_string_width si quieres recortar inteligentemente, aquí recortamos por caracteres
+        max_chars = max(10, int(col_w[4] / 2))
+        pdf.cell(col_w[4], row_h, cargo[:max_chars], border=0, align="C")
+        pdf.ln(row_h)
 
     pdf.ln(8)
 
     # Imprimir leyenda: siglas y significado en cursiva y entre paréntesis
     if siglas_usadas:
-        pdf.set_font("Arial", "I", 10)
+        pdf.set_font("Arial", "I", 8)
+        leyenda_line_h = 4
         for sig, meaning in siglas_usadas.items():
             line = f"({sig}) {meaning}" if meaning else f"({sig})"
-            pdf.multi_cell(0, 6, _safe_text(line))
-        pdf.ln(6)
+            pdf.multi_cell(0, leyenda_line_h, _safe_text(line), align="L")
+        pdf.ln(4)
         pdf.set_font("Arial", size=11)
 
     pdf.multi_cell(0, 6, _safe_text(f"Se expide a solicitud de la persona interesada.\nDado en Piendamó Cauca, el día {fecha_expedicion}."))
     pdf.ln(20)
-
-    # reemplazar bloque de firma actual por uno centrado y en negrilla
-    #    pdf.cell(0, 6, representante, ln=True)
-    #    pdf.cell(0, 6, "Representante Legal", ln=True)
-    # Espacio antes de la firma
+    
     pdf.ln(12)
     # Usar fuente en negrilla para firma y título, centrados
     pdf.set_font("Arial", "B", 11)
