@@ -1,0 +1,19 @@
+# Entorno virtual
+.venv/
+venv/
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+# Bases de datos locales / archivos binarios temporales
+*.db
+*.sqlite3
+# IDE / sistema
+.vscode/
+.DS_Store
+Thumbs.db
+# logs / build
+*.log
+dist/
+build/
