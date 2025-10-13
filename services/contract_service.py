@@ -401,3 +401,57 @@ def eliminar_contrato(contrato_id):
         raise
     finally:
         conn.close()
+def obtener_historial_salario(contract_id):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, monthly_payment, transport, effective_date
+        FROM salary_history
+        WHERE contract_id = ?
+        ORDER BY date(effective_date) DESC, id DESC
+    """, (contract_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [
+        {"id": r[0], "monthly_payment": r[1], "transport": r[2], "effective_date": r[3]}
+        for r in rows
+    ]
+
+def obtener_historial_horas(contract_id):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, value_hour, number_hour, effective_date
+        FROM hourly_history
+        WHERE contract_id = ?
+        ORDER BY date(effective_date) DESC, id DESC
+    """, (contract_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [
+        {"id": r[0], "value_hour": r[1], "number_hour": r[2], "effective_date": r[3]}
+        for r in rows
+    ]
+
+def obtener_historial_ordenes(contract_id):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, old_total_payment, new_total_payment, old_payment_frequency, new_payment_frequency, effective_date
+        FROM service_order_history
+        WHERE contract_id = ?
+        ORDER BY date(effective_date) DESC, id DESC
+    """, (contract_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [
+        {
+            "id": r[0],
+            "old_total_payment": r[1],
+            "new_total_payment": r[2],
+            "old_payment_frequency": r[3],
+            "new_payment_frequency": r[4],
+            "effective_date": r[5]
+        }
+        for r in rows
+    ]

@@ -2,7 +2,9 @@ import customtkinter as ctk
 from PIL import Image
 from tkinter import messagebox
 from datetime import datetime
-from services import contract_service, employee_service
+from services import contract_service
+from controllers import contract_controller
+from utils.modal_history import ModalHistorialPagos
 from views.contracts.edit_contracts import EditarContrato
 from utils.canvas import agregar_fondo_decorativo
 
@@ -57,11 +59,23 @@ class MostrarContrato(ctk.CTkFrame):
         self._crear_widgets()
         self._ocultar_todos_los_campos_pago()
 
+        # Contenedor de botones alineado con el formulario
+        btn_frame = ctk.CTkFrame(self.form_frame, fg_color="transparent")
+        # Ajusta el número de fila si tu formulario tiene más/menos filas; aquí usa 8 como ejemplo
+        btn_frame.grid(row=8, column=0, columnspan=4, pady=(20, 0), sticky="ew")
+        btn_frame.columnconfigure((0, 1), weight=1)
+
         # Botón de edición
         ctk.CTkButton(
-            self.card, text="Editar Contrato", fg_color="#06A051", hover_color="#048B45",
+            btn_frame, text="Editar Contrato", fg_color="#06A051", hover_color="#048B45",
             command=self.abrir_editar_contrato, font=("Georgia", 14), text_color="black", height=50, corner_radius=10
-        ).grid(row=1, column=0, padx=30, pady=30, sticky="ew")
+        ).grid(row=0, column=0, padx=(0, 10), sticky="ew")
+
+        # Botón: Ver historial de pagos (junto al editar)
+        ctk.CTkButton(
+            btn_frame, text="Ver historial de pagos", fg_color="#D9D9D9", hover_color="#CCCCCC",
+            command=self._on_ver_historial, font=("Georgia", 14), text_color="black", height=50, corner_radius=10
+        ).grid(row=0, column=1, padx=(10, 0), sticky="ew")
 
     def _crear_widgets(self):
         """Crea todos los widgets del formulario."""
@@ -234,3 +248,23 @@ class MostrarContrato(ctk.CTkFrame):
             rol=self.rol,
             volver_callback=lambda: BuscarContratos(self.master, self.username, self.rol).pack(fill="both", expand=True)
         ).pack(fill="both", expand=True)
+
+    def mostrar_historial(self):
+        """Muestra modal con historial consultado vía controller."""
+        # delegar a controlador + mostrar modal reutilizable
+        contract_id = getattr(self, "current_contract_id", getattr(self, "contrato_id", None))
+        type_contract = getattr(self, "current_type_contract", self.tipo_contrato_var.get())
+        if not contract_id:
+            messagebox.showerror("Error", "ID de contrato no disponible.")
+            return
+        data = contract_controller.obtener_historial_por_contrato(contract_id, type_contract)
+        headers = data.get("headers", [])
+        rows = data.get("rows", [])
+        if not headers:
+            messagebox.showinfo("Historial", "No hay historial para este tipo de contrato.")
+            return
+        ModalHistorialPagos(self, headers=headers, rows=rows)
+
+    def _on_ver_historial(self):
+        # helper para el botón; reutiliza mostrar_historial
+        self.mostrar_historial()

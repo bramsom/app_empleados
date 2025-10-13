@@ -1,7 +1,9 @@
 from models.contract import Contrato
 from services.contract_service import *
 from utils.date_utils import to_db, to_display
-
+from typing import List, Dict, Any, Tuple
+from services import contract_service
+from datetime import datetime
 def registrar_contrato(datos_contrato_dict):
     """
     Registra un nuevo contrato y sus detalles de pago.
@@ -137,13 +139,69 @@ def modificar_pago_contrato(contrato_id, datos_pago_dict, fecha_efectiva):
         else:
             raise ValueError("Tipo de contrato no soportado para modificar pago.")
 
-        print("DEBUG modificar_pago_contrato -> fecha_raw:", fecha_raw, "fecha_norm:", fecha_norm)
         actualizar_contrato(contrato_id, contrato_obj, applied_date=fecha_norm)
         return True
     except Exception as e:
         print(f"Error al modificar pago del contrato: {e}")
         return False
 
+def _fmt_date(d):
+    if not d:
+        return ""
+    try:
+        # aceptar YYYY-MM-DD o datetime
+        if isinstance(d, datetime):
+            return d.strftime("%d/%m/%Y")
+        return datetime.strptime(str(d), "%Y-%m-%d").strftime("%d/%m/%Y")
+    except Exception:
+        return str(d)
+
+def obtener_historial_por_contrato(contract_id: int, type_contract: str) -> Dict[str, Any]:
+    """
+    Devuelve {'headers': [...], 'rows': [[...], ...]}
+    Las filas están formateadas para mostrar en la UI.
+    """
+    # Contratos por salario
+    if type_contract in [
+        "CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO",
+        "CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO",
+        "CONTRATO APRENDIZAJE SENA"
+    ]:
+        raw = contract_service.obtener_historial_salario(contract_id)
+        headers = ["Fecha efectividad", "Salario mensual", "Transporte"]
+        rows = [
+            [_fmt_date(r.get("effective_date")), r.get("monthly_payment") or "", r.get("transport") or ""]
+            for r in raw
+        ]
+        return {"headers": headers, "rows": rows}
+
+    # Contratos por horas
+    if type_contract == "CONTRATO SERVICIO HORA CATEDRA":
+        raw = contract_service.obtener_historial_horas(contract_id)
+        headers = ["Fecha efectividad", "Valor hora", "Número horas"]
+        rows = [
+            [_fmt_date(r.get("effective_date")), r.get("value_hour") or "", r.get("number_hour") or ""]
+            for r in raw
+        ]
+        return {"headers": headers, "rows": rows}
+
+    # Orden de prestación de servicios
+    if type_contract == "ORDEN PRESTACION DE SERVICIOS":
+        raw = contract_service.obtener_historial_ordenes(contract_id)
+        headers = ["Fecha efectividad", "Antiguo total", "Nuevo total", "Ant. frecuencia", "Nueva frecuencia"]
+        rows = [
+            [
+                _fmt_date(r.get("effective_date")),
+                r.get("old_total_payment") or "",
+                r.get("new_total_payment") or "",
+                r.get("old_payment_frequency") or "",
+                r.get("new_payment_frequency") or ""
+            ]
+            for r in raw
+        ]
+        return {"headers": headers, "rows": rows}
+
+    return {"headers": [], "rows": []}
 
 def borrar_contrato(contrato_id):
     """Elimina un contrato"""
