@@ -160,7 +160,7 @@ class ExportarTipoReporte(ctk.CTkFrame):
                 emp = encontrados[0]
                 ventana.selected_empleado = emp
                 nombre = emp.get("name") + " " + emp.get("last_name") if isinstance(emp, dict) else f"{getattr(emp,'name','')} {getattr(emp,'last_name','')}"
-                resultado_label.configure(text=f"Seleccionado: {nombre} (ID: {emp.get('id') if isinstance(emp, dict) else getattr(emp,'id','')})")
+                resultado_label.configure(text=f"Seleccionado: {nombre} \n(numero documento: {emp.get('document_number') if isinstance(emp, dict) else getattr(emp,'document_number','')})")
             else:
                 ventana.selected_empleado = None
                 resultado_label.configure(text="No se encontró ningún empleado.")

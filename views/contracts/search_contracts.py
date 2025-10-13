@@ -150,7 +150,7 @@ class BuscarContratos(ctk.CTkFrame):
 
         # Definir columnas
         columnas = [
-            ("Empleado", 220), ("Tipo", 220), ("Inicio", 90), ("Corte", 90),
+            ("Empleado", 220), ("Tipo", 190), ("Inicio", 90), ("Corte", 90),
             ("Estado", 90), ("Contratante", 170), ("Valor Estimado", 130),
             ("Ver", 60), ("Editar", 60), ("Eliminar", 70)
         ]

@@ -269,25 +269,45 @@ def obtener_contratos_por_empleado(employee_id):
     
     contratos = []
     for row in contratos_raw:
-        # Crea una instancia de Contrato para cada fila
-        contratos.append(
-            Contrato(
-                id=row[0],
-                employee_id=row[1],
-                type_contract=row[2],
-                start_date=row[3],
-                end_date=row[4],
-                state=row[5],
-                contractor=row[6],
-                monthly_payment=row[7],
-                transport=row[8],
-                value_hour=row[9],
-                number_hour=row[10],
-                total_payment=row[11],
-                payment_frequency=row[12],
-                position=row[13]
-            )
+        # desempaquetar columnas para claridad
+        (
+            id_, employee_id_, type_contract, start_date, end_date, state,
+            contractor, monthly_payment, transport, value_hour, number_hour,
+            new_total_payment, new_payment_frequency, position
+        ) = row
+
+        # calcular valor_estimado según tipo y datos disponibles
+        if (type_contract or "").upper().find("HORA CATEDRA") != -1:
+            try:
+                valor_estimado = (value_hour or 0) * (number_hour or 0)
+            except Exception:
+                valor_estimado = 0
+        elif (type_contract or "").upper().find("ORDEN") != -1:
+            valor_estimado = new_total_payment or 0
+        else:
+            # contratos por salario: usar monthly_payment si existe, si no 0
+            valor_estimado = monthly_payment or 0
+
+        contrato_obj = Contrato(
+            id=id_,
+            employee_id=employee_id_,
+            type_contract=type_contract,
+            start_date=start_date,
+            end_date=end_date,
+            state=state,
+            contractor=contractor,
+            monthly_payment=monthly_payment,
+            transport=transport,
+            value_hour=value_hour,
+            number_hour=number_hour,
+            total_payment=new_total_payment,  # contiene new_total_payment si aplica
+            payment_frequency=new_payment_frequency,
+            position=position
         )
+        # asegurar atributo accesible desde la vista
+        setattr(contrato_obj, "valor_estimado", valor_estimado)
+
+        contratos.append(contrato_obj)
     return contratos
 
 def actualizar_contrato(contrato_id, contrato_data, applied_date=None):
@@ -328,6 +348,15 @@ def actualizar_contrato(contrato_id, contrato_data, applied_date=None):
     position_original = _get_orig(16)
  
     try:
+        # decidir effective_date: usar applied_date si llega, sino hoy
+        if applied_date:
+            if isinstance(applied_date, datetime):
+                effective_date = applied_date.strftime('%Y-%m-%d')
+            else:
+                effective_date = str(applied_date)
+        else:
+            effective_date = datetime.now().strftime('%Y-%m-%d')
+
         # 2. Actualizar los campos principales de la tabla 'contracts'
         cursor.execute("""
             UPDATE contracts SET
@@ -360,21 +389,21 @@ def actualizar_contrato(contrato_id, contrato_data, applied_date=None):
                 cursor.execute("""
                     INSERT INTO salary_history (contract_id, monthly_payment, transport, effective_date)
                     VALUES (?, ?, ?, ?)
-                """, (contrato_id, contrato_data.monthly_payment, contrato_data.transport, datetime.now().strftime('%Y-%m-%d')))
+                """, (contrato_id, contrato_data.monthly_payment, contrato_data.transport, effective_date))
         
         elif contrato_data.type_contract == 'CONTRATO SERVICIO HORA CATEDRA':
             if contrato_data.value_hour != value_hour_original or contrato_data.number_hour != number_hour_original:
                 cursor.execute("""
                     INSERT INTO hourly_history (contract_id, value_hour, number_hour, effective_date)
                     VALUES (?, ?, ?, ?)
-                """, (contrato_id, contrato_data.value_hour, contrato_data.number_hour, datetime.now().strftime('%Y-%m-%d')))
+                """, (contrato_id, contrato_data.value_hour, contrato_data.number_hour, effective_date))
         
         elif contrato_data.type_contract == 'ORDEN PRESTACION DE SERVICIOS':
             if contrato_data.total_payment != new_total_payment_original or contrato_data.payment_frequency != new_payment_frequency_original:
                 cursor.execute("""
                     INSERT INTO service_order_history (contract_id, new_total_payment, new_payment_frequency, effective_date)
                     VALUES (?, ?, ?, ?)
-                """, (contrato_id, contrato_data.total_payment, contrato_data.payment_frequency, datetime.now().strftime('%Y-%m-%d')))
+                """, (contrato_id, contrato_data.total_payment, contrato_data.payment_frequency, effective_date))
 
         # 4. Confirmar la transacción
         conn.commit()

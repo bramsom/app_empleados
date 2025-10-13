@@ -137,6 +137,7 @@ def modificar_pago_contrato(contrato_id, datos_pago_dict, fecha_efectiva):
         else:
             raise ValueError("Tipo de contrato no soportado para modificar pago.")
 
+        print("DEBUG modificar_pago_contrato -> fecha_raw:", fecha_raw, "fecha_norm:", fecha_norm)
         actualizar_contrato(contrato_id, contrato_obj, applied_date=fecha_norm)
         return True
     except Exception as e:

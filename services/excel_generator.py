@@ -20,3 +20,4 @@ def obtener_datos_afiliaciones():
     """
     afiliaciones = listar_afiliaciones()
     return afiliaciones
+
