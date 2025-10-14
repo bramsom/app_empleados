@@ -143,8 +143,7 @@ def crear_tablas():
             phone_number INTEGER NOT NULL,
             residence_address TEXT,
             RUT TEXT,
-            email TEXT,
-            position TEXT
+            email TEXT
         )
     """)
 
@@ -171,9 +170,9 @@ def crear_tablas():
             total_payment REAL,
             payment_frequency INTEGER,
             position TEXT,
-        FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
-        )"""
-    )
+            FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+        )
+    """)
     # Tabla de historial de salarios mensuales
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS salary_history (
@@ -231,7 +230,7 @@ def crear_tablas():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            rol TEXT CHECK(rol IN ('APRENDIZ', 'ADMINISTRADOR')) NOT NULL
+            rol TEXT CHECK(rol IN ('aprendiz', 'administrador')) NOT NULL
         )
     """)
 

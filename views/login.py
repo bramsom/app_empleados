@@ -17,7 +17,7 @@ class LoginApp(ctk.CTk):
         self.resizable(False, False)
         self.title("Inicio de sesión")
         # login.py
-        MODO_DESARROLLO = True  # ⚠️ Cambia a False al finalizar desarrollo
+        MODO_DESARROLLO = False  # ⚠️ Cambia a False al finalizar desarrollo
 
         if MODO_DESARROLLO:
             self.after(100, lambda: self.abrir_dashboard("adminprueba", "administrador"))
@@ -44,7 +44,7 @@ class LoginApp(ctk.CTk):
         canvas.create_polygon(250, 500, 251, 500, 150, 400, 150, 400, fill="#FCFCFC", outline="")
 
         try:
-            logo_img = ctk.CTkImage(Image.open("C:/Users/Usuario/Documents/proyectos python/app_empleados/images/logo.png"), size=(140, 150))
+            logo_img = ctk.CTkImage(Image.open("images/logo.png"), size=(140, 150))
             logo_label = ctk.CTkLabel(frame_izquierdo, image=logo_img, text="", fg_color="#FFEFEF")
             logo_label.place(relx=0.55, rely=0.45, anchor="center")
         except:
