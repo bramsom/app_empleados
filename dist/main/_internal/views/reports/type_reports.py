@@ -63,83 +63,70 @@ class ExportarTipoReporte(ctk.CTkFrame):
                 title="Guardar reporte Excel"
             )
             if not ruta:
-                return
+                return  # El usuario canceló
 
-            sheets = obtener_datos_para_excel(tablas_a_exportar)
+            # Mapa de columnas (ajusta las claves a las que devuelve tu controlador)
+            column_map = {
+                "id": "ID",
+                "name": "Nombre",
+                "last_name": "Apellido",
+                "document_type": "Tipo documento",
+                "document_number": "Número documento",
+                "document_issuance": "Lugar expedición",
+                "birthdate": "Fecha nacimiento",
+                "phone_number": "Teléfono",
+                "residence_address": "Dirección",
+                "RUT": "RUT",
+                "email": "Correo",
+                "position": "Cargo",
+                "employee_id": "ID Empleado",
+                "type_contract": "Tipo contrato",
+                "start_date": "Fecha inicio",
+                "end_date": "Fecha fin",
+                "state": "Estado",
+                "contractor": "Contratante",
+                "total_payment": "Pago total",
+                "payment_frequency": "Número de cuotas",
+                "monthly_payment": "Salario mensual",
+                "transport": "Transporte",
+                "value_hour": "Valor hora",
+                "number_hour": "Número horas",
+                "eps": "EPS",
+                "arl": "ARL",
+                "risk_level": "Nivel de riesgo",
+                "afp": "AFP",
+                "compensation_box": "Caja compensación",
+                "bank": "Banco",
+                "account_number": "Número cuenta",
+                "account_type": "Tipo cuenta"
+                # añade/ajusta según necesites
+            }
 
-            # DEBUG: ver qué llega (muestra sólo primeras filas por sheet)
-            try:
-                for s in sheets:
-                    name = s.get("name", "<no name>")
-                    rows = s.get("rows", []) or []
-                    columns_spec = s.get("columns", []) or []
-                    print(f"[DEBUG export] sheet={name}, rows={len(rows)}, columns_spec={columns_spec}")
-                    if rows:
-                        # imprimir primeras 3 filas para inspección
-                        for r in rows[:3]:
-                            print("  row sample:", {k: (v if isinstance(v,(str,int,float,bool)) else str(v)) for k,v in list(r.items())[:8]})
-            except Exception:
-                pass
-
+            contract_type_map = {
+                "CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO": ("C.I.T.T.F", "Contrato Individual de Trabajo a Término Fijo"),
+                "CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO": ("C.I.T.T.I", "Contrato Individual de Trabajo a Término Indefinido"),
+                "CONTRATO SERVICIO HORA CATEDRA": ("C.S.H.C", "Contrato de Prestación de Servicios - Hora Cátedra"),
+                "CONTRATO APRENDIZAJE SENA": ("C.A.S", "Contrato de Aprendizaje SENA"),
+                "ORDEN PRESTACION DE SERVICIOS": ("O.P.S", "Orden de Prestación de Servicios")
+            }
+            # Usa el controlador para obtener los datos
+            datos = obtener_datos_para_excel(tablas_a_exportar)
             import pandas as pd
-            default_width = 15.0
-            with pd.ExcelWriter(ruta, engine="openpyxl") as writer:
-                for s in sheets:
-                    name = s.get("name", "Sheet1")
-                    rows = s.get("rows", []) or []
-                    columns_spec = s.get("columns", []) or []  # lista de (key, header)
-                    df = pd.DataFrame(rows)
+            with pd.ExcelWriter(ruta) as writer:
+                if "empleados" in tablas_a_exportar and "empleados" in datos:
+                    df_emp = pd.DataFrame(datos["empleados"])
+                    df_emp = df_emp.rename(columns=column_map)
+                    df_emp.to_excel(writer, sheet_name="Empleados", index=False)
 
-                    # si tenemos columns_spec, reordenar y renombrar según (key, header)
-                    if columns_spec:
-                        keys = [k for k, _ in columns_spec]
-                        headers_map = {k: h for k, h in columns_spec}
-                        # asegurar columnas existentes en el DF
-                        for k in keys:
-                            if k not in df.columns:
-                                df[k] = ""  # columna vacía si falta
-                        df = df.reindex(columns=keys)
-                        df = df.rename(columns=headers_map)
-                        col_keys = keys
-                        header_names = [headers_map[k] for k in keys]
-                    else:
-                        col_keys = list(df.columns)
-                        header_names = col_keys
+                if "contratos" in tablas_a_exportar and "contratos" in datos:
+                    df_con = pd.DataFrame(datos["contratos"])
+                    df_con = df_con.rename(columns=column_map)
+                    df_con.to_excel(writer, sheet_name="Contratos", index=False)
 
-                    df.to_excel(writer, sheet_name=name, index=False)
-
-                    # fijar anchos usando openpyxl
-                    try:
-                        from openpyxl.utils import get_column_letter
-                        ws = writer.sheets[name]
-                        col_widths = s.get("column_widths", None)
-
-                        for idx, (orig_key, header_name) in enumerate(zip(col_keys, header_names), start=1):
-                            letter = get_column_letter(idx)
-
-                            # preferir ancho explícito si existe
-                            if isinstance(col_widths, (list, tuple)):
-                                w = col_widths[idx - 1] if len(col_widths) >= idx else default_width
-                            elif isinstance(col_widths, dict):
-                                # buscar por clave original (orig_key)
-                                w = col_widths.get(orig_key, default_width)
-                            else:
-                                w = None
-
-                            if w is None:
-                                # auto ancho basado en contenido y cabecera
-                                try:
-                                    max_len = df[header_name].astype(str).map(len).max()
-                                    max_len = max(max_len if pd.notna(max_len) else 0, len(str(header_name)))
-                                    w = float(max_len) + 2.0
-                                except Exception:
-                                    w = default_width
-
-                            ws.column_dimensions[letter].width = float(w)
-                    except Exception:
-                        # no crítico; seguimos sin fijar anchos si falla
-                        pass
-
+                if "afiliaciones" in tablas_a_exportar and "afiliaciones" in datos:
+                    df_afi = pd.DataFrame(datos["afiliaciones"])
+                    df_afi = df_afi.rename(columns=column_map)
+                    df_afi.to_excel(writer, sheet_name="Afiliaciones", index=False)
             messagebox.showinfo("Éxito", f"Datos exportados correctamente a {ruta}")
 
         ModalSeleccionExcel(self, exportar_callback)
