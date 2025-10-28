@@ -74,8 +74,8 @@ class BuscarEmpleados(ctk.CTkFrame):
         self.scroll_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Límites de visualización
-        self.MAX_EMAIL_LEN = 100
-        self.MAX_POSITION_LEN = 60
+        self.MAX_EMAIL_LEN = 40
+        self.MAX_POSITION_LEN = 25
 
         self.cargar_empleados()
 

@@ -46,10 +46,6 @@
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_setuptools.py',
    'PYSOURCE'),
-  ('pyi_rth_pkgutil',
-   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
-   'python\\app_empleados\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgutil.py',
-   'PYSOURCE'),
   ('pyi_rth_multiprocessing',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_multiprocessing.py',
@@ -57,6 +53,10 @@
   ('pyi_rth__tkinter',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth__tkinter.py',
+   'PYSOURCE'),
+  ('pyi_rth_pkgutil',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgutil.py',
    'PYSOURCE'),
   ('main',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos python\\app_empleados\\main.py',

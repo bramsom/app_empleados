@@ -70,10 +70,6 @@
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_setuptools.py',
    'PYSOURCE'),
-  ('pyi_rth_pkgutil',
-   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
-   'python\\app_empleados\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgutil.py',
-   'PYSOURCE'),
   ('pyi_rth_multiprocessing',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_multiprocessing.py',
@@ -82,13 +78,17 @@
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth__tkinter.py',
    'PYSOURCE'),
+  ('pyi_rth_pkgutil',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgutil.py',
+   'PYSOURCE'),
   ('main',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos python\\app_empleados\\main.py',
    'PYSOURCE')],
  [],
  False,
  False,
- 1760419492,
+ 1760429366,
  [('run.exe',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\.venv\\Lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit-intel\\run.exe',

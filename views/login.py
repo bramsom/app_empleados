@@ -17,7 +17,7 @@ class LoginApp(ctk.CTk):
         self.resizable(False, False)
         self.title("Inicio de sesión")
         # login.py
-        MODO_DESARROLLO = False  # ⚠️ Cambia a False al finalizar desarrollo
+        MODO_DESARROLLO = True  # ⚠️ Cambia a False al finalizar desarrollo
 
         if MODO_DESARROLLO:
             self.after(100, lambda: self.abrir_dashboard("adminprueba", "administrador"))

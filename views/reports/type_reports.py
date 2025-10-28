@@ -1,5 +1,6 @@
 import customtkinter as ctk
-from tkinter import Toplevel,messagebox
+from tkinter import Toplevel, messagebox
+import tkinter as tk
 import pandas as pd
 from PIL import Image
 from fpdf import FPDF
@@ -11,6 +12,7 @@ from services.pdf_generator import generar_certificado_contratos
 from controllers.report_controller import ReportController
 from tkinter import filedialog
 from utils.modal_excel_selection import ModalSeleccionExcel
+from utils.modal_pdf_export import ModalExportPDF
 
 class ExportarTipoReporte(ctk.CTkFrame):
     def __init__(self, parent, username, rol, obtener_datos_excel_callback, obtener_datos_pdf_callback, volver_callback):
@@ -132,83 +134,14 @@ class ExportarTipoReporte(ctk.CTkFrame):
         ModalSeleccionExcel(self, exportar_callback)
 
     def exportar_pdf(self):
-        # Ventana emergente para buscar empleado
-        ventana = Toplevel(self)
-        ventana.title("Buscar empleado")
-        ventana.geometry("420x220")
-        ventana.transient(self)
-        ventana.grab_set()
-
-        ctk.CTkLabel(ventana, text="Buscar por nombre o documento:").pack(pady=10)
-        entry_busqueda = ctk.CTkEntry(ventana, width=280)
-        entry_busqueda.pack(pady=5)
-
-        resultado_label = ctk.CTkLabel(ventana, text="", wraplength=380)
-        resultado_label.pack(pady=5)
-
-        def buscar_empleado():
-            texto = entry_busqueda.get().strip().lower()
-            # obtener listado de empleados (usa callback si fue pasado al crear la vista)
-            if hasattr(self, "obtener_datos_pdf_callback") and callable(self.obtener_datos_pdf_callback):
-                empleados = self.obtener_datos_pdf_callback()
-            else:
-                # fallback: ReportController debe proveer una lista si no hay callback
-                empleados = ReportController.obtener_todos_los_empleados() if hasattr(ReportController, "obtener_todos_los_empleados") else []
-
-            encontrados = ReportController.buscar_empleado_por_nombre_o_documento(empleados, texto)
-            if encontrados:
-                emp = encontrados[0]
-                ventana.selected_empleado = emp
-                nombre = emp.get("name") + " " + emp.get("last_name") if isinstance(emp, dict) else f"{getattr(emp,'name','')} {getattr(emp,'last_name','')}"
-                resultado_label.configure(text=f"Seleccionado: {nombre} \n(numero documento: {emp.get('document_number') if isinstance(emp, dict) else getattr(emp,'document_number','')})")
-            else:
-                ventana.selected_empleado = None
-                resultado_label.configure(text="No se encontró ningún empleado.")
-
-        btn_buscar = ctk.CTkButton(ventana, text="Buscar", command=buscar_empleado)
-        btn_buscar.pack(pady=(5,10))
-
-        def aceptar():
-            emp = getattr(ventana, "selected_empleado", None)
-            if not emp:
-                messagebox.showerror("Error", "No se ha seleccionado un empleado válido.")
-                return
-
-            emp_id = emp.get("id") if isinstance(emp, dict) else getattr(emp, "id", None)
-            if emp_id is None:
-                messagebox.showerror("Error", "Empleado seleccionado no tiene ID válido.")
-                return
-
-            # obtener contratos del empleado
-            try:
-                contratos = consultar_contratos_por_empleado(emp_id)
-            except Exception as e:
-                messagebox.showerror("Error", f"No se pudieron obtener los contratos: {e}")
-                return
-
-            # pedir ruta de guardado
-            ruta = filedialog.asksaveasfilename(
-                defaultextension=".pdf",
-                filetypes=[("PDF files", "*.pdf")],
-                title="Guardar reporte PDF"
-            )
-            if not ruta:
-                return
-
-            try:
-                # pasar emp como dict al generador
-                emp_dict = emp if isinstance(emp, dict) else {k: v for k, v in emp.__dict__.items() if not k.startswith("_")}
-                generar_certificado_contratos(emp_dict, contratos, ruta,
-                                              entidad_nombre="COLEGIO CIUDAD DE PIENDAMÓ",
-                                              nit="NIT.817001256-7",
-                                              representante="EDGAR ALFONSO PAJA FLOR")
-                messagebox.showinfo("Éxito", f"Reporte guardado en: {ruta}")
-                ventana.destroy()
-            except Exception as e:
-                messagebox.showerror("Error", f"No se pudo generar el PDF: {e}")
-
-        btn_aceptar = ctk.CTkButton(ventana, text="Generar PDF", fg_color="#06A051", command=aceptar)
-        btn_aceptar.pack(pady=(0,10))
+        # abrir modal reutilizable (inyectar callbacks)
+        modal = ModalExportPDF(
+            parent=self,
+            obtener_empleados_cb=(self.obtener_datos_pdf_callback if callable(self.obtener_datos_pdf_callback) else (lambda: [])),
+            consultar_contratos_cb=consultar_contratos_por_empleado,
+            generar_cb=generar_certificado_contratos  # opcional, puedes omitir para usar el por defecto
+        )
+        modal.open()
 
     def _volver(self):
         if self.volver_callback:

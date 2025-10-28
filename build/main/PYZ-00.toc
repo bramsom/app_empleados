@@ -600,6 +600,50 @@
    'C:\\Users\\SOLMART '
    'TM\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\asyncio\\windows_utils.py',
    'PYMODULE'),
+  ('babel',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\babel\\__init__.py',
+   'PYMODULE'),
+  ('babel.core',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\babel\\core.py',
+   'PYMODULE'),
+  ('babel.dates',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\babel\\dates.py',
+   'PYMODULE'),
+  ('babel.localedata',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\babel\\localedata.py',
+   'PYMODULE'),
+  ('babel.localtime',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\babel\\localtime\\__init__.py',
+   'PYMODULE'),
+  ('babel.localtime._fallback',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\babel\\localtime\\_fallback.py',
+   'PYMODULE'),
+  ('babel.localtime._helpers',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\babel\\localtime\\_helpers.py',
+   'PYMODULE'),
+  ('babel.localtime._unix',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\babel\\localtime\\_unix.py',
+   'PYMODULE'),
+  ('babel.localtime._win32',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\babel\\localtime\\_win32.py',
+   'PYMODULE'),
+  ('babel.numbers',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\babel\\numbers.py',
+   'PYMODULE'),
+  ('babel.plural',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\babel\\plural.py',
+   'PYMODULE'),
   ('backports',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\backports\\__init__.py',
@@ -720,7 +764,10 @@
    'C:\\Users\\SOLMART '
    'TM\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\contextvars.py',
    'PYMODULE'),
-  ('controllers', '-', 'PYMODULE'),
+  ('controllers',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\controllers\\__init__.py',
+   'PYMODULE'),
   ('controllers.affiliation_controller',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\controllers\\affiliation_controller.py',
@@ -736,6 +783,10 @@
   ('controllers.report_controller',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\controllers\\report_controller.py',
+   'PYMODULE'),
+  ('controllers.user_controller',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\controllers\\user_controller.py',
    'PYMODULE'),
   ('copy',
    'C:\\Users\\SOLMART '
@@ -1398,6 +1449,10 @@
   ('models.employee',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\models\\employee.py',
+   'PYMODULE'),
+  ('models.user',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\models\\user.py',
    'PYMODULE'),
   ('multiprocessing',
    'C:\\Users\\SOLMART '
@@ -4088,6 +4143,10 @@
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\services\\pdf_generator.py',
    'PYMODULE'),
+  ('services.user_service',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\services\\user_service.py',
+   'PYMODULE'),
   ('setuptools',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\.venv\\Lib\\site-packages\\setuptools\\__init__.py',
@@ -4784,6 +4843,22 @@
    'C:\\Users\\SOLMART '
    'TM\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\threading.py',
    'PYMODULE'),
+  ('tkcalendar',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tkcalendar\\__init__.py',
+   'PYMODULE'),
+  ('tkcalendar.calendar_',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tkcalendar\\calendar_.py',
+   'PYMODULE'),
+  ('tkcalendar.dateentry',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tkcalendar\\dateentry.py',
+   'PYMODULE'),
+  ('tkcalendar.tooltip',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tkcalendar\\tooltip.py',
+   'PYMODULE'),
   ('tkinter',
    'C:\\Users\\SOLMART '
    'TM\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\tkinter\\__init__.py',
@@ -4855,6 +4930,94 @@
   ('typing',
    'C:\\Users\\SOLMART '
    'TM\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\typing.py',
+   'PYMODULE'),
+  ('tzdata',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Africa',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Africa\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.America',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\America\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.America.Argentina',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\America\\Argentina\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.America.Indiana',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\America\\Indiana\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.America.Kentucky',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\America\\Kentucky\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.America.North_Dakota',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\America\\North_Dakota\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Antarctica',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Antarctica\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Arctic',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Arctic\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Asia',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Asia\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Atlantic',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Atlantic\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Australia',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Australia\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Brazil',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Brazil\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Canada',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Canada\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Chile',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Chile\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Etc',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Etc\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Europe',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Europe\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Indian',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Indian\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Mexico',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Mexico\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.Pacific',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\Pacific\\__init__.py',
+   'PYMODULE'),
+  ('tzdata.zoneinfo.US',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\.venv\\Lib\\site-packages\\tzdata\\zoneinfo\\US\\__init__.py',
    'PYMODULE'),
   ('unittest',
    'C:\\Users\\SOLMART '
@@ -4928,9 +5091,21 @@
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\utils\\__init__.py',
    'PYMODULE'),
+  ('utils.autocomplete',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\utils\\autocomplete.py',
+   'PYMODULE'),
   ('utils.canvas',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\utils\\canvas.py',
+   'PYMODULE'),
+  ('utils.contract_filters',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\utils\\contract_filters.py',
+   'PYMODULE'),
+  ('utils.contract_helpers',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\utils\\contract_helpers.py',
    'PYMODULE'),
   ('utils.date_utils',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
@@ -4939,6 +5114,10 @@
   ('utils.modal_excel_selection',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
    'python\\app_empleados\\utils\\modal_excel_selection.py',
+   'PYMODULE'),
+  ('utils.modal_history',
+   'C:\\Users\\SOLMART TM\\Documents\\proyectos '
+   'python\\app_empleados\\utils\\modal_history.py',
    'PYMODULE'),
   ('utils.pdf_layout',
    'C:\\Users\\SOLMART TM\\Documents\\proyectos '
@@ -5088,4 +5267,20 @@
   ('zipimport',
    'C:\\Users\\SOLMART '
    'TM\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\zipimport.py',
+   'PYMODULE'),
+  ('zoneinfo',
+   'C:\\Users\\SOLMART '
+   'TM\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\zoneinfo\\__init__.py',
+   'PYMODULE'),
+  ('zoneinfo._common',
+   'C:\\Users\\SOLMART '
+   'TM\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\zoneinfo\\_common.py',
+   'PYMODULE'),
+  ('zoneinfo._tzpath',
+   'C:\\Users\\SOLMART '
+   'TM\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\zoneinfo\\_tzpath.py',
+   'PYMODULE'),
+  ('zoneinfo._zoneinfo',
+   'C:\\Users\\SOLMART '
+   'TM\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\zoneinfo\\_zoneinfo.py',
    'PYMODULE')])
