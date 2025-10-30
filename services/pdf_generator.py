@@ -133,10 +133,11 @@ def generar_certificado_contratos(emp: Any, contratos: List[Any], ruta_salida: s
                                   entidad_nombre: str = "COLEGIO CIUDAD DE PIENDAMÓ",
                                   nit: str = "NIT.817001256-7",
                                   representante: str = "EDGAR ALFONSO PAJA FLOR",
-                                  fecha_expedicion: Optional[str] = None,
-                                  include_pago: bool = True,
-                                  labores_descripcion: Optional[str] = None,
-                                  show_table: bool = True) -> str:
+                                  representante_titulo: str = "Representante Legal",
+                                   fecha_expedicion: Optional[str] = None,
+                                   include_pago: bool = True,
+                                   labores_descripcion: Optional[str] = None,
+                                   show_table: bool = True) -> str:
     if fecha_expedicion is None:
         fecha_expedicion = _format_date_for_print(datetime.now())
 
@@ -205,7 +206,7 @@ def generar_certificado_contratos(emp: Any, contratos: List[Any], ruta_salida: s
         pdf.set_font("Arial", "B", 11)
         pdf.cell(0, 6, _safe_text(representante), ln=True, align="C")
         pdf.ln(4)
-        pdf.cell(0, 6, _safe_text("Representante Legal"), ln=True, align="C")
+        pdf.cell(0, 6, _safe_text(representante_titulo), ln=True, align="C")
         pdf.set_font("Arial", size=11)
         pdf.output(ruta_salida)
         return ruta_salida
@@ -240,12 +241,13 @@ def generar_certificado_contratos(emp: Any, contratos: List[Any], ruta_salida: s
         pdf.ln(4)
         pdf.set_font("Arial", size=11)
 
+    # footer / firma (usar representante_titulo en vez de cadena fija)
     pdf.multi_cell(0, 6, _safe_text(f"Se expide a solicitud de la persona interesada.\nDado en Piendamó Cauca, el día {fecha_expedicion}."))
     pdf.ln(20)
     pdf.set_font("Arial", "B", 11)
     pdf.cell(0, 6, _safe_text(representante), ln=True, align="C")
     pdf.ln(4)
-    pdf.cell(0, 6, _safe_text("Representante Legal"), ln=True, align="C")
+    pdf.cell(0, 6, _safe_text(representante_titulo), ln=True, align="C")
     pdf.set_font("Arial", size=11)
 
     pdf.output(ruta_salida)
