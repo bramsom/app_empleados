@@ -49,11 +49,14 @@ def calcular_tiempo_laborado(fecha_inicio, fecha_fin):
     return f"{años} años, {meses} meses, {dias} días"
 
 # ---------- Impresores de secciones ----------
-def _imprimir_intro(pdf: CertPDF, nombre_completo: str, documento: str, labores_text: str,
-                    fecha_inicio_str: str, fecha_fin_str: str, tipos_text: str, show_table: bool):
+def _imprimir_intro(pdf: CertPDF, nombre_completo: str, documento: str, document_issuance: str,
+                    labores_text: str, fecha_inicio_str: str, fecha_fin_str: str,
+                    tipos_text: str, show_table: bool):
+    """Imprime la introducción del certificado incluyendo lugar de expedición si existe."""
+    issuance_fragment = f" expedida en {document_issuance}," if document_issuance else ""
     if show_table:
         intro = (
-            f"Que, {nombre_completo}, titular de la cédula de ciudadanía número {documento}, "
+            f"Que, {nombre_completo}, titular de la cédula de ciudadanía número {documento}{issuance_fragment} "
             + (f"prestó sus servicios {labores_text} " if labores_text else "prestó sus servicios ")
             + "en los siguientes períodos y bajo los siguientes contratos:"
         )
@@ -63,7 +66,7 @@ def _imprimir_intro(pdf: CertPDF, nombre_completo: str, documento: str, labores_
         if fecha_inicio_str or fecha_fin_str:
             periodo_fragment = f" desde {fecha_inicio_str} hasta {fecha_fin_str}"
         intro = (
-            f"Que, {nombre_completo}, titular de la cédula de ciudadanía número {documento}, "
+            f"Que, {nombre_completo}, titular de la cédula de ciudadanía número {documento}{issuance_fragment} "
             f"prestó sus servicios{periodo_fragment}{tipo_fragment}, realizando las siguientes labores:"
         )
     pdf.multi_cell(0, 6, _safe_text(intro))
@@ -148,10 +151,12 @@ def generar_certificado_contratos(emp: Any, contratos: List[Any], ruta_salida: s
         nombre_completo = f"{emp.get('name','').strip()} {emp.get('last_name','').strip()}".strip()
         documento = emp.get("document_number","")
         posicion_emp = emp.get("position","")
+        document_issuance = emp.get("document_issuance", "")  # <- extrae lugar de expedición
     else:
         nombre_completo = f"{getattr(emp,'name','').strip()} {getattr(emp,'last_name','').strip()}".strip()
         documento = getattr(emp, "document_number", "")
         posicion_emp = getattr(emp, "position", "")
+        document_issuance = getattr(emp, "document_issuance", "")
 
     labores_text = construir_labores_text(posicion_emp, contratos_norm)
 
@@ -194,14 +199,43 @@ def generar_certificado_contratos(emp: Any, contratos: List[Any], ruta_salida: s
     pdf.ln(6)
     pdf.set_font("Arial", size=11)
 
+    # formato de fecha extendido para expedición
+    def _format_date_verbose(date_input):
+        """Devuelve 'DÍA del mes de MES del año AÑO' a partir de datetime o string."""
+        if not date_input:
+            return ""
+        dt = None
+        if isinstance(date_input, datetime):
+            dt = date_input
+        else:
+            try:
+                dt = _parse_date(str(date_input))
+            except Exception:
+                dt = None
+        if not dt:
+            # si no pudimos parsear, devolver el original como fallback
+            return str(date_input)
+        meses = [
+            "enero", "febrero", "marzo", "abril", "mayo", "junio",
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+        ]
+        return f"{dt.day} del mes de {meses[dt.month - 1]} del año {dt.year}"
+
+    # donde se generaba la cadena con fecha_expedicion
+    if fecha_expedicion is None:
+        fecha_expedicion = _format_date_for_print(datetime.now())
+
+    # generar versión verbal para el footer
+    fecha_expedicion_verbose = _format_date_verbose(fecha_expedicion)
+
     # intro y descripción
-    _imprimir_intro(pdf, nombre_completo, documento, labores_text, fecha_inicio_str, fecha_fin_str, tipos_text, show_table)
+    _imprimir_intro(pdf, nombre_completo, documento, document_issuance, labores_text, fecha_inicio_str, fecha_fin_str, tipos_text, show_table)
     _print_labores_descripcion(pdf, labores_descripcion)
 
     # si no hay tabla, imprimir footer y terminar
     if not show_table:
         pdf.ln(8)
-        pdf.multi_cell(0, 6, _safe_text(f"Se expide a solicitud de la persona interesada.\nDado en Piendamó Cauca, el día {fecha_expedicion}."))
+        pdf.multi_cell(0, 6, _safe_text(f"Se expide a solicitud de la persona interesada.\nDado en Piendamó Cauca, el día {fecha_expedicion_verbose}."))
         pdf.ln(20)
         pdf.set_font("Arial", "B", 11)
         pdf.cell(0, 6, _safe_text(representante), ln=True, align="C")
@@ -242,7 +276,7 @@ def generar_certificado_contratos(emp: Any, contratos: List[Any], ruta_salida: s
         pdf.set_font("Arial", size=11)
 
     # footer / firma (usar representante_titulo en vez de cadena fija)
-    pdf.multi_cell(0, 6, _safe_text(f"Se expide a solicitud de la persona interesada.\nDado en Piendamó Cauca, el día {fecha_expedicion}."))
+    pdf.multi_cell(0, 6, _safe_text(f"Se expide a solicitud de la persona interesada.\nDado en Piendamó Cauca, el día {fecha_expedicion_verbose}."))
     pdf.ln(20)
     pdf.set_font("Arial", "B", 11)
     pdf.cell(0, 6, _safe_text(representante), ln=True, align="C")

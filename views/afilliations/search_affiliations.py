@@ -18,6 +18,15 @@ class BuscarAfiliaciones(ctk.CTkFrame):
         self.icon_eliminar = ctk.CTkImage(light_image=Image.open("images/delete.png"), size=(20, 20))
         self.icon_back = ctk.CTkImage(Image.open("images/arrow.png"), size=(30, 30))
         self.icon_seeker = ctk.CTkImage(Image.open("images/seeker.png"), size=(25, 25))
+        # límite de longitud para mostrar nombre de empleado
+        self.MAX_EMPLEADO_LEN = 40
+        # límites para otros campos (ajusta a tu gusto)
+        self.MAX_EPS_LEN = 12
+        self.MAX_ARL_LEN = 12
+        self.MAX_AFP_LEN = 12
+        self.MAX_CAJA_LEN = 20
+        self.MAX_BANK_LEN = 15
+        self.MAX_ACCOUNT_TYPE_LEN = 19
 
         agregar_fondo_decorativo(self)
         self.configure(fg_color="#F5F5F5")
@@ -154,16 +163,25 @@ class BuscarAfiliaciones(ctk.CTkFrame):
             else:
                 color_fila = "#D9D9D9"  # Gris más oscuro
                 
+            # truncar campos para la vista
+            empleado_disp = self._truncar(afiliacion.get('empleado') or "-", self.MAX_EMPLEADO_LEN)
+            eps_disp = self._truncar(afiliacion.get('eps') or "-", self.MAX_EPS_LEN)
+            arl_disp = self._truncar(afiliacion.get('arl') or "-", self.MAX_ARL_LEN)
+            afp_disp = self._truncar(afiliacion.get('afp') or "-", self.MAX_AFP_LEN)
+            caja_disp = self._truncar(afiliacion.get('compensation_box') or "-", self.MAX_CAJA_LEN)
+            bank_disp = self._truncar(afiliacion.get('bank') or "-", self.MAX_BANK_LEN)
+            account_type_disp = self._truncar(afiliacion.get('account_type') or "-", self.MAX_ACCOUNT_TYPE_LEN)
+
             valores = [
-                afiliacion.get('empleado') or "-",
-                afiliacion.get('eps') or "-",
-                afiliacion.get('arl') or "-",
+                empleado_disp,
+                eps_disp,
+                arl_disp,
                 afiliacion.get('risk_level') or "-",
-                afiliacion.get('afp') or "-",
-                afiliacion.get('compensation_box') or "-",
-                afiliacion.get('bank') or "-",
+                afp_disp,
+                caja_disp,
+                bank_disp,
                 afiliacion.get('account_number') or "-",
-                afiliacion.get('account_type') or "-"
+                account_type_disp
             ]
 
             # 2. Crear las celdas de datos con el color de fondo de la fila
@@ -268,3 +286,10 @@ class BuscarAfiliaciones(ctk.CTkFrame):
         else:
             # comportamiento por defecto: destruir la vista
             self.destroy()
+
+    def _truncar(self, texto, max_len):
+        """Trunca texto y añade '...' si excede max_len."""
+        if texto is None:
+            return ""
+        s = str(texto)
+        return s if len(s) <= max_len else s[: max_len - 3] + "..."

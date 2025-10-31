@@ -74,7 +74,9 @@ class BuscarEmpleados(ctk.CTkFrame):
         self.scroll_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Límites de visualización
-        self.MAX_EMAIL_LEN = 40
+        self.MAX_EMAIL_LEN = 30
+        self.MAX_NAME_LEN = 20
+        self.MAX_LAST_NAME_LEN = 20
         self.MAX_POSITION_LEN = 25
 
         self.cargar_empleados()
@@ -184,8 +186,10 @@ class BuscarEmpleados(ctk.CTkFrame):
             color_fila = "#F0F0F0" if row % 2 == 0 else "#D9D9D9"
             # Usar versiones truncadas para correo y cargo
             email_disp = self._truncar(emp.email, self.MAX_EMAIL_LEN)
+            name_disp = self._truncar(emp.name, self.MAX_NAME_LEN)
+            last_name_disp = self._truncar(emp.last_name, self.MAX_LAST_NAME_LEN)
             position_disp = self._truncar(emp.position, self.MAX_POSITION_LEN)
-            valores = [emp.name, emp.last_name, emp.document_type, emp.document_number,
+            valores = [name_disp, last_name_disp, emp.document_type, emp.document_number,
                        emp.birthdate, emp.phone_number, email_disp, position_disp]
             for col, texto in enumerate(valores):
                 celda = ctk.CTkFrame(self.scroll_frame, fg_color=color_fila, corner_radius=0)

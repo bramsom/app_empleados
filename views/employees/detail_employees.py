@@ -143,16 +143,20 @@ class MostrarEmpleado(ctk.CTkFrame):
             text_color="#06A051"
         ).grid(row=0, column=0, columnspan=5, sticky="w", padx=10, pady=5)
 
+        nombre_disp = _truncate(f"{self.empleado.name} {self.empleado.last_name}", 40)
+        direccion_disp = _truncate(self.empleado.residence_address or "-", 40)
+        email_disp = _truncate(self.empleado.email or "-", 35)
+
         campos = [
-            ("Nombre:", f"{self.empleado.name} {self.empleado.last_name}", 1, 0, 2),
+            ("Nombre:", nombre_disp, 1, 0, 2),
             ("Tipo documento:", self.empleado.document_type, 1, 2),
             ("Número documento:", self.empleado.document_number, 1, 3),
             ("Expedida en:", self.empleado.document_issuance, 1, 4),
             ("Fecha nacimiento:", self.empleado.birthdate, 2, 0),
             ("No telefono:", self.empleado.phone_number, 2, 1),
-            ("Dirección residencia:", self.empleado.residence_address, 2, 2, 2),
+            ("Dirección residencia:", direccion_disp, 2, 2, 2),
             ("RUT:", self.empleado.RUT, 2, 4),
-            ("Correo electrónico:", self.empleado.email, 3, 0, 2),
+            ("Correo electrónico:", email_disp, 3, 0, 2),
         ]
         
         for campo in campos:
@@ -173,16 +177,23 @@ class MostrarEmpleado(ctk.CTkFrame):
         # Asume que un empleado solo tiene una afiliación para el diseño de tarjeta
         afiliacion = self.afiliaciones[0]
 
+        EPS_disp = _truncate(afiliacion.eps or "-",  12)
+        ARL_disp = _truncate(afiliacion.arl or "-", 12)
+        AFP_disp = _truncate(afiliacion.afp or "-", 12)
+        Caja_disp = _truncate(afiliacion.compensation_box or "-", 20)
+        Banco_disp = _truncate(afiliacion.bank or "-", 15)
+        TipoCuenta_disp = _truncate(afiliacion.account_type or "-", 19)    
+
         # Lista de campos: (Etiqueta, Valor, Fila, Columna, Columnspan)
         campos_afiliaciones = [
-            ("EPS:", afiliacion.eps, 1, 0),
-            ("ARL:", afiliacion.arl, 1, 1),
+            ("EPS:", EPS_disp, 1, 0),
+            ("ARL:", ARL_disp, 1, 1),
             ("Nivel riesgo:", afiliacion.risk_level, 1, 2),
-            ("AFP:", afiliacion.afp, 2, 0),
-            ("Caja compensacion:", afiliacion.compensation_box, 2, 1, 2),
-            ("Banco:", afiliacion.bank, 3, 0),
+            ("AFP:", AFP_disp, 2, 0),
+            ("Caja compensacion:", Caja_disp, 2, 1, 2),
+            ("Banco:", Banco_disp, 3, 0),
             ("No cuenta:", afiliacion.account_number, 3, 1),
-            ("Tipo cuenta:", afiliacion.account_type, 3, 2)
+            ("Tipo cuenta:", TipoCuenta_disp, 3, 2)
         ]
 
         for campo in campos_afiliaciones:

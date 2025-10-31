@@ -101,34 +101,95 @@ class ExportarTipoReporte(ctk.CTkFrame):
                 "bank": "Banco",
                 "account_number": "Número cuenta",
                 "account_type": "Tipo cuenta"
-                # añade/ajusta según necesites
             }
 
-            contract_type_map = {
-                "CONTRATO INDIVIDUAL DE TRABAJO TERMINO FIJO": ("C.I.T.T.F", "Contrato Individual de Trabajo a Término Fijo"),
-                "CONTRATO INDIVIDUAL DE TRABAJO TERMINO INDEFINIDO": ("C.I.T.T.I", "Contrato Individual de Trabajo a Término Indefinido"),
-                "CONTRATO SERVICIO HORA CATEDRA": ("C.S.H.C", "Contrato de Prestación de Servicios - Hora Cátedra"),
-                "CONTRATO APRENDIZAJE SENA": ("C.A.S", "Contrato de Aprendizaje SENA"),
-                "ORDEN PRESTACION DE SERVICIOS": ("O.P.S", "Orden de Prestación de Servicios")
-            }
-            # Usa el controlador para obtener los datos
+            # Normalizadores para evitar aliases y columnas duplicadas
+            def _normalize_contratos(list_dicts):
+                out = []
+                for d in list_dicts or []:
+                    out.append({
+                        "id": d.get("id"),
+                        "type_contract": d.get("type_contract") or d.get("tipo"),
+                        "start_date": d.get("start_date") or d.get("inicio"),
+                        "end_date": d.get("end_date") or d.get("corte"),
+                        "state": d.get("state") or d.get("estado"),
+                        "contractor": d.get("contractor") or d.get("contratante"),
+                        "position": d.get("position") or d.get("cargo"),
+                        "employee_id": d.get("employee_id") or d.get("employee_id") or d.get("employee") or d.get("empleado"),
+                        "monthly_payment": d.get("monthly_payment") or d.get("salario_mensual") or d.get("monthly_payment"),
+                        "transport": d.get("transport"),
+                        "value_hour": d.get("value_hour") or d.get("valor_hora"),
+                        "number_hour": d.get("number_hour") or d.get("number_hour"),
+                        "valor_estimado": d.get("valor_estimado") or 0
+                    })
+                return out
+
+            def _normalize_empleados(list_dicts):
+                out = []
+                for d in list_dicts or []:
+                    out.append({
+                        "id": d.get("id"),
+                        "name": d.get("name"),
+                        "last_name": d.get("last_name"),
+                        "document_type": d.get("document_type"),
+                        "document_number": d.get("document_number"),
+                        "document_issuance": d.get("document_issuance"),
+                        "birthdate": d.get("birthdate"),
+                        "phone_number": d.get("phone_number"),
+                        "residence_address": d.get("residence_address") or d.get("direccion") or d.get("address"),
+                        "RUT": d.get("RUT"),
+                        "email": d.get("email"),
+                        "position": d.get("position")
+                    })
+                return out
+
+            def _normalize_afiliaciones(list_dicts):
+                out = []
+                for d in list_dicts or []:
+                    out.append({
+                        "id": d.get("id"),
+                        "employee_id": d.get("employee_id") or d.get("empleado_id"),
+                        "eps": d.get("eps"),
+                        "arl": d.get("arl"),
+                        "risk_level": d.get("risk_level"),
+                        "afp": d.get("afp"),
+                        "compensation_box": d.get("compensation_box") or d.get("caja"),
+                        "bank": d.get("bank"),
+                        "account_number": d.get("account_number"),
+                        "account_type": d.get("account_type")
+                    })
+                return out
+
+            # Obtener y normalizar datos
             datos = obtener_datos_para_excel(tablas_a_exportar)
             import pandas as pd
-            with pd.ExcelWriter(ruta) as writer:
+
+            with pd.ExcelWriter(ruta, engine="openpyxl", mode="w") as writer:
                 if "empleados" in tablas_a_exportar and "empleados" in datos:
-                    df_emp = pd.DataFrame(datos["empleados"])
+                    df_emp = pd.DataFrame(_normalize_empleados(datos["empleados"]))
+                    df_emp = df_emp.loc[:, ~df_emp.columns.duplicated()]
                     df_emp = df_emp.rename(columns=column_map)
                     df_emp.to_excel(writer, sheet_name="Empleados", index=False)
 
                 if "contratos" in tablas_a_exportar and "contratos" in datos:
-                    df_con = pd.DataFrame(datos["contratos"])
+                    df_con = pd.DataFrame(_normalize_contratos(datos["contratos"]))
+                    df_con = df_con.loc[:, ~df_con.columns.duplicated()]
+
+                    # mover employee_id a la primera columna si existe
+                    cols = list(df_con.columns)
+                    if "employee_id" in cols:
+                        cols.insert(0, cols.pop(cols.index("employee_id")))
+                        df_con = df_con[cols]
+
                     df_con = df_con.rename(columns=column_map)
                     df_con.to_excel(writer, sheet_name="Contratos", index=False)
 
                 if "afiliaciones" in tablas_a_exportar and "afiliaciones" in datos:
-                    df_afi = pd.DataFrame(datos["afiliaciones"])
+                    df_afi = pd.DataFrame(_normalize_afiliaciones(datos["afiliaciones"]))
+                    df_afi = df_afi.loc[:, ~df_afi.columns.duplicated()]
                     df_afi = df_afi.rename(columns=column_map)
                     df_afi.to_excel(writer, sheet_name="Afiliaciones", index=False)
+
             messagebox.showinfo("Éxito", f"Datos exportados correctamente a {ruta}")
 
         ModalSeleccionExcel(self, exportar_callback)

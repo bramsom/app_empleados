@@ -189,18 +189,26 @@ class BuscarContratos(ctk.CTkFrame):
             else:
                 tipo_contrato_mostrar = tipo_contrato_original
             
+            max_empleado = 30
+            max_contratante = 30
+            empleado_raw = contrato.get("empleado", "")
+            contratante_raw = contrato.get("contratante", "")
+
+            empleado_disp = (str(empleado_raw)[:max_empleado] + "...") if len(str(empleado_raw)) > max_empleado else str(empleado_raw)
+            contratante_disp = (str(contratante_raw)[:max_contratante] + "...") if len(str(contratante_raw)) > max_contratante else str(contratante_raw)
+            
             if row % 2 == 0:
                 color_fila = "#F0F0F0"  # Gris claro
             else:
                 color_fila = "#D9D9D9"  # Gris más oscuro
             # Crear fila
             valores = [
-                contrato["empleado"],
+                empleado_disp,
                 tipo_contrato_mostrar,
                 inicio_mostrar,
                 corte_mostrar,
-                contrato["estado"],
-                contrato["contratante"],
+                contrato.get("estado", ""),
+                contratante_disp,
                 f"${valor_estimado:,.2f}"
             ]
             for col, valor in enumerate(valores):
